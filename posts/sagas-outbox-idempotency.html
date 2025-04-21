@@ -91,14 +91,14 @@
 
             <h2>Inbox Pattern</h2>
             <p>
-            The inbox pattern, better known as the idempotent consumer pattern utilizes a similar approach to automic message processing as the outbox pattern,
-            although in reverse. The inbox pattern writes incomming messages into a database table within a transaction which handles associated work to said
-            message. If the work for the message succeeds, then the message is written to the inbox. Subsequent messages are ignored. 
-            If the work fails, then we can reprocess the message at a later point. In our example, the Order service attaches the specific, auto incrementing 
-            primary key for each specific order to the message it sends to the Inventory Service. This way, the inventory service is able to identify 
-            duplicated messages, different from two messages with the same contents and different orderIds. It recieves the message, begins a transaction, 
-            reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
-            to the Order service to continue on with the Saga
+                The inbox pattern, better known as the idempotent consumer pattern utilizes a similar approach to automic message processing as the outbox pattern,
+                although in reverse. The inbox pattern writes incomming messages into a database table within a transaction which handles associated work to said
+                message. If the work for the message succeeds, then the message is written to the inbox. Subsequent messages are ignored. 
+                If the work fails, then we can reprocess the message at a later point. In our example, the Order service attaches the specific, auto incrementing 
+                primary key for each specific order to the message it sends to the Inventory Service. This way, the inventory service is able to identify 
+                duplicated messages, different from two messages with the same contents and different orderIds. It recieves the message, begins a transaction, 
+                reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
+                to the Order service to continue on with the Saga
             </p>
             <h2>Section Heading</h2>
             
