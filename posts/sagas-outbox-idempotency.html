@@ -63,6 +63,11 @@
                 of the huge benefits of microserices is that the Orders service should know a lot about order details, but the inventory service might only need
                 to know the productId associated with the order. This results in a nice separation of concerns, leading to messages which only need to hold 
                 foreign references to "Entities" owned by other services. See DDD Blog to learn more.
+
+                With the implementation of queues inbetween our services, we have greatly improved our resiliance! However, consider the following scenario. The 
+                Order service recieves a message to place a pending order. It writes the pending order to the database, then crashes before it can send the message. 
+                The order service will come back online, and have a pending order in the database, but no message sent out to kick off our Saga. The end user will
+                be left at some sort of waiting or error screen, and even worse our data is corrupted
             </p>
             
             <h2>Section Heading</h2>
