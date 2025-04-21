@@ -117,6 +117,8 @@
                 ReserveInventory step, because we don't know if it was succcessful or not!
             </p>
 
+
+
             <h2>The implementation</h2>
 
             <p>
@@ -124,6 +126,68 @@
                 services. My first thought was to implement a representation of a saga via an in-memory class. It would implement a ISagaOrchestrator  
                 and have a list of steps, which implemented an ISagaStep interface. Below are the example classes
 
+            <pre>
+                <code>
+                        export interface ISagaOrchestrator<T> {
+                          begin(): Promise<void>;
+                        }
+                </code>
+                <code>
+                        export interface ISagaStep {
+                          invoke(): Promise<void>;
+                          compensate(): Promise<void>;
+                        }
+                </code>
+                <code>
+                        export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
+
+                            constructor(private steps: ISagaStep[]) {}
+
+                            async begin(): Promise<void> {
+                                const succeededSteps: ISagaStep[] = []
+                                try {
+                                    for (const step of steps) {
+                                        const response = await step.invoke()
+                                        if (!response.successful) {
+                                            await compensate()
+                                            return
+                                        }
+                                        succeededSteps.push(step)
+                                    }
+                                } catch (e) {
+                                    console.error(e)
+                                    await compensate()
+                                }
+                            }
+
+                            private async compensate() {
+                                await Promise.all(succeededSteps.map(async (step)) => {
+                                    return await step.compensate()
+                                })
+                            }
+                        }
+                </code>
+                <code>
+                        export class ReserveInventoryStep implements ISagaStep {
+
+                            constructor(
+                                private rabbitMQService: RMQService
+                                private productId: number,
+                                private quantity: number
+                                ) {}
+
+                            invoke(): Promise<void> {
+                               await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
+                               return await this.rabbitMQService.listenForReserveInventoryResponse()
+                            }
+
+                            compensate(): Promise<void> {
+                                await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+                            }
+                        }
+                </code>
+
+            </pre>
                 CODE
 
                 This felt very organized and enterprised. Once a message came in, I would write the order and the InventoryReserve message to the database. Then, 
