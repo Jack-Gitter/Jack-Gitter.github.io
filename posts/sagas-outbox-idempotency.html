@@ -100,16 +100,20 @@
                 reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
                 to the Order service to continue on with the Saga
             </p>
-            <h2>Section Heading</h2>
+
+            <h2>Putting It All Together</h2>
+
+            <p>
+            Below is a link to a Github repository with the code implementation for the described example scenario. It utilizes NestJS, and dockerized
+            Postgres and RabbitMQ instances. I was too lazy to configure a .env, so please clear off ports 3000, 3001, 3002, 1000, 1001, 5672 
+            <a href="https://github.com/Jack-Gitter/saga-outbox">Repo Link</a>
+            </p>
             
             todos: 
             * saga in memory representation. Two sagas waiting at the same point in time on the same channel, might receieve message meant for the other saga!
             * figured out that a router on each individual queue is more effective
             
             
-            <p>
-            <a href="https://github.com/Jack-Gitter/saga-outbox">Repo Link</a>
-            </p>
         </article>
     </main>
     <footer>
