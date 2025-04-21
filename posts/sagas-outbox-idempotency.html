@@ -101,9 +101,38 @@
                 to the Order service to continue on with the Saga
             </p>
 
+            <h2>Compensating Actions</h2>
+            <p>
+                * what are compensating actions
+                * why you cannot send all steps to sagas in parallel, compensating actions might be processed before the actual step!
+            </p>
+
             <h2>The implementation</h2>
 
             <p>
+                Now that we are all together on a theoretical level, lets talk implementation. I'll be using NodeJS, and NestJS, a framework for backend 
+                services. My first thought was to implement a representation of a saga via an in-memory class. It would implement a ISagaOrchestrator  
+                and have a list of steps, which implemented an ISagaStep interface. Below are the example classes
+
+                CODE
+
+                This felt very organized and enterprised. Once a message came in, I would write the order and the InventoryReserve message to the database. Then, 
+                every 5 seconds I would poll the outbox for new messages. If any were found, I would create a Saga with the needed steps, add it to the activeSagas
+                array in the service class, and simply call the begin() method to kick off the first message and then delete the message from the outbox. The saga
+                had code registered to listen on the corresponding queue for incomming response messages, and the world was great. Until I realized that I had 
+                one of the most annoying kind of bugs, a data race. Lets say for example we have two incomming order requests, which kicks off two sagas: Saga1 and 
+                Saga2. Saga1 and Saga2 both send out messages to the InventoryReserve channel, and listen on the corresponding InventoryReserveResponse queue for 
+                updates. This is actually whats known as the competing consumer pattern, and can be great in some cases! A response will come to the queue, and either
+                Saga1 or Saga2 can get the message, but only one of them. In some cases, this allows for essentially a multithreading sort of functionality. But in 
+                our scenario, it allows for Sagas to recieve the responses meant for other Sagas, meaning if Saga1's inventory request was denied but Saga2's wans't,
+                Saga1 could recieve an successful message while Saga2 recieved the rejected message -- not good. So how do we remedy this? Back to the drawing board.
+                We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga it belongs to. I decided to 
+                create a map, from orderId to saga and attach the orderId to the message. When a message comes back, we will simplyl look up the saga in the map,
+                and call nextstep. Now another problem, remember "at least once delivery?" well we have two options here. One is to use the inbox pattern to ignore
+                incomming requests. Something I just thought of now, but nevertheless I went in another direction. Instead of making the method called invokeNext(),
+                just make the method take in a specific step, and invoke that step. That way, we can invoke steps multiple times, and idempotent consumers 
+                will ignroe duplicated messages. Looking back on it now, its stupid. I should have just used the inbox pattern here as well. 
+                Finally, 
             </p>
 
 
