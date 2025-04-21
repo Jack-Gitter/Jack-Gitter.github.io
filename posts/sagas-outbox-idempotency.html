@@ -41,6 +41,29 @@
                 product. Only after which, can the Order service then notify the Inventory application to remove the stock permanently, and set the order status 
                 to approved. All of these steps together form a Saga, a long running, evetually consistent business process, but how is it actually implemented?
             </p>
+
+            <h2>Queues</h2>
+
+            <p>
+                There are many different ways that different computers can communicate with one another. One of the most popular is the HTTP protocol, 
+                built ontop of TCP. With HTTP, if a request fails due to a networking outage or other unexpected issue, there is little that can be done.
+                Exponential backoff can be used to build in some improvements, although it pails in comparison when put up against a message broker. A message broker
+                typically utilizes message queues in order to route requests between services. Queues, such as RabbitMQ utilize other protocols such as AMQP to send 
+                and recieve data. Some of the biggest improvements seen when switching over to using message queues for communication is decoupling of applications
+                and optional durability. A message queue can be thought of like a buffer, it holds messages until the recieving application is ready, and it can 
+                re-queue messages in the event of failures. For example, with HTTP if a request from service A is sent to service B which has crashed, then the 
+                service will simply not get the message. This indicates tight coupling between the two services. If service A uploads the message to a queue however,
+                then the queue will hold the message until service B comes back online, and is ready to process the message. In the meantime, service A can go about 
+                whatever it needs to do until service B sends a response if necessary. 
+
+                To apply this to our specific scenario, we would first recieve an HTTP request to our Orders service to kick off our Saga. The Orders service would
+                write a pending order to the database, send a message to the queue which should be eventually delivered to the Inventory service, and can process
+                other messages in the meantime. Once the Inventory service has responded, then the Orders service can upload a message to the queue directed at the 
+                Shipping service, and so on. As a side note, the messages can be very "thin", in the sense that they do not need to contain a lot of data. One
+                of the huge benefits of microserices is that the Orders service should know a lot about order details, but the inventory service might only need
+                to know the productId associated with the order. This results in a nice separation of concerns, leading to messages which only need to hold 
+                foreign references to "Entities" owned by other services. See DDD Blog to learn more.
+            </p>
             
             <h2>Section Heading</h2>
             
