@@ -39,7 +39,7 @@
                 The inventory then reserves stock in the product, and notifies the Orders service that there is ample supply for the specific order. Then,
                 the Order service must reach out to the shipping service to validate that the customer is within the allowed shipping range for the specific 
                 product. Only after which, can the Order service then notify the Inventory application to remove the stock permanently, and set the order status 
-                to approved
+                to approved. All of these steps together form a Saga, a long running, evetually consistent business process, but how is it actually implemented?
             </p>
             
             <h2>Section Heading</h2>
