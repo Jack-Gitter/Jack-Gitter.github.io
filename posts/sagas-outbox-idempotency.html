@@ -137,7 +137,8 @@
                 we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. That was it, I had enough of 
                 enterprise software object orientedness for one weekend. Rather, I ended up with the solution described in the article above. I simplyl
                 created message handlers for each response queue, and I attached the orderId to every message to every service. This way, when the order
-                service got a message, it could simplyl look up the order details, craft the next message 
+                service got a message, it could simplyl look up the order details, craft the next message with the data it knows about the order, and then 
+                send it to the corresponding channel. No in-memory models cluttering up an already complex system
             </p>
 
 
