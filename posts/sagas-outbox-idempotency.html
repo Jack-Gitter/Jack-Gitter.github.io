@@ -67,10 +67,21 @@
                 With the implementation of queues inbetween our services, we have greatly improved our resiliance! However, consider the following scenario. The 
                 Order service recieves a message to place a pending order. It writes the pending order to the database, then crashes before it can send the message. 
                 The order service will come back online, and have a pending order in the database, but no message sent out to kick off our Saga. The end user will
-                be left at some sort of waiting or error screen, and even worse our data is corrupted
+                be left at some sort of waiting or error screen, and even worse our data is corrupted.
             </p>
 
             <h2>Outbox Pattern</h2>
+
+            <p>
+                An outbox is like a holding station for any outgoing messages that a service should send at some point, in order to be eventually consistent.
+                This is best implemented as a database table, so that transactional consistency can be achieved between processing a request, and writing 
+                a message to another service. Lets take the orders service example once more. An HTTP request comes in to place a pending order. The 
+                Order service starts a transaction, writes this pending order to the database, and then writes a message to the InventoryReservationOutbox table. 
+                The service then commits the transaction, so that both the message and the pending order are either both written, or neither are. On startup, 
+                the Order service is set up to poll the InventoryReservationOutbox table for outgoing messages every X seconds. Once this polling functionality is 
+                triggered, the message is pulled from the table, converted into JSON, and sent into the message queue for the Inventory service to process at a 
+                later point.
+            </p>
             
             <h2>Section Heading</h2>
             
