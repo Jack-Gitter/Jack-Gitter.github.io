@@ -91,9 +91,6 @@
 
             <h2>Inbox Pattern</h2>
             <p>
-            we will use the unique ID that we have in the orders table and attach it to the messages, so we can identify duplicates, and also figure out
-                using the orderId of the order we placed in the table
-
             The inbox pattern, better known as the idempotent consumer pattern utilizes a similar approach to automic message processing as the outbox pattern,
             although in reverse. The inbox pattern writes incomming messages into a database table within a transaction which handles associated work to said
             message. If the work for the message succeeds, then the message is written to the inbox. Subsequent messages are ignored. 
