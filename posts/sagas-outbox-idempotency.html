@@ -103,8 +103,18 @@
 
             <h2>Compensating Actions</h2>
             <p>
-                * what are compensating actions
-                * why you cannot send all steps to sagas in parallel, compensating actions might be processed before the actual step!
+                Up to this point, we've assumed that everything will go smoothy: which it won't. Sometimes half way through the saga, the 
+                Shipping service will say that we cannot ship to the person, and we'll have a problem. We have these reserved inventory and pending product, 
+                what to do? With a database, the solution would be simple. Abort the transaction, and rollback. With Sagas, the solution is similar: compensating
+                actions. For each step in a Saga, there should always be a compensating action. For example, reserving 10 inventory for a specific product 
+                would have the compenstaing action of releasing the 10 items for another person to purchase. If any step in the Saga fails, then 
+                all previously successful steps must be compensated. This can be achieved by sending compensatino messages to all services who have 
+                already performed some local transaction based on a recieved message earlier in the Saga.
+
+                As a side note, it might at first seem adventageous to send out all Saga steps in parallel, to speed up the execution. I thought so too at first
+                but as I looked into it a bit further, I realized a potential nasty data race. Lets say that the Order service sends out the ReserveInventory 
+                and ValidateShipping messages both at once. The ValidateShipping message comes back uncessfull. What do we do? We can't yet compensate the 
+                ReserveInventory step, because we don't know if it was succcessful or not!
             </p>
 
             <h2>The implementation</h2>
@@ -150,12 +160,6 @@
             Postgres and RabbitMQ instances. I was too lazy to configure a .env, so please clear off ports 3000, 3001, 3002, 1000, 1001, and 5672 
             <a href="https://github.com/Jack-Gitter/saga-outbox">Repo Link</a>
             </p>
-            
-            todos: 
-            * saga in memory representation. Two sagas waiting at the same point in time on the same channel, might receieve message meant for the other saga!
-            * figured out that a router on each individual queue is more effective
-            
-            
         </article>
     </main>
     <footer>
