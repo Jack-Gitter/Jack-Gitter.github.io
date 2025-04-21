@@ -28,6 +28,19 @@
                 as it's only a matter of time before as a microservice architecture using simple HTTP requests and isolated database transactions winds up in 
                 an inconsistent state
             </p>
+
+            <h2>The Setup</h2>
+
+            <p>
+                Consider an ecommerce business where you can place orders for various different items, and have them shipped to you around the world.
+                This business might have services for keeping track of orders, managing inventory, and validating shipping requirements. These can be called
+                the Orders, Inventory, and Shipping microservices, respectively. When a user places an order, and Order record is entered in a pending state
+                in the Orders database, and a message is sent to the Inventory service to check whether there is enough inventory of the particular product.
+                The inventory then reserves stock in the product, and notifies the Orders service that there is ample supply for the specific order. Then,
+                the Order service must reach out to the shipping service to validate that the customer is within the allowed shipping range for the specific 
+                product. Only after which, can the Order service then notify the Inventory application to remove the stock permanently, and set the order status 
+                to approved
+            </p>
             
             <h2>Section Heading</h2>
             
