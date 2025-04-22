@@ -138,8 +138,10 @@
                     }
                 </code>
                 <code>
+
     export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
 
+        // list of steps in the saga
         constructor(private steps: ISagaStep[]) {}
 
         async begin(): Promise<void> {
@@ -169,12 +171,14 @@
                 <code>
     export class ReserveInventoryStep implements ISagaStep {
 
+        // example step, constructed with necessary data to send to quueue 
         constructor(
             private rabbitMQService: RMQService
             private productId: number,
             private quantity: number
             ) {}
 
+        // send reserve inventory message, and wait for response. Do not advance Saga until we get a response
         invoke(): Promise<void> {
            await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
            return await this.rabbitMQService.listenForReserveInventoryResponse()
@@ -233,9 +237,11 @@
                 <code>
     export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
 
+        // map to keep track of steps in the Saga
         constructor(private steps: Map<OrderSagaStep, ISagaStep>, private successfulSteps: ISagaStep[]) {}
         
 
+        // invoke a singular step in the Saga, one at a time
         async invokeStep(step: OrderSagaStep): Promise<void> {
             const response = await steps.get(step).invoke()
             if (!response.successful) {
@@ -244,6 +250,7 @@
             successfulSteps.push(step)
         }
 
+        // compensate a singular step in the Saga, one at a time
         async compensateStep(step: OrderSagaStep): Promise<void> {
             const response = await steps.get(step).compensate()
             if (!response.successful) {
@@ -276,8 +283,10 @@
 
         constructor(private rabbitmqService: RMQService) {}
 
+        // all currently running Sagas
         private activeSagas: Map<number, ISagaOrchestrator>
 
+        // await all inventoryReserve message responses in a "global" place, and route them to appropriate saga based on orderId
         public reserveShippingResponseHandler() {
               const response = this.rabbitmqService.getInventoryResponse()
               const relatedSaga = this.runningSagas.get(response.orderId);
@@ -287,6 +296,7 @@
                 );
               }
               if (response.successfull) {
+                // the reserve inventory step succeeded, start the next step in the saga
                 relatedSaga.invokeStep(OrderSagaStep.SHIPPING_VALIDATION);
               } else {
                 toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
