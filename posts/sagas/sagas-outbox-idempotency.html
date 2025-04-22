@@ -212,98 +212,95 @@
                 and call next step. 
 
 
-            <pre>
-                <code>
-                    export interface ISagaOrchestrator<T> {
-                      invokeStep(step: T): Promise<void>
-                      compensateStep(step: T): Promise<void>
-                    }
-                </code>
-                <code>
-                    export interface ISagaStep {
-                      invoke(): Promise<void>;
-                      compensate(): Promise<void>;
-                    }
-                </code>
-                <code>
-                    export enum OrderSagaStep {
-                        INVENTORY_RESERVE,
-                        SHIPPING_VALIDATION,
-                        INVENTORY_REMOVE
-                    }
-                </code>
-                <code>
-    export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
-
-        // map to keep track of steps in the Saga
-        constructor(private steps: Map<OrderSagaStep, ISagaStep>, private successfulSteps: ISagaStep[]) {}
+<div class="interface-title">ISagaOrchestrator Interface</div>
+        <pre><code>export interface ISagaOrchestrator&lt;T&gt; {
+  invokeStep(step: T): Promise&lt;void&gt;
+  compensateStep(step: T): Promise&lt;void&gt;
+}</code></pre>
         
-
-        // invoke a singular step in the Saga, one at a time
-        async invokeStep(step: OrderSagaStep): Promise<void> {
-            const response = await steps.get(step).invoke()
-            if (!response.successful) {
-                await this.compensate()
-            }
-            successfulSteps.push(step)
-        }
-
-        // compensate a singular step in the Saga, one at a time
-        async compensateStep(step: OrderSagaStep): Promise<void> {
-            const response = await steps.get(step).compensate()
-            if (!response.successful) {
-                throw new Error('Failed to compensate')
-            }
-        }
+        <div class="interface-title">ISagaStep Interface</div>
+        <pre><code>export interface ISagaStep {
+  invoke(): Promise&lt;void&gt;;
+  compensate(): Promise&lt;void&gt;;
+}</code></pre>
+        
+        <div class="enum-title">OrderSagaStep Enum</div>
+        <pre><code>export enum OrderSagaStep {
+  INVENTORY_RESERVE,
+  SHIPPING_VALIDATION,
+  INVENTORY_REMOVE
+}</code></pre>
+        
+        <div class="class-title">OrderSagaOrchestrator Class</div>
+        <pre><code>export class OrderSagaOrchestrator implements ISagaOrchestrator&lt;OrderSagaStep&gt; {
+  // map to keep track of steps in the Saga
+  constructor(
+    private steps: Map&lt;OrderSagaStep, ISagaStep&gt;, 
+    private successfulSteps: ISagaStep[]
+  ) {}
+  
+  // invoke a singular step in the Saga, one at a time
+  async invokeStep(step: OrderSagaStep): Promise&lt;void&gt; {
+    const response = await steps.get(step).invoke()
+    if (!response.successful) {
+      await this.compensate()
     }
-    </code>
-    <code>
-    export class ReserveInventoryStep implements ISagaStep {
-
-        constructor(
-            private rabbitMQService: RMQService
-            private productId: number,
-            private quantity: number
-            ) {}
-
-        invoke(): Promise<void> {
-           await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
-           // do not await response here!
-        }
-
-        compensate(): Promise<void> {
-            await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
-        }
+    successfulSteps.push(step)
+  }
+  
+  // compensate a singular step in the Saga, one at a time
+  async compensateStep(step: OrderSagaStep): Promise&lt;void&gt; {
+    const response = await steps.get(step).compensate()
+    if (!response.successful) {
+      throw new Error('Failed to compensate')
     }
-    </code>
-    <code>
-    export class OrdersController implements ISagaStep {
-
-        constructor(private rabbitmqService: RMQService) {}
-
-        // all currently running Sagas
-        private activeSagas: Map<number, ISagaOrchestrator>
-
-        // await all inventoryReserve message responses in a "global" place, and route them to appropriate saga based on orderId
-        public reserveShippingResponseHandler() {
-              const response = this.rabbitmqService.getInventoryResponse()
-              const relatedSaga = this.runningSagas.get(response.orderId);
-              if (!relatedSaga) {
-                throw new InternalServerErrorException(
-                  `No running saga is related to the most recent message recieved!`,
-                );
-              }
-              if (response.successfull) {
-                // the reserve inventory step succeeded, start the next step in the saga
-                relatedSaga.invokeStep(OrderSagaStep.SHIPPING_VALIDATION);
-              } else {
-                toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
-              }
-        };
-
+  }
+}</code></pre>
+        
+        <div class="class-title">ReserveInventoryStep Class</div>
+        <pre><code>export class ReserveInventoryStep implements ISagaStep {
+  constructor(
+    private rabbitMQService: RMQService,
+    private productId: number,
+    private quantity: number
+  ) {}
+  
+  invoke(): Promise&lt;void&gt; {
+    await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
+    // do not await response here!
+  }
+  
+  compensate(): Promise&lt;void&gt; {
+    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+  }
+}</code></pre>
+        
+        <div class="class-title">OrdersController Class</div>
+        <pre><code>export class OrdersController implements ISagaStep {
+  constructor(private rabbitmqService: RMQService) {}
+  
+  // all currently running Sagas
+  private activeSagas: Map&lt;number, ISagaOrchestrator&gt;
+  
+  // await all inventoryReserve message responses in a "global" place, and route them to appropriate saga based on orderId
+  public reserveShippingResponseHandler() {
+    const response = this.rabbitmqService.getInventoryResponse()
+    const relatedSaga = this.runningSagas.get(response.orderId);
+    
+    if (!relatedSaga) {
+      throw new InternalServerErrorException(
+        `No running saga is related to the most recent message recieved!`,
+      );
     }
-    </code>
-            </pre>
+    
+    if (response.successfull) {
+      // the reserve inventory step succeeded, start the next step in the saga
+      relatedSaga.invokeStep(OrderSagaStep.SHIPPING_VALIDATION);
+    } else {
+      toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
+    }
+  }
+}</code></pre>
 
                 Finally, we get to maybe the most obvious problem, the one that made me completely redesign the code: A server crash. If a server crashes with 
                 active sagas, then we have messages that are going to eventually come back to the Orders application, with no corresponding saga. This means that
