@@ -6,6 +6,7 @@
     <title>Sagas, Outbox, and Idempotency</title>
     <link rel="stylesheet" href="../../styles.css">
     <link rel="stylesheet" href="sagas-style.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 </head>
 <body>
     <header>
@@ -130,19 +131,19 @@
 <div class="container">
         <h1>Saga Pattern Implementation</h1>
         
-        <div class="interface-title">ISagaOrchestrator Interface</div>
-        <pre><code>export interface ISagaOrchestrator {
+  <div class="interface-title">ISagaOrchestrator Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaOrchestrator {
   begin(): Promise<void>;
-}</code></pre>
-        
-        <div class="interface-title">ISagaStep Interface</div>
-        <pre><code>export interface ISagaStep {
+}</pre>
+  
+  <div class="interface-title">ISagaStep Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaStep {
   invoke(): Promise<void>;
   compensate(): Promise<void>;
-}</code></pre>
-        
-        <div class="class-title">OrderSagaOrchestrator Class</div>
-        <pre><code>export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
+}</pre>
+  
+  <div class="class-title">OrderSagaOrchestrator Class</div>
+  <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
   // list of steps in the saga
   constructor(private steps: ISagaStep[]) {}
   
@@ -168,10 +169,10 @@
       return await step.compensate()
     }))
   }
-}</code></pre>
-        
-        <div class="class-title">ReserveInventoryStep Class</div>
-        <pre><code>export class ReserveInventoryStep implements ISagaStep {
+}</pre>
+  
+  <div class="class-title">ReserveInventoryStep Class</div>
+  <pre class="prettyprint lang-typescript">export class ReserveInventoryStep implements ISagaStep {
   // example step, constructed with necessary data to send to quueue 
   constructor(
     private rabbitMQService: RMQService,
@@ -189,8 +190,7 @@
     await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
   }
 }
-... other steps</code></pre>
-    </div>
+... other steps</pre>
 
 
                 This felt very organized and enterprised. Once a message came in, I would write the order and the InventoryReserve message to the database. Then, 
@@ -213,26 +213,26 @@
 
 
 <div class="interface-title">ISagaOrchestrator Interface</div>
-        <pre><code>export interface ISagaOrchestrator&lt;T&gt; {
+  <pre class="prettyprint lang-typescript">export interface ISagaOrchestrator&lt;T&gt; {
   invokeStep(step: T): Promise&lt;void&gt;
   compensateStep(step: T): Promise&lt;void&gt;
-}</code></pre>
-        
-        <div class="interface-title">ISagaStep Interface</div>
-        <pre><code>export interface ISagaStep {
+}</pre>
+  
+  <div class="interface-title">ISagaStep Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaStep {
   invoke(): Promise&lt;void&gt;;
   compensate(): Promise&lt;void&gt;;
-}</code></pre>
-        
-        <div class="interface-title">OrderSagaStep Enum</div>
-        <pre><code>export enum OrderSagaStep {
+}</pre>
+  
+  <div class="interface-title">OrderSagaStep Enum</div>
+  <pre class="prettyprint lang-typescript">export enum OrderSagaStep {
   INVENTORY_RESERVE,
   SHIPPING_VALIDATION,
   INVENTORY_REMOVE
-}</code></pre>
-        
-        <div class="class-title">OrderSagaOrchestrator Class</div>
-        <pre><code>export class OrderSagaOrchestrator implements ISagaOrchestrator&lt;OrderSagaStep&gt; {
+}</pre>
+  
+  <div class="class-title">OrderSagaOrchestrator Class</div>
+  <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator&lt;OrderSagaStep&gt; {
   // map to keep track of steps in the Saga
   constructor(
     private steps: Map&lt;OrderSagaStep, ISagaStep&gt;, 
@@ -255,10 +255,10 @@
       throw new Error('Failed to compensate')
     }
   }
-}</code></pre>
-        
-        <div class="class-title">ReserveInventoryStep Class</div>
-        <pre><code>export class ReserveInventoryStep implements ISagaStep {
+}</pre>
+  
+  <div class="class-title">ReserveInventoryStep Class</div>
+  <pre class="prettyprint lang-typescript">export class ReserveInventoryStep implements ISagaStep {
   constructor(
     private rabbitMQService: RMQService,
     private productId: number,
@@ -273,10 +273,10 @@
   compensate(): Promise&lt;void&gt; {
     await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
   }
-}</code></pre>
-        
-        <div class="class-title">OrdersController Class</div>
-        <pre><code>export class OrdersController implements ISagaStep {
+}</pre>
+  
+  <div class="class-title">OrdersController Class</div>
+  <pre class="prettyprint lang-typescript">export class OrdersController implements ISagaStep {
   constructor(private rabbitmqService: RMQService) {}
   
   // all currently running Sagas
@@ -300,7 +300,7 @@
       toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
     }
   }
-}</code></pre>
+}</pre>
 
                 Finally, we get to maybe the most obvious problem, the one that made me completely redesign the code: A server crash. If a server crashes with 
                 active sagas, then we have messages that are going to eventually come back to the Orders application, with no corresponding saga. This means that
