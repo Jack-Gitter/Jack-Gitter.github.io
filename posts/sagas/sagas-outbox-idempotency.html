@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sagas, Outbox, and Idempotency</title>
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="sagas-style.css">
 </head>
 <body>
     <header>
@@ -125,74 +126,71 @@
                 Now that we are all together on a theoretical level, lets talk implementation. I'll be using NodeJS, and NestJS, a framework for backend 
                 services. My first thought was to implement a representation of a saga via an in-memory class. It would implement a ISagaOrchestrator  
                 and have a list of steps, which implemented an ISagaStep interface. Below are the example classes
-            <pre>
-                <code>
-                    export interface ISagaOrchestrator {
-                      begin(): Promise<void>;
-                    }
-                </code>
-                <code>
-                    export interface ISagaStep {
-                      invoke(): Promise<void>;
-                      compensate(): Promise<void>;
-                    }
-                </code>
-                <code>
 
-    export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
-
-        // list of steps in the saga
-        constructor(private steps: ISagaStep[]) {}
-
-        async begin(): Promise<void> {
-            const succeededSteps: ISagaStep[] = []
-            try {
-                for (const step of steps) {
-                    const response = await step.invoke()
-                    if (!response.successful) {
-                        await compensate()
-                        return
-                    }
-                    succeededSteps.push(step)
-                }
-            } catch (e) {
-                console.error(e)
-                await compensate()
-            }
+<div class="container">
+        <h1>Saga Pattern Implementation</h1>
+        
+        <div class="interface-title">ISagaOrchestrator Interface</div>
+        <pre><code>export interface ISagaOrchestrator {
+  begin(): Promise<void>;
+}</code></pre>
+        
+        <div class="interface-title">ISagaStep Interface</div>
+        <pre><code>export interface ISagaStep {
+  invoke(): Promise<void>;
+  compensate(): Promise<void>;
+}</code></pre>
+        
+        <div class="class-title">OrderSagaOrchestrator Class</div>
+        <pre><code>export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
+  // list of steps in the saga
+  constructor(private steps: ISagaStep[]) {}
+  
+  async begin(): Promise<void> {
+    const succeededSteps: ISagaStep[] = []
+    try {
+      for (const step of steps) {
+        const response = await step.invoke()
+        if (!response.successful) {
+          await compensate()
+          return
         }
-
-        private async compensate() {
-            await Promise.all(succeededSteps.map(async (step)) => {
-                return await step.compensate()
-            })
-        }
+        succeededSteps.push(step)
+      }
+    } catch (e) {
+      console.error(e)
+      await compensate()
     }
-                </code>
-                <code>
-    export class ReserveInventoryStep implements ISagaStep {
-
-        // example step, constructed with necessary data to send to quueue 
-        constructor(
-            private rabbitMQService: RMQService
-            private productId: number,
-            private quantity: number
-            ) {}
-
-        // send reserve inventory message, and wait for response. Do not advance Saga until we get a response
-        invoke(): Promise<void> {
-           await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
-           return await this.rabbitMQService.listenForReserveInventoryResponse()
-        }
-
-        compensate(): Promise<void> {
-            await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
-        }
-    }
-
-
-    ... other steps
-                </code>
-            </pre>
+  }
+  
+  private async compensate() {
+    await Promise.all(succeededSteps.map(async (step) => {
+      return await step.compensate()
+    }))
+  }
+}</code></pre>
+        
+        <div class="class-title">ReserveInventoryStep Class</div>
+        <pre><code>export class ReserveInventoryStep implements ISagaStep {
+  // example step, constructed with necessary data to send to quueue 
+  constructor(
+    private rabbitMQService: RMQService,
+    private productId: number,
+    private quantity: number
+  ) {}
+  
+  // send reserve inventory message, and wait for response. Do not advance Saga until we get a response
+  invoke(): Promise<void> {
+    await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
+    return await this.rabbitMQService.listenForReserveInventoryResponse()
+  }
+  
+  compensate(): Promise<void> {
+    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+  }
+}
+... other steps</code></pre>
+    </div>
 
 
                 This felt very organized and enterprised. Once a message came in, I would write the order and the InventoryReserve message to the database. Then, 

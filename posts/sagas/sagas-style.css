@@ -1,0 +1,18 @@
+code {
+    display: block;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f2f0f0
+}
+
+.interface-title, .class-title {
+    font-weight: bold;
+    color: #0066cc;
+    padding: 8px 16px;
+    background-color: #e1ecf4;
+    border-bottom: 1px solid #ddd;
+}
