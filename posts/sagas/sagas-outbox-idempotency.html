@@ -180,7 +180,8 @@
     private quantity: number
   ) {}
   
-  // send reserve inventory message, and wait for response. Do not advance Saga until we get a response
+  /* send reserve inventory message, and wait for response. 
+  Do not advance Saga until we get a response */
   invoke(): Promise<void> {
     await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
     return await this.rabbitMQService.listenForReserveInventoryResponse()
@@ -216,7 +217,8 @@
   <pre class="prettyprint lang-typescript">export interface ISagaOrchestrator&lt;T&gt; {
   invokeStep(step: T): Promise&lt;void&gt;
   compensateStep(step: T): Promise&lt;void&gt;
-}</pre>
+ }
+ </pre>
   
   <div class="interface-title">ISagaStep Interface</div>
   <pre class="prettyprint lang-typescript">export interface ISagaStep {
@@ -282,7 +284,8 @@
   // all currently running Sagas
   private activeSagas: Map&lt;number, ISagaOrchestrator&gt;
   
-  // await all inventoryReserve message responses in a "global" place, and route them to appropriate saga based on orderId
+  /* await all inventoryReserve message responses in a "global" place, 
+  and route them to appropriate saga based on orderId */
   public reserveShippingResponseHandler() {
     const response = this.rabbitmqService.getInventoryResponse()
     const relatedSaga = this.runningSagas.get(response.orderId);
