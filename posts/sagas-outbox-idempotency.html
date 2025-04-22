@@ -307,11 +307,6 @@
     </code>
             </pre>
 
-
-                Now another problem, remember "at least once delivery?" well we have two options here. One is to use the inbox pattern to ignore
-                incomming requests. Something I just thought of now, but nevertheless I went in another direction. Instead of making the method called invokeNext(),
-                just make the method take in a specific step, and invoke that step. That way, we can invoke steps multiple times, and idempotent consumers 
-                will ignroe duplicated messages. Looking back on it now, its stupid. I should have just used the inbox pattern here as well. 
                 Finally, we get to maybe the most obvious problem, the one that made me completely redesign the code: A server crash. If a server crashes with 
                 active sagas, then we have messages that are going to eventually come back to the Orders application, with no corresponding saga. This means that
                 we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. That was it, I had enough of 
