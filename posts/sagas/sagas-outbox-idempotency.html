@@ -41,7 +41,7 @@
                 must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
                 for the specific product. Only after which, can the <span class="inline-service">Order</span> service then notify the 
                 <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> entity and corresponding 
-                inventory, and set the <span class="inline-class">Order</span> entity status to approved. All of these steps together form a Saga, 
+                inventory, and set the <span class="inline-code">Order</span> entity status to approved. All of these steps together form a Saga, 
                 a long running, evetually consistent business process. 
             </p>
 
