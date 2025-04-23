@@ -100,10 +100,11 @@
                     owned by other services. 
                 </div>
 
-                With the implementation of queues inbetween our services, we have greatly improved our resiliance! However, consider the following scenario. The 
-                Order service recieves a message to place a pending order. It writes the pending order to the database, then crashes before it can send the message. 
-                The order service will come back online, and have a pending order in the database, but no message sent out to kick off our Saga. The end user will
-                be left at some sort of waiting or error screen, and even worse our data is corrupted.
+                With queues inbetween services, the resiliance of the entire process has been greatly improved, but it is not perfect. Consider the following 
+                scenario. The <span class='inline-service'>Order</span> service recieves a message to place a pending order. 
+                It writes an <span class='inline-code'>Order</span> to the database, but crashes before it can send an inventory reservation message to the queue. 
+                The order service will come back online, and have a pending <span class='inline-code'>Order</span> in the database, but no message sent out to 
+                kick off the Saga. The end user will be left at some sort of waiting or error screen and our data is corrupted.
             </p>
 
             <h2>Outbox Pattern</h2>
