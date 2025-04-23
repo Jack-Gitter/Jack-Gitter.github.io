@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sagas, Outbox, and Idempotency</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./sagas.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 </head>
 <body>
@@ -48,16 +49,46 @@
             <h2>Queues</h2>
 
             <p>
-                There are many different ways that different computers can communicate with one another. One of the most popular is the HTTP protocol, 
-                built ontop of TCP. With HTTP, if a request fails due to a networking outage or other unexpected issue, there is little that can be done.
-                Exponential backoff can be used to build in some improvements, although it pails in comparison when put up against a message broker. A message broker
-                typically utilizes message queues in order to route requests between services. Queues, such as RabbitMQ utilize other protocols such as AMQP to send 
-                and recieve data. Some of the biggest improvements seen when switching over to using message queues for communication is decoupling of applications
-                and optional durability. A message queue can be thought of like a buffer, it holds messages until the recieving application is ready, and it can 
-                re-queue messages in the event of failures. For example, with HTTP if a request from service A is sent to service B which has crashed, then the 
-                service will simply not get the message. This indicates tight coupling between the two services. If service A uploads the message to a queue however,
-                then the queue will hold the message until service B comes back online, and is ready to process the message. In the meantime, service A can go about 
-                whatever it needs to do until service B sends a response if necessary. 
+                There are many different ways that different computers can communicate with one another. One of the most popular is the HTTP protocol With HTTP, 
+                failed requests due to networking or service outages are hard to overcome. 
+                <a href='https://en.wikipedia.org/wiki/Exponential_backoff'>Exponential Backoff</a> can be used to improve upon standard usage,
+                although it achieves little of what could be done by a message broker. A message broker
+                typically utilizes queues in order to route requests between services. Some of the biggest improvements seen when switching over to 
+                using message queues for communication is decoupling of applications and increased durability. 
+                A message queue can be thought of like a buffer. It holds messages until the reciever is ready. In the event of a message consumption failure,
+                it can also re-queue messages. Below is a comparison between inter-service communication between two services A and B. Service A is attempting
+                to send a message to service B, although service B is currently unavailable.
+            </p>
+
+            <p>
+                <div class="diagram">
+                        <div class="title">1. Direct HTTP Communication (Service B Down)</div>
+                        <div>
+                            <span class="box">Service A</span>
+                            <span class="arrow">--❌--></span>
+                            <span class="box crashed">Service B</span>
+                        </div>
+                        <div class="note">Request fails, Service A is blocked</div>
+
+                        <div class="title">2. Queue-Based Communication (Service B Down)</div>
+                        <div>
+                            <span class="box">Service A</span>
+                            <span class="arrow">--✓--></span>
+                            <span class="box queue">Message Queue</span>
+                            <span class="arrow red">--⏳--></span>
+                            <span class="box crashed">Service B</span>
+                        </div>
+                        <div class="note">Service A continues working, queue holds message</div>
+
+                        <div>
+                            <span class="box">Service A</span>
+                            <span class="arrow">     </span>
+                            <span class="box queue">Message Queue</span>
+                            <span class="arrow">--✓--></span>
+                            <span class="box">Service B</span>
+                        </div>
+                        <div class="note">Message delivered when Service B comes back online</div>
+                    </div>
 
                 To apply this to our specific scenario, we would first recieve an HTTP request to our Orders service to kick off our Saga. The Orders service would
                 write a pending order to the database, send a message to the queue which should be eventually delivered to the Inventory service, and can process

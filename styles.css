@@ -49,12 +49,16 @@ code {
 .inline-code {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
-    color: blue
+    color: blue;
+    background-color: #f0f0f0;
+    padding: 3px;
 }
 .inline-service {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
-    color: red
+    color: red;
+    background-color: #f0f0f0;
+    padding: 3px;
 }
 .interface-title, .class-title {
     font-weight: bold;
