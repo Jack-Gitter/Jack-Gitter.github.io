@@ -104,7 +104,7 @@
                 scenario. The <span class='inline-service'>Order</span> service recieves a message to place a pending order. 
                 It writes an <span class='inline-code'>Order</span> to the database, but crashes before it can send an inventory reservation message to the queue. 
                 The order service will come back online, and have a pending <span class='inline-code'>Order</span> in the database, but no message sent out to 
-                kick off the Saga. The end user will be left at some sort of waiting or error screen and our data is corrupted.
+                kick off the Saga.
             </p>
 
             <h2>Outbox Pattern</h2>
