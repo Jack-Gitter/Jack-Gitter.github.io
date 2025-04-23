@@ -117,9 +117,10 @@
                 writes the <span class='inline-code'>Order</span> entity to the database, and then writes a message to the 
                 <span class='inline-code'>InventoryReservationOutbox</span> table. The service then commits the transaction, so that both the message and 
                 the entity are both written, or neither are. On startup, the <span class='inline-service'>Order</span> service polls the 
-                <span class='inline-code'>InventoryReservationOutbox</span> table for outgoing messages every X seconds. Once this polling functionality is 
-                triggered, the message is pulled from the table, converted into JSON, and sent into the message queue for the Inventory service to process at a 
-                later point. Once the message is in the queue, it is safe to be deleted from the InventoryReservationOutbox table. Most queues have configurable 
+                <span class='inline-code'>InventoryReservationOutbox</span> table for outgoing messages every couple of seconds. Once this polling callback is 
+                triggered, all messagea are queries from the outbox table, converted into JSON, and sent into the queue for the 
+                <span class='inline-service'>Inventory</span> service to process at a later point. Once the message is in the queue, it is safe to 
+                be deleted from the <span class='inline-code'>InventoryReservationOutbox</span> table. Most queues have configurable 
                 durability, meaning if they crash with messages inside them they are able to enqueue them after coming back up again. 
 
                 All done, right?! Wrong. Most message queues also have something called "at least once" delivery, meaning that messages might be sent to consumers
