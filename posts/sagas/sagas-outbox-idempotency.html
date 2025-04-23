@@ -123,9 +123,8 @@
                 be deleted from the <span class='inline-code'>InventoryReservationOutbox</span> table. Most queues have configurable 
                 durability, meaning if they crash with messages inside them they are able to enqueue them after coming back up again. 
 
-                All done, right?! Wrong. Most message queues also have something called "at least once" delivery, meaning that messages might be sent to consumers
-                such as the Inventory service more than once. If we send the same exact product reservation message to the Inventory service more than once, 
-                we want the Inventory service to ignore any occurances of the message past the first 
+                Next, we have to take a look at something known as "at least once" delivery. This is typical of message brokers, meaning messages might be 
+                sent to consumers more than once. 
             </p>
             
 
