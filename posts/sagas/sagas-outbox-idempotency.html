@@ -64,38 +64,35 @@
 
             <p>
                 <div class="diagram">
-                        <div class="title">1. Direct HTTP Communication (Service B Down)</div>
+                    <div class="title">1. Direct HTTP Communication</div>
                         <div>
-                            <span class="box">Service A</span>
+                            <span class="box inline-service">Orders</span>
                             <span class="arrow">--❌--></span>
-                            <span class="box crashed">Service B</span>
+                            <span class="box crashed inline-service">Inventory</span>
                         </div>
-                        <div class="note">Request fails, Service A is blocked</div>
+                        <div class="note">Request to reserve inventory fails, order cannot be placed</div>
 
-                        <div class="title">2. Queue-Based Communication (Service B Down)</div>
+                        <div class="title">2. Queue-Based Communication</div>
                         <div>
-                            <span class="box">Service A</span>
+                            <span class="box inline-service">Orders</span>
                             <span class="arrow">--✓--></span>
                             <span class="box queue">Message Queue</span>
                             <span class="arrow red">--⏳--></span>
-                            <span class="box crashed">Service B</span>
+                            <span class="box crashed inline-service">Inventory</span>
                         </div>
                         <div class="note">Service A continues working, queue holds message</div>
 
                         <div>
-                            <span class="box">Service A</span>
+                            <span class="box inline-service">Orders</span>
                             <span class="arrow">     </span>
                             <span class="box queue">Message Queue</span>
                             <span class="arrow">--✓--></span>
-                            <span class="box">Service B</span>
+                            <span class="box inline-service">Inventory</span>
                         </div>
                         <div class="note">Message delivered when Service B comes back online</div>
                     </div>
 
-                To apply this to our specific scenario, we would first recieve an HTTP request to our Orders service to kick off our Saga. The Orders service would
-                write a pending order to the database, send a message to the queue which should be eventually delivered to the Inventory service, and can process
-                other messages in the meantime. Once the Inventory service has responded, then the Orders service can upload a message to the queue directed at the 
-                Shipping service, and so on. As a side note, the messages can be very "thin", in the sense that they do not need to contain a lot of data. One
+                As a side note, the messages can be very "thin", in the sense that they do not need to contain a lot of data. One
                 of the huge benefits of microserices is that the Orders service should know a lot about order details, but the inventory service might only need
                 to know the productId associated with the order. This results in a nice separation of concerns, leading to messages which only need to hold 
                 foreign references to "Entities" owned by other services. See DDD Blog to learn more.
