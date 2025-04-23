@@ -39,3 +39,25 @@ a:hover {
     color: #666;
     font-size: 0.8em;
 }
+
+code {
+    padding: 16px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.interface-title, .class-title {
+    font-weight: bold;
+    color: #0066cc;
+    padding: 8px 16px;
+    background-color: #e1ecf4;
+    border-bottom: 1px solid #ddd;
+}    
+pre.prettyprint {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 5px;
+}
+pre.code {
+    padding: 100px
+}
