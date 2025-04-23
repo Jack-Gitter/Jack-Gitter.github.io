@@ -92,10 +92,13 @@
                         <div class="note">Message delivered when Service B comes back online</div>
                     </div>
 
-                    <div class='sidenote'>As a side note, the messages can be very "thin", in the sense that they do not need to contain a lot of data. One
-                of the huge benefits of microserices is that the Orders service should know a lot about order details, but the inventory service might only need
-                to know the productId associated with the order. This results in a nice separation of concerns, leading to messages which only need to hold 
-                foreign references to "Entities" owned by other services. See DDD Blog to learn more.</div>
+                <div class='sidenote'>
+                    As a side note, messages between services should be "thin", meaning they should not contain a lot of data. One
+                    of the huge benefits of microserices is that the <span class='inline-service'>Orders</span> service should know a lot about order details, 
+                    but the <span class='inline-service'>Inventory</span> service might only need to know the productId associated with the order. 
+                    This results in a nice separation of concerns, leading to messages which only need to hold foreign references to "Entities" 
+                    owned by other services. See DDD Blog to learn more.
+                </div>
 
                 With the implementation of queues inbetween our services, we have greatly improved our resiliance! However, consider the following scenario. The 
                 Order service recieves a message to place a pending order. It writes the pending order to the database, then crashes before it can send the message. 
