@@ -46,6 +46,16 @@ code {
     font-size: 14px;
 }
 
+.inline-code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    color: blue
+}
+.inline-service {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    color: red
+}
 .interface-title, .class-title {
     font-weight: bold;
     color: #0066cc;
