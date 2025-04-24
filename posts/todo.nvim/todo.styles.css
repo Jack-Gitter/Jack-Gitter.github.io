@@ -1,0 +1,10 @@
+.todo-img-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+    
+.todo-img-container img {
+    max-width: 80%;
+    height: auto;
+}
