@@ -192,7 +192,7 @@
   
   <div class="class-title">OrderSagaOrchestrator Class</div>
   <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
-  // list of steps in the saga
+  // List of steps in the saga
   constructor(private steps: ISagaStep[]) {}
   
   async begin(): Promise<void> {
@@ -221,14 +221,14 @@
   
   <div class="class-title">ReserveInventoryStep Class</div>
   <pre class="prettyprint lang-typescript">export class ReserveInventoryStep implements ISagaStep {
-  // example step, constructed with necessary data to send to quueue 
+  // Example step, constructed with necessary data to send to quueue 
   constructor(
     private rabbitMQService: RMQService,
     private productId: number,
     private quantity: number
   ) {}
   
-  /* send reserve inventory message, and wait for response. 
+  /* Send reserve inventory message, and wait for response. 
   Do not advance Saga until we get a response */
   invoke(): Promise<void> {
     await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
@@ -246,9 +246,10 @@
                 entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
                 for new messages. If any were found, I would create a Saga with the needed steps, add it to the <span class='inline-code'>activeSagas</span>
                 array in the service class, and simply call the begin() method to kick off the first message and delete the message from the outbox. The saga
-                had code registered to listen on the corresponding queue for incomming response messages, and the world was great. Until I realized that I had 
-                one of the most annoying kind of bugs, a data race. 
+                itself listened on the corresponding response queues for incomming messages. This seemed great, until I noticed a pretty big flaw.
+            </p>
 
+            <p>
                 Lets say for example we have two incomming order requests, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages 
                 to the InventoryReserve channel, and call the this.rabbitMQService.listenFoReserveInventoryResponse() method, meaning that they are sitting there,
                 waiting from a message to come back from the rabbitMQ queue. This is actually whats known as the competing consumer pattern, 
