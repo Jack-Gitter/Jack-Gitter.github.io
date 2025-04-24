@@ -40,7 +40,7 @@
                 creates a <span class="inline-code">Reservation</span> entity, and stores it in the database to keep track of the current status of the warehouse,
                 after which it notifies the <span class="inline-service">Orders</span> of its success. Then, the <span class="inline-service">Orders</span> service 
                 must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
-                for the specific product. Only after which, can the <span class="inline-service">Order</span> service then notify the 
+                for the specific product. Only after which, can the <span class="inline-service">Orders</span> service then notify the 
                 <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> entity and corresponding 
                 inventory, and set the <span class="inline-code">Order</span> entity status to approved. All of these steps together form a Saga, 
                 a long running, evetually consistent business process. 
@@ -101,9 +101,9 @@
                 </div>
 
                 With queues inbetween services, the resiliance of the entire process has been greatly improved, but it is not perfect. Consider the following 
-                scenario. The <span class='inline-service'>Order</span> service recieves a message to place a pending order. 
+                scenario. The <span class='inline-service'>Orders</span> service recieves a message to place a pending order. 
                 It writes an <span class='inline-code'>Order</span> to the database, but crashes before it can send an inventory reservation message to the queue. 
-                The order service will come back online, and have a pending <span class='inline-code'>Order</span> in the database, but no message sent out to 
+                The order service will come back online, and have a pending <span class='inline-code'>Orders</span> in the database, but no message sent out to 
                 kick off the Saga.
             </p>
 
@@ -116,7 +116,7 @@
                 an HTTP request is routed to the <span class='inline-service'>Orders</span> service to place an order. The service starts a database transaction, 
                 writes the <span class='inline-code'>Order</span> entity to the database, and then writes a message to the 
                 <span class='inline-code'>InventoryReservationOutbox</span> table. The service then commits the transaction, so that both the message and 
-                the entity are both written, or neither are. On startup, the <span class='inline-service'>Order</span> service polls the 
+                the entity are both written, or neither are. On startup, the <span class='inline-service'>Orders</span> service polls the 
                 <span class='inline-code'>InventoryReservationOutbox</span> table for outgoing messages every couple of seconds. Once this polling callback is 
                 triggered, all messagea are queries from the outbox table, converted into JSON, and sent into the queue for the 
                 <span class='inline-service'>Inventory</span> service to process at a later point. Once the message is in the queue, it is safe to 
