@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo.nvim</title>
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./todo.styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 </head>
 <body>
     <header>
@@ -13,11 +15,50 @@
     <main>
         <article>
             <h1>First Neovim Plugin</h1>
-            <p class="date">April 19, 2025</p>
+            <p class="date">April 24, 2025</p>
+
+            I've been using neovim for quite some time now, and something that I strive to achieve with my configuration is completeness. For coding related
+            activities, I don't want to have to leave the environment and open up another application. Plugins such as 
+            <a href='https://github.com/tpope/vim-dadbod'>nvim-dadbod</a> and <a href='https://github.com/mistweaverco/kulala.nvim'>kulala</a> have helped me 
+            in these efforts by giving my a built in database client with nvim-dadbod, and HTTP (and more) client with kulala. Now my plugin is nothing 
+            close to these, although it did help me stay within neovim for something I do quite often. As apart of my development workflow when creating a 
+            new feature, I typically list out all of the steps, requirements, and other important aspects of the feature in a text document of sorts so that
+            I'm able to focus on one thing at a time, and feel at ease because all my thoughts are written down already which pertain to later implementation
+            details. My solution was typically to use the Notes app on MacOS which required me to leave neovim. I figured this would be a great time to learn 
+            something new and solve my problem at the same time. The result of this is Todo.nvim, a plugin made by me to take persistant notes across neovim 
+            sessions! The usage and implementation is quite basic, writing information to a file and displaying it with a markdown renderer in a floating window, 
+            but I learned a lot along the way and use it quite frequently.
             
-            <h2>Section Heading</h2>
-            
-            <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
+
+            <div class='todo-img-container'>
+                <img src="./todo.nvim.png">
+            </div>
+
+
+            An example configuration using lazy package manager is below
+
+
+<pre class="prettyprint lang-lua"> return {
+    'Jack-Gitter/todo.nvim',
+    dependencies = {
+        'MeanderingProgrammer/render-markdown.nvim',
+    },
+    opts = {
+        fullpath = vim.env.HOME .. '/.config/todo.md',
+    },
+    config = function(_, opts)
+        local todo = require('todo')
+        todo.setup(opts)
+    end,
+    keys = { '<leader>td' }
+}</pre>
+
+
+
+        <p>
+        Overall, I learned alot about the lua api within neovim, and despite it being a small plugin has helped me feel more emmersed in my environment. 
+        Here is a link to the repository that contains the plugin code. <a href="https://github.com/Jack-Gitter/todo.nvim">Repo Link</a>
+        </p>
         </article>
     </main>
     <footer>
