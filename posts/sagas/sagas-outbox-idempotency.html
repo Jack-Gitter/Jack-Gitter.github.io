@@ -288,13 +288,13 @@
   
   <div class="class-title">OrderSagaOrchestrator Class</div>
   <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator&lt;OrderSagaStep&gt; {
-  // map to keep track of steps in the Saga
+  // Map to keep track of steps in the Saga
   constructor(
     private steps: Map&lt;OrderSagaStep, ISagaStep&gt;, 
     private successfulSteps: ISagaStep[]
   ) {}
   
-  // invoke a singular step in the Saga, one at a time
+  // Invoke a singular step in the Saga, one at a time
   async invokeStep(step: OrderSagaStep): Promise&lt;void&gt; {
     const response = await steps.get(step).invoke()
     if (!response.successful) {
@@ -303,7 +303,7 @@
     successfulSteps.push(step)
   }
   
-  // compensate a singular step in the Saga, one at a time
+  // Compensate a singular step in the Saga, one at a time
   async compensateStep(step: OrderSagaStep): Promise&lt;void&gt; {
     const response = await steps.get(step).compensate()
     if (!response.successful) {
@@ -334,10 +334,10 @@
   <pre class="prettyprint lang-typescript">export class OrdersController implements ISagaStep {
   constructor(private rabbitmqService: RMQService) {}
   
-  // all currently running Sagas
+  // All currently running Sagas
   private activeSagas: Map&lt;number, ISagaOrchestrator&gt;
   
-  /* await all inventoryReserve message responses in a "global" place, 
+  /* Await all InventoryReserve message responses in a "global" place, 
   and route them to appropriate saga based on orderId */
   public reserveShippingResponseHandler() {
     const response = this.rabbitmqService.getInventoryResponse()
@@ -350,7 +350,7 @@
     }
     
     if (response.successfull) {
-      // the reserve inventory step succeeded, start the next step in the saga
+      // The reserve inventory step succeeded, start the next step in the saga
       relatedSaga.invokeStep(OrderSagaStep.SHIPPING_VALIDATION);
     } else {
       toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
