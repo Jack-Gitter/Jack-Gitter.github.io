@@ -130,30 +130,41 @@
 
             <h2>Inbox Pattern</h2>
             <p>
-                The inbox pattern, better known as the idempotent consumer pattern utilizes a similar approach to automic message processing as the outbox pattern,
-                although in reverse. The inbox pattern writes incomming messages into a database table within a transaction which handles associated work to said
-                message. If the work for the message succeeds, then the message is written to the inbox. Subsequent messages are ignored. 
-                If the work fails, then we can reprocess the message at a later point. In our example, the Order service attaches the specific, auto incrementing 
-                primary key for each specific order to the message it sends to the Inventory Service. This way, the inventory service is able to identify 
-                duplicated messages, different from two messages with the same contents and different orderIds. It recieves the message, begins a transaction, 
+                The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the the outbox pattern, just in reverse.
+                When using this pattern, incomming messages are written into a database table within a transaction which handles the work associated to the 
+                message itself. If the work (for example, creating an entity and inserting into the database) succeeds, 
+                then the message is written to the inbox table. If the work fails, then we can reprocess the message at a later point.
+                When a new message comes in, the inbox table is first checked to determine if an identical message
+                has already been processed to avoid duplicated work. To detect duplicate messages, a unique key must be assigned to each new message. 
+                To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto incrementing 
+                primary key for each specific <span class='inline-code'>Order</span> entity to the message it sends to the 
+                <span class='inline-service'>Inventory</span> Service. With this identifier, the <span class='inline-service'>Inventory</span> service 
+                is able to detect duplicated messages. It recieves the message, begins a transaction, 
                 reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
                 to the Order service to continue on with the Saga
+
+                <div class='sidenote'>
+                    It is important to know that without this unique ID associated with each <span class='inline-code'>Order</span> entity attached to the message,
+                    its impossible to differentiate two messages with the same contents. For example, if two customers place orders for the same product and quantity,
+                    the <span class='inline-service'>Inventory</span> service would have no way to know that this message is not a duplicate
+                </div>
             </p>
 
             <h2>Compensating Actions</h2>
             <p>
-                Up to this point, we've assumed that everything will go smoothy: which it won't. Sometimes half way through the saga, the 
-                Shipping service will say that we cannot ship to the person, and we'll have a problem. We have these reserved inventory and pending product, 
-                what to do? With a database, the solution would be simple. Abort the transaction, and rollback. With Sagas, the solution is similar: compensating
-                actions. For each step in a Saga, there should always be a compensating action. For example, reserving 10 inventory for a specific product 
-                would have the compenstaing action of releasing the 10 items for another person to purchase. If any step in the Saga fails, then 
-                all previously successful steps must be compensated. This can be achieved by sending compensatino messages to all services who have 
-                already performed some local transaction based on a recieved message earlier in the Saga.
+                What happens if one of the steps of our Saga fails? For example, after reserving inventory, the <span class='inline-service'>Shipping</span> service 
+                says that we do not ship this particular product to the requested destination. We currently have 
+                <span class='inline-code'>InventoryReservation</span> and pending <span class='inline-code'>Order</span> entities in our other services, and 
+                they need to be removed. To do so, messages can be sent to each respective service to remove the corresponding resources, these messages
+                are better known as compensating actions. For each step in a Saga that persists data or changes state, there must be a compensating action. 
+                If any step in the Saga fails, then all previously successful steps must be compensated. 
+                <div class='sidenote'>
+                    It might at first seem adventageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
+                    Lets say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
+                    at the same time. The shipping validation message comes back first, and is uncessfull. What to do? The inventory reservation message
+                    cannot yet be compensated, because we don't know if it was succcessful or not! 
+                </div>
 
-                As a side note, it might at first seem adventageous to send out all Saga steps in parallel, to speed up the execution. I thought so too at first
-                but as I looked into it a bit further, I realized a potential nasty data race. Lets say that the Order service sends out the ReserveInventory 
-                and ValidateShipping messages both at once. The ValidateShipping message comes back uncessfull. What do we do? We can't yet compensate the 
-                ReserveInventory step, because we don't know if it was succcessful or not!
             </p>
 
 
