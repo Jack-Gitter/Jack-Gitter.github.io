@@ -158,6 +158,7 @@
                 they need to be removed. To do so, messages can be sent to each respective service to remove the corresponding resources, these messages
                 are better known as compensating actions. For each step in a Saga that persists data or changes state, there must be a compensating action. 
                 If any step in the Saga fails, then all previously successful steps must be compensated. 
+
                 <div class='sidenote'>
                     It might at first seem adventageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
                     Lets say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
@@ -169,12 +170,13 @@
 
 
 
-            <h2>The implementation</h2>
+            <h2>Failed Implementations</h2>
 
             <p>
-                Now that we are all together on a theoretical level, lets talk implementation. I'll be using NodeJS, and NestJS, a framework for backend 
-                services. My first thought was to implement a representation of a saga via an in-memory class. It would implement a ISagaOrchestrator  
-                and have a list of steps, which implemented an ISagaStep interface. Below are the example classes
+                Lets talk about the journey to get to the solution described above. For the code examples, I'll be using NodeJS, and NestJS, a backend framework
+                which wraps express. When sitting down to implement this saga, my first thought was to implement a representation of a 
+                saga in a class. It would implement a <span class='inline-code'>ISagaOrchestrator</span> interface and have a list of steps, 
+                which implemented an <span class='inline-code'>ISagaStep</span> interface. Below are the example classes
 
 <div class="container">
   <div class="interface-title">ISagaOrchestrator Interface</div>
@@ -240,9 +242,10 @@
 ... other steps</pre>
 
 
-                This felt very organized and enterprised. Once a message came in, I would write the order and the InventoryReserve message to the database. Then, 
-                every 5 seconds I would poll the outbox for new messages. If any were found, I would create a Saga with the needed steps, add it to the activeSagas
-                array in the service class, and simply call the begin() method to kick off the first message and then delete the message from the outbox. The saga
+                At a first glance, I felt pretty good about this. Once a message came in, I would write the <span class='inline-code'>Order</span> 
+                entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
+                for new messages. If any were found, I would create a Saga with the needed steps, add it to the <span class='inline-code'>activeSagas</span>
+                array in the service class, and simply call the begin() method to kick off the first message and delete the message from the outbox. The saga
                 had code registered to listen on the corresponding queue for incomming response messages, and the world was great. Until I realized that I had 
                 one of the most annoying kind of bugs, a data race. 
 
