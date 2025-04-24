@@ -358,13 +358,15 @@
   }
 }</pre>
 
-                Finally, we get to maybe the most obvious problem, the one that made me completely redesign the code: A server crash. If a server crashes with 
-                active sagas, then we have messages that are going to eventually come back to the Orders application, with no corresponding saga. This means that
-                we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. That was it, I had enough of 
-                enterprise software object orientedness for one weekend. Rather, I ended up with the solution described in the article above. I simply
-                created message handlers for each response queue, and I attached the orderId to every message to every service. This way, when the order
-                service got a message, it could simply look up the order details, craft the next message with the data it knows about the order, and then 
-                send it to the corresponding channel. No in-memory models cluttering up an already complex system
+                Finally, we reach the problem which made me completely redesign the code: A orchestrator server crash. If the orchestration server (in this case, 
+                the server hosting the <span class='inline-service'>Orders</span> service) crashes with active sagas, then we have messages that are going to 
+                eventually come back to the <span class='inline-service'>Orders</span> service, with no corresponding saga. This means that
+                we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. This could be done by looking at 
+                all currently pending orders upon server restart and constructing a saga from them, but it was beginning to feel over-engineered. 
+                Rather, I ended up going a much simpler route. I created message handlers for each response queue, and I attached the ID of each 
+                <span class='inline-code'>Order</span> entity to every message to every service. This way, when the order
+                service got a message, it could simply look up the <span class='inline-code'>Order</span> entity details from the database, craft the next message 
+                with the data it got from the database, and then send it to the corresponding channel. 
             </p>
 
 
