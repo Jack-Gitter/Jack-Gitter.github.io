@@ -39,3 +39,39 @@ a:hover {
     color: #666;
     font-size: 0.8em;
 }
+
+code {
+    padding: 16px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.inline-code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    color: blue;
+    background-color: #f0f0f0;
+    padding: 3px;
+}
+.inline-service {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    color: red;
+    background-color: #f0f0f0;
+    padding: 3px;
+}
+.interface-title, .class-title {
+    font-weight: bold;
+    color: #0066cc;
+    padding: 8px 16px;
+    background-color: #e1ecf4;
+    border-bottom: 1px solid #ddd;
+}    
+pre.prettyprint {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 5px;
+}
+pre.code {
+    padding: 100px
+}

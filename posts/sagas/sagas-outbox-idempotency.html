@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sagas, Outbox, and Idempotency</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./sagas.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Sagas, Outbox, and Idempotency</h1>
+    </header>
+    <main>
+        <article>
+            <h1>How To Achieve Bulletproof Microservice Communication</h1>
+            <p class="date">April 21, 2025</p>
+
+            <p>
+                Utilizing microserves in order to decouple a backend system into individually scalable and customizable applications is
+                an effective method to build sustainable infrastructure. Pair this with dockerized services and an orchestration platform such as
+                Kubernetes, and the infrastruture is robust
+            </p>
+            <p>
+                With all these benefits, why would anyone ever decide to go in another direction? One of the biggest challenges when developing microservices
+                is data integrity and consistency. Microsverices that utilize simple HTTP requests and isolated database transactions are bound to end up in
+                an inconsistent state sooner or later, and I want to discuss how to avoid it.
+            </p>
+
+            <h2>The Setup</h2>
+
+            <p>
+                Consider an ecommerce business where you can place orders for various different items, and have them shipped to you around the world.
+                This business might have services for keeping track of orders, managing inventory, and validating shipping requirements. These can be called
+                the <span class="inline-service">Orders</span>, <span class="inline-service">Inventory</span>, and <span class="inline-service">Shipping</span> 
+                microservices, respectively. When a user places an order, an <span class="inline-code">Order</span> entity is entered into the 
+                database as a record in a pending state. Afterwards a message is sent to the <span class="inline-service">Inventory</span> service to 
+                check whether there is enough inventory of the particular product. The <span class= "inline-service">Inventory</span> service then 
+                creates a <span class="inline-code">Reservation</span> entity, and stores it in the database to keep track of the current status of the warehouse,
+                after which it notifies the <span class="inline-service">Orders</span> of its success. Then, the <span class="inline-service">Orders</span> service 
+                must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
+                for the specific product. Only after which, can the <span class="inline-service">Orders</span> service then notify the 
+                <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> entity and corresponding 
+                inventory, and set the <span class="inline-code">Order</span> entity status to approved. All of these steps together form a Saga, 
+                a long running, evetually consistent business process. 
+            </p>
+
+            <h2>Queues</h2>
+
+            <p>
+                There are many different ways that different computers can communicate with one another. One of the most popular is the HTTP protocol With HTTP, 
+                failed requests due to networking or service outages are hard to overcome. 
+                <a href='https://en.wikipedia.org/wiki/Exponential_backoff'>Exponential Backoff</a> can be used to improve upon standard usage,
+                although it achieves little of what could be done by a message broker. A message broker
+                typically utilizes queues in order to route requests between services. Some of the biggest improvements seen when switching over to 
+                using message queues for communication is decoupling of applications and increased durability. 
+                A message queue can be thought of like a buffer. It holds messages until the reciever is ready. In the event of a message consumption failure,
+                it can also re-queue messages. Below is a comparison between inter-service communication between two services, 
+                the <span class="inline-service"> Orders</span> service and <span class="inline-service">Inventory</span> service. 
+                <span class="inline-service">Orders</span> is attempting to send a message to <span class='inline-service'>Inventory</span>, 
+                although <span class='inline-service'>Inventory</span> is currently unavailable.
+            </p>
+
+            <p>
+                <div class="diagram">
+                    <div class="title">1. Direct HTTP Communication</div>
+                        <div>
+                            <span class="box inline-service">Orders</span>
+                            <span class="arrow">--❌--></span>
+                            <span class="box crashed inline-service">Inventory</span>
+                        </div>
+                        <div class="note">Request to reserve inventory fails, order cannot be placed</div>
+
+                        <div class="title">2. Queue-Based Communication</div>
+                        <div>
+                            <span class="box inline-service">Orders</span>
+                            <span class="arrow">--✓--></span>
+                            <span class="box queue">Message Queue</span>
+                            <span class="arrow red">--⏳--></span>
+                            <span class="box crashed inline-service">Inventory</span>
+                        </div>
+                        <div class="note">Service A continues working, queue holds message</div>
+
+                        <div>
+                            <span class="box inline-service">Orders</span>
+                            <span class="arrow">     </span>
+                            <span class="box queue">Message Queue</span>
+                            <span class="arrow">--✓--></span>
+                            <span class="box inline-service">Inventory</span>
+                        </div>
+                        <div class="note">Message delivered when Service B comes back online</div>
+                    </div>
+
+                <div class='sidenote'>
+                    As a side note, messages between services should be "thin", meaning they should not contain a lot of data. One
+                    of the huge benefits of microserices is that the <span class='inline-service'>Orders</span> service should know a lot about order details, 
+                    but the <span class='inline-service'>Inventory</span> service might only need to know the product ID associated with the order. 
+                    This results in a nice separation of concerns, leading to messages which only need to hold foreign references to entities 
+                    owned by other services. 
+                </div>
+
+                With queues inbetween services, the resiliance of the entire process has been greatly improved, but it is not perfect. Consider the following 
+                scenario. The <span class='inline-service'>Orders</span> service recieves a message to place a pending order. 
+                It writes an <span class='inline-code'>Order</span> to the database, but crashes before it can send an inventory reservation message to the queue. 
+                The order service will come back online, and have a pending <span class='inline-code'>Orders</span> in the database, but no message sent out to 
+                kick off the Saga.
+            </p>
+
+            <h2>Outbox Pattern</h2>
+
+            <p>
+                An outbox is a holding station for any outgoing messages that a service needs to eventually send. This is best implemented as a database table, 
+                so that sending a message and performing necessary business logic can all occur atomically. To get an idea of how this is structured, we can 
+                use the <span class='inline-service'>Orders</span> and <span class='inline-service'>Inventory</span> services one again. To kick off the process,
+                an HTTP request is routed to the <span class='inline-service'>Orders</span> service to place an order. The service starts a database transaction, 
+                writes the <span class='inline-code'>Order</span> entity to the database, and then writes a message to the 
+                <span class='inline-code'>InventoryReservationOutbox</span> table. The service then commits the transaction, so that both the message and 
+                the entity are both written, or neither are. On startup, the <span class='inline-service'>Orders</span> service polls the 
+                <span class='inline-code'>InventoryReservationOutbox</span> table for outgoing messages every couple of seconds. Once this polling callback is 
+                triggered, all messagea are queries from the outbox table, converted into JSON, and sent into the queue for the 
+                <span class='inline-service'>Inventory</span> service to process at a later point. Once the message is in the queue, it is safe to 
+                be deleted from the <span class='inline-code'>InventoryReservationOutbox</span> table. Most queues have configurable 
+                durability, meaning if they crash with messages inside them they are able to enqueue them after coming back up again. 
+
+                Next, we have to take a look at something known as "at least once" delivery. This is typical of message brokers, meaning messages might be 
+                sent to consumers more than once. 
+            </p>
+            
+
+            <h2>Inbox Pattern</h2>
+            <p>
+                The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the the outbox pattern, just in reverse.
+                When using this pattern, incomming messages are written into a database table within a transaction which handles the work associated to the 
+                message itself. If the work (for example, creating an entity and inserting into the database) succeeds, 
+                then the message is written to the inbox table. If the work fails, then we can reprocess the message at a later point.
+                When a new message comes in, the inbox table is first checked to determine if an identical message
+                has already been processed to avoid duplicated work. To detect duplicate messages, a unique key must be assigned to each new message. 
+                To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto incrementing 
+                primary key for each specific <span class='inline-code'>Order</span> entity to the message it sends to the 
+                <span class='inline-service'>Inventory</span> Service. With this identifier, the <span class='inline-service'>Inventory</span> service 
+                is able to detect duplicated messages. It recieves the message, begins a transaction, 
+                reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
+                to the Order service to continue on with the Saga
+
+                <div class='sidenote'>
+                    It is important to know that without this unique ID associated with each <span class='inline-code'>Order</span> entity attached to the message,
+                    its impossible to differentiate two messages with the same contents. For example, if two customers place orders for the same product and quantity,
+                    the <span class='inline-service'>Inventory</span> service would have no way to know that this message is not a duplicate
+                </div>
+            </p>
+
+            <h2>Compensating Actions</h2>
+            <p>
+                What happens if one of the steps of our Saga fails? For example, after reserving inventory, the <span class='inline-service'>Shipping</span> service 
+                says that we do not ship this particular product to the requested destination. We currently have 
+                <span class='inline-code'>InventoryReservation</span> and pending <span class='inline-code'>Order</span> entities in our other services, and 
+                they need to be removed. To do so, messages can be sent to each respective service to remove the corresponding resources, these messages
+                are better known as compensating actions. For each step in a Saga that persists data or changes state, there must be a compensating action. 
+                If any step in the Saga fails, then all previously successful steps must be compensated. 
+
+                <div class='sidenote'>
+                    It might at first seem adventageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
+                    Lets say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
+                    at the same time. The shipping validation message comes back first, and is uncessfull. What to do? The inventory reservation message
+                    cannot yet be compensated, because we don't know if it was succcessful or not! 
+                </div>
+
+            </p>
+
+
+
+            <h2>Failed Implementations</h2>
+
+            <p>
+                Lets talk about the journey to get to the solution described above. For the code examples, I'll be using NodeJS, and NestJS, a backend framework
+                which wraps express. When sitting down to implement this saga, my first thought was to implement a representation of a 
+                saga in a class. It would implement a <span class='inline-code'>ISagaOrchestrator</span> interface and have a list of steps, 
+                which implemented an <span class='inline-code'>ISagaStep</span> interface. Below are the example classes
+
+<div class="container">
+  <div class="interface-title">ISagaOrchestrator Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaOrchestrator {
+  begin(): Promise<void>;
+}</pre>
+  
+  <div class="interface-title">ISagaStep Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaStep {
+  invoke(): Promise<void>;
+  compensate(): Promise<void>;
+}</pre>
+  
+  <div class="class-title">OrderSagaOrchestrator Class</div>
+  <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator<OrderSagaStep> {
+  // List of steps in the saga
+  constructor(private steps: ISagaStep[]) {}
+  
+  async begin(): Promise<void> {
+    const succeededSteps: ISagaStep[] = []
+    try {
+      for (const step of steps) {
+        const response = await step.invoke()
+        if (!response.successful) {
+          await compensate()
+          return
+        }
+        succeededSteps.push(step)
+      }
+    } catch (e) {
+      console.error(e)
+      await compensate()
+    }
+  }
+  
+  private async compensate() {
+    await Promise.all(succeededSteps.map(async (step) => {
+      return await step.compensate()
+    }))
+  }
+}</pre>
+  
+  <div class="class-title">ReserveInventoryStep Class</div>
+  <pre class="prettyprint lang-typescript">export class ReserveInventoryStep implements ISagaStep {
+  // Example step, constructed with necessary data to send to quueue 
+  constructor(
+    private rabbitMQService: RMQService,
+    private productId: number,
+    private quantity: number
+  ) {}
+  
+  /* Send reserve inventory message, and wait for response. 
+  Do not advance Saga until we get a response */
+  invoke(): Promise<void> {
+    await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
+    return await this.rabbitMQService.listenForReserveInventoryResponse()
+  }
+  
+  compensate(): Promise<void> {
+    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+  }
+}
+... other steps</pre>
+
+
+                At a first glance, I felt pretty good about this. Once a message came in, I would write the <span class='inline-code'>Order</span> 
+                entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
+                for new messages. If any were found, I would create a Saga with the needed steps, add it to the <span class='inline-code'>activeSagas</span>
+                array in the service class, and simply call the begin() method to kick off the first message and delete the message from the outbox. The saga
+                itself listened on the corresponding response queues for incomming messages. This seemed great, until I noticed a pretty big flaw.
+            </p>
+
+            <p>
+                To explain the issue, I'll give an example. Lets say that we recieve two incomming HTTP requests to the <span class='inline-service'>Orders</span>
+                service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to the 
+                to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenFoReserveInventoryResponse()</span> method, 
+                meaning that they both are waiting for a message to come back on the same queue. This is known as the competing consumer pattern, 
+                and can be great in some cases. A response will come to the queue, and either Saga1 or Saga2 can get the message, but only one of them. 
+                In some cases, this allows for essentially multithreading functionality. But in our scenario, 
+                it creates the possibility for a Saga to recieve the responses meant for another Saga. If Saga1's inventory request was denied but Saga2's wans't,
+                Saga1 could recieve an successful message while Saga2 recieved the rejected message. 
+            </p>
+
+            <p>
+                How can we remedy this? We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga 
+                it belongs to. I decided to create a map, from the unique ID of each <span class='inline-code'>Order</span> entity to saga and attach the 
+                ID to the message. When a message comes back, we will simply look up the saga in the map, and call next step. 
+
+
+<div class="interface-title">ISagaOrchestrator Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaOrchestrator&lt;T&gt; {
+  invokeStep(step: T): Promise&lt;void&gt;
+  compensateStep(step: T): Promise&lt;void&gt;
+ }
+ </pre>
+  
+  <div class="interface-title">ISagaStep Interface</div>
+  <pre class="prettyprint lang-typescript">export interface ISagaStep {
+  invoke(): Promise&lt;void&gt;;
+  compensate(): Promise&lt;void&gt;;
+}</pre>
+  
+  <div class="interface-title">OrderSagaStep Enum</div>
+  <pre class="prettyprint lang-typescript">export enum OrderSagaStep {
+  INVENTORY_RESERVE,
+  SHIPPING_VALIDATION,
+  INVENTORY_REMOVE
+}</pre>
+  
+  <div class="class-title">OrderSagaOrchestrator Class</div>
+  <pre class="prettyprint lang-typescript">export class OrderSagaOrchestrator implements ISagaOrchestrator&lt;OrderSagaStep&gt; {
+  // Map to keep track of steps in the Saga
+  constructor(
+    private steps: Map&lt;OrderSagaStep, ISagaStep&gt;, 
+    private successfulSteps: ISagaStep[]
+  ) {}
+  
+  // Invoke a singular step in the Saga, one at a time
+  async invokeStep(step: OrderSagaStep): Promise&lt;void&gt; {
+    const response = await steps.get(step).invoke()
+    if (!response.successful) {
+      await this.compensate()
+    }
+    successfulSteps.push(step)
+  }
+  
+  // Compensate a singular step in the Saga, one at a time
+  async compensateStep(step: OrderSagaStep): Promise&lt;void&gt; {
+    const response = await steps.get(step).compensate()
+    if (!response.successful) {
+      throw new Error('Failed to compensate')
+    }
+  }
+}</pre>
+  
+  <div class="class-title">ReserveInventoryStep Class</div>
+  <pre class="prettyprint lang-typescript">export class ReserveInventoryStep implements ISagaStep {
+  constructor(
+    private rabbitMQService: RMQService,
+    private productId: number,
+    private quantity: number
+  ) {}
+  
+  invoke(): Promise&lt;void&gt; {
+    await this.rabbitMQService.sendReserveInventoryMessage(productId, quantity) 
+    // do not await response here!
+  }
+  
+  compensate(): Promise&lt;void&gt; {
+    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+  }
+}</pre>
+  
+  <div class="class-title">OrdersController Class</div>
+  <pre class="prettyprint lang-typescript">export class OrdersController implements ISagaStep {
+  constructor(private rabbitmqService: RMQService) {}
+  
+  // All currently running Sagas
+  private activeSagas: Map&lt;number, ISagaOrchestrator&gt;
+  
+  /* Await all InventoryReserve message responses in a "global" place, 
+  and route them to appropriate saga based on orderId */
+  public reserveShippingResponseHandler() {
+    const response = this.rabbitmqService.getInventoryResponse()
+    const relatedSaga = this.runningSagas.get(response.orderId);
+    
+    if (!relatedSaga) {
+      throw new InternalServerErrorException(
+        `No running saga is related to the most recent message recieved!`,
+      );
+    }
+    
+    if (response.successfull) {
+      // The reserve inventory step succeeded, start the next step in the saga
+      relatedSaga.invokeStep(OrderSagaStep.SHIPPING_VALIDATION);
+    } else {
+      toRollback.forEach((step) => relatedSaga.compensateStep(OrderSagaStep.INVENTORY_RESERVE));
+    }
+  }
+}</pre>
+
+                Finally, we reach the problem which made me completely redesign the code: A orchestrator server crash. If the orchestration server (in this case, 
+                the server hosting the <span class='inline-service'>Orders</span> service) crashes with active sagas, then we have messages that are going to 
+                eventually come back to the <span class='inline-service'>Orders</span> service, with no corresponding saga. This means that
+                we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. This could be done by looking at 
+                all currently pending orders upon server restart and constructing a saga from them, but it was beginning to feel over-engineered. 
+                Rather, I ended up going a much simpler route. I created message handlers for each response queue, and I attached the ID of each 
+                <span class='inline-code'>Order</span> entity to every message to every service. This way, when the order
+                service got a message, it could simply look up the <span class='inline-code'>Order</span> entity details from the database, craft the next message 
+                with the data it got from the database, and then send it to the corresponding channel. 
+            </p>
+
+
+            <h2>Code</h2>
+
+            <p>
+            Below is a link to a Github repository with the code implementation for the final solution. It utilizes NestJS, and dockerized
+            Postgres and RabbitMQ instances. I was too lazy to configure a .env, so please clear off ports 3000, 3001, 3002, 1000, 1001, and 5672 if you want 
+            to run it. I have also provided a .http file for ease of use
+            <a href="https://github.com/Jack-Gitter/saga-outbox">Repo Link</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">JSWE at Sentinel Group</span>
+    </footer>
+</body>
+</html>
