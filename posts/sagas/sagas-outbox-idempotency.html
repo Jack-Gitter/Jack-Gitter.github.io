@@ -250,17 +250,20 @@
             </p>
 
             <p>
-                Lets say for example we have two incomming order requests, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages 
-                to the InventoryReserve channel, and call the this.rabbitMQService.listenFoReserveInventoryResponse() method, meaning that they are sitting there,
-                waiting from a message to come back from the rabbitMQ queue. This is actually whats known as the competing consumer pattern, 
-                and can be great in some cases! A response will come to the queue, and either Saga1 or Saga2 can get the message, but only one of them. 
-                In some cases, this allows for essentially a multithreading sort of functionality. But in 
-                our scenario, it allows for Sagas to recieve the responses meant for other Sagas, meaning if Saga1's inventory request was denied but Saga2's wans't,
-                Saga1 could recieve an successful message while Saga2 recieved the rejected message -- not good. So how do we remedy this? Back to the drawing board.
+                To explain the issue, I'll give an example. Lets say that we recieve two incomming HTTP requests to the <span class='inline-service'>Orders</span>
+                service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to the 
+                to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenFoReserveInventoryResponse()</span> method, 
+                meaning that they both are waiting for a message to come back on the same queue. This is known as the competing consumer pattern, 
+                and can be great in some cases. A response will come to the queue, and either Saga1 or Saga2 can get the message, but only one of them. 
+                In some cases, this allows for essentially multithreading functionality. But in our scenario, 
+                it creates the possibility for a Saga to recieve the responses meant for another Saga. If Saga1's inventory request was denied but Saga2's wans't,
+                Saga1 could recieve an successful message while Saga2 recieved the rejected message. 
+            </p>
 
-                We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga it belongs to. I decided to 
-                create a map, from orderId to saga and attach the orderId to the message. When a message comes back, we will simply look up the saga in the map,
-                and call next step. 
+            <p>
+                How can we remedy this? We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga 
+                it belongs to. I decided to create a map, from the unique ID of each <span class='inline-code'>Order</span> entity to saga and attach the 
+                ID to the message. When a message comes back, we will simply look up the saga in the map, and call next step. 
 
 
 <div class="interface-title">ISagaOrchestrator Interface</div>
