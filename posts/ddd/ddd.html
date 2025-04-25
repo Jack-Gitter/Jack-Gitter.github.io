@@ -57,6 +57,7 @@
                 are used to compose them.
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an entity.
+
                 <div class='sidenote'>
                     There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
                     an entity as methods, a thin model's business logic is implemented in services which wrap entities. DDD heavily 
@@ -65,14 +66,121 @@
                     Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
-                 <div>
-                    Example of a domain object for an Airplane
-                 </div>
-                 <div>
-                    Example of another domain object (to use below)
-                 </div>
+                 <pre class='prettyprint lang-typescript'>@Entity('Segment')
+export class Flight {
 
-                ease of testing. entities do not deped on anything else, making business logic extremely easy to test. no mocking database connections, etc
+    @PrimaryGeneratedColumn('uuid')
+    public id: UUID
+
+    @Column({type: 'enum', enum: FLIGHT_STATUS, default: FLIGHT_STATUS.ON_TIME})
+    public status: FLIGHT_STATUS
+
+    @OneToOne(() => FlightSchedule, (flightSchedule) => flightSchedule.flight, 
+    { cascade: true, onDelete: 'NO ACTION', nullable: true, createForeignKeyConstraints: false })
+    @JoinColumn()
+    public schedule: UUID
+
+    @OneToMany(() => Reservation, (reservation) => 
+    reservation.flight, { cascade: true, onDelete: 'CASCADE', orphanedRowAction: 'delete' })
+    public reservations: Array<Reservation>
+
+    @OneToMany(() => Seat, (seat) => 
+    seat.flight, { cascade: true, onDelete: 'CASCADE', orphanedRowAction: 'delete' })
+    public seats: Array<Seat>
+
+    constructor(id: UUID, seats: Array<Seat>) {
+        this.id = id
+        this.seats = seats
+        this.status = FLIGHT_STATUS.ON_TIME
+    }
+
+    public makeReservation(seatPosition: SeatPosition, personId: UUID) {
+
+        if (!this.reservations) {
+            this.reservations = new Array<Reservation>()
+        }
+
+        const seat = this.seats.find((seat) => seat.position.equals(seatPosition))
+
+        if (!seat) {
+            throw new BadRequestException(
+            `No seat found with the position ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const existingReservation = this.reservations.find((reservation) => 
+            reservation.seatPosition.equals(seatPosition))
+
+        if (existingReservation) {
+            throw new BadRequestException(
+            `Reservation already exists for seat ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const reservation = Reservation.CreateReservation(seatPosition, personId, this.id)
+
+        this.reservations.push(reservation)
+    }
+
+    public cancelReservation(seatPosition: SeatPosition, personId: UUID) {
+
+        if (!this.reservations) {
+            throw new BadRequestException(`No reservations exist for this flight!`)
+        }
+
+        const seat = this.seats.find((seat) => seat.position.equals(seatPosition))
+
+        if (!seat) {
+            throw new BadRequestException(
+            `No seat found with the position ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const existingReservation = this.reservations.find((reservation) => 
+            reservation.seatPosition.equals(seatPosition))
+
+        if (!existingReservation) {
+            throw new BadRequestException(
+            `No existing reservation with that information exists`
+            )
+        }
+
+        this.reservations = this.reservations.filter((reservation) => 
+            { reservation.id !== existingReservation.id })
+
+    }
+
+    public cancelReservationsByPerson(personId: UUID) {
+
+        if (!this.reservations) {
+            throw new BadRequestException(`No reservations exist for this flight!`)
+        }
+
+        const existingReservations = this.reservations.filter((reservation) => 
+            reservation.personId === personId)
+
+        if (existingReservations.length === 0) {
+            throw new BadRequestException(
+            `No existing reservation with that information exists`
+            )
+        }
+
+        this.reservations = this.reservations.filter((reservation) => 
+            reservation.personId !== personId)
+
+    }
+
+    public setSchedule(schedule: UUID) {
+        this.schedule = schedule
+    }
+
+    public removeSchedule() {
+        this.schedule = null
+    }
+} </pre> 
+
+            You can see the entity above, it repressents a segment of a flight. It has a UUID to represent its intrinsic value, but also
+            is comprised of value objects such as a Location
             </p>
 
             <h2>Aggregate Roots</h2>
