@@ -38,22 +38,14 @@
             <p>
                 In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model that gain value soley 
                 based on the content of their components. To put it more concretely, a JSON Value Object who has the same exact fields as another JSON 
-                Value Object are equal. They are typically created as immutable, since changing one value of the value object would completly change the object, 
-                and it is preffered to create another value object entirely. They have no uniquenessvalue ob
+                Value Object are equal. They are typically created as immutable, since changing one value of the value object would completly change the object. 
+                It is preffered to create another value object entirely instead of changing the field of a value object. A good example of a value object is a name.
 
-                <div class='prettyprint lang-typescript'>
-                    export type Name = {
-                        first: string;
-                        middle?: string;
-                        last: string;
-                    }
-                </div>
+                <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
 
-                A good example of a value object is a name. A name might have a first, middle, lastname field. Changing any part of this name completly makes 
-                it a new name. But lets consider a person who has a single name. The person can change their name, but the person remains still the same person
-                in real life. The person is an entity, and the name is a value object.
-
-
+                A name might have first, middle, and last fields. Changing any part of this name completly makes it a new name. 
+                Lets consider a person who has a name. The person can change their name, but the person themselves is still intrinsically the same person
+                they previously were. In this instance, the name is a Value Object, and the person is an Entity.
             </p>
 
 
