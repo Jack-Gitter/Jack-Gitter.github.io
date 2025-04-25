@@ -56,13 +56,13 @@
                 have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real-life value separately from the value objects that
                 are used to compose them.
 
-                Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside within an entity,
-                so it can be re-used across services. 
+                Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an entity.
                 <div class='sidenote'>
-                    there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
-                    entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
-                    logic is not re-usable, and much harder to test. Since its in a service, it might involve mocking datbase connections, etc. Keeping it in the 
-                     seIhmmdomain model allows it to be isolated, and tested without any dependencies
+                    There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
+                    an entity as methods, a thin model's business logic is implemented in services which wrap entities. DDD heavily 
+                    favors thick domain models, as the logic is isolated, reusable, and can tested without any dependencies. When developing a thin model,
+                    logic is not reusable between services, and is much harder to test. 
+                    Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
                  <div>
