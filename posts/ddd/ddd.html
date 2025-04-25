@@ -57,6 +57,8 @@
                 are used to compose them.
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an entity.
+                Entities should have no external dependencies outside of the domain layer, only focused on implementing business logic as accurately as 
+                possible
 
                 <div class='sidenote'>
                     There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
@@ -179,8 +181,9 @@ export class Flight {
     }
 } </pre> 
 
-            You can see the entity above, it repressents a segment of a flight. It has a UUID to represent its intrinsic value, but also
-            is comprised of value objects such as a Location
+            The above entity represent a flight in a domain associated with booking flights for users. It has a UUID to represent its intrinsic value, but also
+            is comprised of value objects such as an array of seats. Additionally it has method to perform logical operations on its members, and most 
+            importantly has no external dependencies so it can be tested easily.
             </p>
 
             <h2>Aggregate Roots</h2>
