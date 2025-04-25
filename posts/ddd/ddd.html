@@ -33,10 +33,28 @@
                 terms are grabbed from the business when possible, as to have the code model implementation stay as close to the real life business as possible.
             </p>
 
+            <h2>Value Objects</h2>
+
+
+            <p>
+                objects which are made up soley of their fileds. so two objects that have the same exact fields mean the same thing.
+
+                <div>
+                    code example of value object
+                </div>
+
+            </p>
+
+
             <h2>Entities</h2>
 
             <p>
-                entities are the buliding blocks of DDD, They are the code representation of business objects, concepts, and logic. Most of the time,
+                entities are the buliding blocks of DDD, They are the code representation of business objects, concepts, and logic. They always
+                have a unique ID, typically impleemnted in a UUID. That is what differs them from value objects, they have intrinstic value
+                outside of just their properties.
+
+
+                Most of the time,
                 they are implemented as classes in an OOP language. Business logic should be contained within an entity, so it can be re-used across services.
                 there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
                 entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
@@ -45,6 +63,9 @@
 
                  <div>
                     Example of a domain object for an Airplane
+                 </div>
+                 <div>
+                    Example of another domain object (to use below)
                  </div>
 
                 ease of testing. entities do not deped on anything else, making business logic extremely easy to test. no mocking database connections, etc
@@ -59,6 +80,10 @@
                 invariants: things that must always be true according to business logic, and can never afford to be false. it can be thought of 
                 as an entity "manager" as the root has a view on all of the entities within the aggregate. It can see the state of them, and because it has 
                 the context of all other entities in the aggreagte, it has the ability to make decisions.
+
+                <div>
+                    code example of an aggregate root
+                </div>
             </p>
 
             <h2>Repository Pattern</h2>
