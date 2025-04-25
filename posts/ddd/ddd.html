@@ -16,20 +16,49 @@
             <p class="date">April 25, 2025</p>
 
             <p>
-                What is it?
-
+                Domain Driven Design is an approach to software design that puts a very heavy emphasis on the domain and business model. At its core, 
+                DDD puts an extreme focus on accurately map the business domain into code. Its mainly concerned with the data model, and things such as 
+                the database design come second. There are many guidelines to follow when developing an application in a DDD style, but before 
+                jumping into code, something that is extremely important in the DDD philosophy is utilizing a ubiquitous language to communicate
+                with business experts to get a better understanding about business operations, and easily communicate what the code is doing.
             </p>
 
             <h2>Ubiquitous language</h2>
 
             <p>
-            before even getting into code, something that is fundamental to DDD is ubiquitous langageu
+                When discussing existing code logic and business requirements with business experts, communication typically has to be "translated" from 
+                what the terms business experts use, and what is used in the code. With translation comes loss of information, and loss of information 
+                causes errors in business logic implementation, purley by misunderstanding. Ubiquitous language attempts to eliminate this translation
+                by defining a set of terms used to describe business related terms so everyone can communicate on a even playing field. Typically, these
+                terms are grabbed from the business when possible, as to have the code model implementation stay as close to the real life business as possible.
             </p>
 
             <h2>Entities</h2>
 
+            <p>
+                entities are the buliding blocks of DDD, They are the code representation of business objects, concepts, and logic. Most of the time,
+                they are implemented as classes in an OOP language. Business logic should be contained 
+
+
+
+                ease of testing. entities do not deped on anything else, making business logic extremely easy to test. no mocking database connections, etc
+            </p>
+
 
             <h2>Aggregate Roots</h2>
+
+
+            <h2>Domain Services</h2>
+            <p>
+                is used only to implement logic between two entities, when the business logic does not naturally fit into any entity itself
+            </p>
+
+
+            <h2>Application Services</h2>
+
+            <p>
+            interacts with things outside of entities, like coordinating database, etc
+            </p>
 
 
             <h2>Repository Pattern</h2>
