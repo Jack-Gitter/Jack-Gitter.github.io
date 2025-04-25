@@ -58,7 +58,7 @@
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside within an entity,
                 so it can be re-used across services. 
-                <div class='side-note'>
+                <div class='sidenote'>
                     there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
                     entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
                     logic is not re-usable, and much harder to test. Since its in a service, it might involve mocking datbase connections, etc. Keeping it in the 
@@ -108,7 +108,7 @@
                     code example
                 </div>
 
-                <div class='side-note'>
+                <div class='sidenote'>
                     side note: need some sort of locking, transaction, select for update, or MVCC to avoid data races -- aggregate roots!
                 </div>
             </p>
