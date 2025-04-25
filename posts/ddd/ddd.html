@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domain Driven Design</title>
     <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 </head>
 <body>
     <header>
@@ -34,16 +35,18 @@
             </p>
 
             <h2>Value Objects</h2>
-
-
             <p>
                 In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model that gain value soley 
                 based on the content of their components. To put it more concretely, a JSON Value Object who has the same exact fields as another JSON 
                 Value Object are equal. They are typically created as immutable, since changing one value of the value object would completly change the object, 
                 and it is preffered to create another value object entirely. They have no uniquenessvalue ob
 
-                <div>
-                    code example of value object
+                <div class='prettyprint lang-typescript'>
+                    export type Name = {
+                        first: string;
+                        middle?: string;
+                        last: string;
+                    }
                 </div>
 
                 A good example of a value object is a name. A name might have a first, middle, lastname field. Changing any part of this name completly makes 
