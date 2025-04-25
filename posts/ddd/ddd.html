@@ -56,10 +56,9 @@
                 doamin events and eventual consistency. An agggregate root represents a consisstency boundary. If two or more things
                 cannot by any means be out of sync, they need to be together in an aggregate. messages to one aggregate to another
                 must go through the aggregate root, either you could end up with inconsistencies as the job of an aggregate is also to enforce 
-                invariants: things that must always be true according to business logic, and can never afford to be false. 
-                Aggregate roots enforce invariants.
-                
-
+                invariants: things that must always be true according to business logic, and can never afford to be false. it can be thought of 
+                as an entity "manager" as the root has a view on all of the entities within the aggregate. It can see the state of them, and because it has 
+                the context of all other entities in the aggreagte, it has the ability to make decisions.
             </p>
 
             <h2>Repository Pattern</h2>
