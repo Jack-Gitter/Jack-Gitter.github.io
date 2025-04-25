@@ -37,11 +37,29 @@
 
             <p>
                 entities are the buliding blocks of DDD, They are the code representation of business objects, concepts, and logic. Most of the time,
-                they are implemented as classes in an OOP language. Business logic should be contained 
+                they are implemented as classes in an OOP language. Business logic should be contained within an entity, so it can be re-used across services.
+                there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
+                entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
+                logic is not re-usable, and much harder to test. Since its in a service, it might involve mocking datbase connections, etc. Keeping it in the 
+                 seIhmmdomain model allows it to be isolated, and tested without any dependencies
 
-
+                 <div>
+                    Example of a domain object for an Airplane
+                 </div>
 
                 ease of testing. entities do not deped on anything else, making business logic extremely easy to test. no mocking database connections, etc
+            </p>
+
+            <h2>Aggregate Roots</h2>
+            <p>
+                an aggregate root is a collection of entities that typically belongs together in a database transaction. DDD relies heavily on 
+                doamin events and eventual consistency. An agggregate root represents a consisstency boundary. If two or more things
+                cannot by any means be out of sync, they need to be together in an aggregate. messages to one aggregate to another
+                must go through the aggregate root, either you could end up with inconsistencies as the job of an aggregate is also to enforce 
+                invariants: things that must always be true according to business logic, and can never afford to be false. 
+                Aggregate roots enforce invariants.
+                
+
             </p>
 
             <h2>Repository Pattern</h2>
@@ -49,14 +67,17 @@
             <p>
                 repositories are classes that fetch entities from a database. They help with the translation between the flat structure of a SQL database,
                 and reconstructing this data into an entity. Typically, entities are loaded from datbase via a repository, they are operated on, and then
-                loaded back into the datbase
+                loaded back into the datbase. Repositories load entire aggregates.
 
-                side note: need some sort of locking, transaction, select for update, or MVCC to avoid data races -- aggregate roots!
+                <div>
+                    code example
+                </div>
+
+                <div class='side-note'>
+                    side note: need some sort of locking, transaction, select for update, or MVCC to avoid data races -- aggregate roots!
+                </div>
             </p>
 
-            <h2>Aggregate Roots</h2>
-            <p>
-            </p>
 
 
             <h2>Domain Services</h2>
