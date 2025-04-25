@@ -44,8 +44,19 @@
                 ease of testing. entities do not deped on anything else, making business logic extremely easy to test. no mocking database connections, etc
             </p>
 
+            <h2>Repository Pattern</h2>
+
+            <p>
+                repositories are classes that fetch entities from a database. They help with the translation between the flat structure of a SQL database,
+                and reconstructing this data into an entity. Typically, entities are loaded from datbase via a repository, they are operated on, and then
+                loaded back into the datbase
+
+                side note: need some sort of locking, transaction, select for update, or MVCC to avoid data races -- aggregate roots!
+            </p>
 
             <h2>Aggregate Roots</h2>
+            <p>
+            </p>
 
 
             <h2>Domain Services</h2>
@@ -59,13 +70,19 @@
             <h2>Application Services</h2>
 
             <p>
-            interacts with things outside of entities, like coordinating database, etc. It is just a coordinator of an entire feature
+                interacts with things outside of entities, like coordinating database, etc. It is just a coordinator of an entire feature
             </p>
 
 
-            <h2>Repository Pattern</h2>
 
             <h2>Bounded Contexts and Microservices</h2>
+            <p>
+                Bounded context separate what entites "mean" in different contexts. for an order service, might need things like product id, 
+                person who ordered, address, etc. But for inventory, we just need an ID for that entity, we don't care about who ordered, and their address. 
+                Keep data as minimal as possible 
+
+
+            </p>
 
         </article>
     </main>
