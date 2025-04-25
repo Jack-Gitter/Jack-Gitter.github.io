@@ -64,7 +64,7 @@
             <h2>Repository Pattern</h2>
 
             <p>
-                repositories are classes that fetch entities from a database. They help with the translation between the flat structure of a SQL database,
+                repositories are classes that fetch aggregate roots from a database. They help with the translation between the flat structure of a SQL database,
                 and reconstructing this data into an entity. Typically, entities are loaded from datbase via a repository, they are operated on, and then
                 loaded back into the datbase. Repositories load entire aggregates.
 
@@ -93,6 +93,17 @@
                 interacts with things outside of entities, like coordinating database, etc. It is just a coordinator of an entire feature
             </p>
 
+            <h2>Domain events</h2>
+
+            <p>
+
+                for things that don't need to be immediately consistent. they are domain eventgs. domain events are messages typically delivered by queue
+                so that other aggregates can be updated at a later date. This is preffered in all cases, because this model allows for refactoring 
+                an aggregate into another microservice or bounded context later, since domain events means that the aggregate does not need to be included
+                in a database transaction
+            </p>
+
+
 
 
             <h2>Bounded Contexts and Microservices</h2>
@@ -100,8 +111,6 @@
                 Bounded context separate what entites "mean" in different contexts. for an order service, might need things like product id, 
                 person who ordered, address, etc. But for inventory, we just need an ID for that entity, we don't care about who ordered, and their address. 
                 Keep data as minimal as possible 
-
-
             </p>
 
         </article>
