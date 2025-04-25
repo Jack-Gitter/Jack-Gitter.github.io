@@ -52,17 +52,18 @@
             <h2>Entities</h2>
 
             <p>
-                entities are the buliding blocks of DDD, They are the code representation of business objects, concepts, and logic. They always
-                have a unique ID, typically impleemnted in a UUID. That is what differs them from value objects, they have intrinstic value
-                outside of just their properties.
+                Entities are the next largest buliding blocks of DDD. They are the code representation of business objects, concepts, and logic. They always
+                have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real-life value separately from the value objects that
+                are used to compose them.
 
-
-                Most of the time,
-                they are implemented as classes in an OOP language. Business logic should be contained within an entity, so it can be re-used across services.
-                there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
-                entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
-                logic is not re-usable, and much harder to test. Since its in a service, it might involve mocking datbase connections, etc. Keeping it in the 
-                 seIhmmdomain model allows it to be isolated, and tested without any dependencies
+                Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside within an entity,
+                so it can be re-used across services. 
+                <div class='side-note'>
+                    there is a notion betwen thick vs thin domain models, meaning thick is when business logic is implemented on 
+                    entities inthe form of methods, and thin meaning that logic is implemented in teh services that utilize entiies. When using thin domain models,
+                    logic is not re-usable, and much harder to test. Since its in a service, it might involve mocking datbase connections, etc. Keeping it in the 
+                     seIhmmdomain model allows it to be isolated, and tested without any dependencies
+                </div>
 
                  <div>
                     Example of a domain object for an Airplane
