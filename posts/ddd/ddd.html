@@ -108,12 +108,11 @@ export class Reservation {
             <h2>Aggregate Roots</h2>
             <p>
                 An aggregate is a collection of entities that typically belongs together in a database transaction. An Aggregate root is the entity which
-                "owns" the other entities in any given aggregate. DDD relies heavily on doamin events and eventual consistency. An agggregate root represents a consisstency boundary. If two or more things
-                cannot by any means be out of sync, they need to be together in an aggregate. messages to one aggregate to another
-                must go through the aggregate root, either you could end up with inconsistencies as the job of an aggregate is also to enforce 
-                invariants: things that must always be true according to business logic, and can never afford to be false. it can be thought of 
-                as an entity "manager" as the root has a view on all of the entities within the aggregate. It can see the state of them, and because it has 
-                the context of all other entities in the aggreagte, it has the ability to make decisions.
+                "owns" the other entities in any given aggregate. An agggregate root represents a consisstency boundary. If two or more entities
+                cannot be out of sync for any period of time, they must be organized together in an aggregate. Because of this, all work done to an 
+                aggregate must be done via the interface for the aggregate root, so that it can ensure business invariants are satisfied. 
+                An aggregate root can be thought of as an orchestrator for the sub-entities that it contains. It 
+                has a complete view of all its objects, so it can ensure that no invariants are ever violated when performing business logic.
 
 <pre class='prettyprint lang-typescript'>@Entity('Segment')
 export class Flight {
