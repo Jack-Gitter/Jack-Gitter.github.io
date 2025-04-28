@@ -228,10 +228,16 @@ export class Flight {
 } </pre> 
 
             The above example represents the aggregate root for a flight in an application that helps people to book flights on airlines.
-            The aggregate is comprised of other Entities such as a list of reservations and a list of seats, but it also has a reference to another
-            entity, a flight schedule. This is because in this instsance, there are invariants preventing two reservations being booked for the same seat
-            but there are no invariants betweeen flights and flight scheduels. Thus, we need transactional consistency between a flight and its seats, but
-            we only need eventual consistency between a flight and its schedule.
+            The aggregate is comprised of other Entities such as a list of Reservation objects and a list of Seat objects. This is so that the flight
+            object can enforce the invariant that no seat must have more than one reservation associated with it at any given time. This invariant's 
+            implementation can be seen in the MakeReservation method, where we ensure that no other existing reservation currently exists for the given 
+            flight before allowing the user to book that seat.
+
+            There is also another portion of the aggregate that references an entity, but does not contain the entity itself: the flightScheduleId. In
+            this made up scenario, there are no invariants that must always be true between a flight schedule and a flight. Because of this, the flight
+            schedule does not need to be within the Flight aggregate, it can be its own class. Eventual consistency can be reached via domain events,
+            and at a later point if needed this object can be removed into its own service entirely as we do not rely on a database transaction for 
+            business logic implementation.
             </p>
 
             <h2>Factory Pattern</h2>
