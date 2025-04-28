@@ -246,21 +246,33 @@ export class Flight {
             <h2>Factory Pattern</h2>
 
             <p>
-            The factory pattern is heavily used in DDD to construct complex aggregates, and enforce invariants during construction. In the case of a Flight, we 
-            should always create a new flight with no reservations, and a specific number of seats. This allows for single responsibility principal, 
+            The factory pattern is heavily used in DDD to construct complex aggregates, and enforce invariants during construction. In the case of a Flight, there 
+            might be many invariants that we want to enforce for a flight to exist in the first place, such as commercial flights having more and cheaper seats,
+            and private flights having less seats but more expensive ones. This allows for single responsibility principal, 
             and ease of testing as the creation of an aggregate can be tested totally separately from the implementation.
 
 <pre class='prettyprint lang-typescript'>export class FlightFactory {
-
     public createFlight(flightType: FLIGHT_TYPE): Flight {
         let seats: Array<Seat>
         const flightId = randomUUID()
         switch (flightType) {
             case FLIGHT_TYPE.Commercial: 
-                seats = this.generateSeats(flightId, flightType, new Price(USD, BASE_COMMERCIAL_FLIGHT_PRICE_UNITS, BASE_COMMERCIAL_FLIGHT_PRICE_SUB_UNITS))
+                seats = this.generateSeats(
+                    flightId, flightType, new Price(
+                        USD, 
+                        BASE_COMMERCIAL_FLIGHT_PRICE_UNITS, 
+                        BASE_COMMERCIAL_FLIGHT_PRICE_SUB_UNITS)
+                    )
                 return new Flight(flightId, seats)
             case FLIGHT_TYPE.Private:
-                seats = this.generateSeats(flightId, flightType, new Price(USD, BASE_PRIVATE_FLIGHT_SUB_UNITS, BASE_PRIVATE_FLIGHT_SUB_UNITS))
+                seats = this.generateSeats(
+                    flightId, 
+                    flightType, 
+                    new Price(
+                        USD, 
+                        BASE_PRIVATE_FLIGHT_SUB_UNITS, 
+                        BASE_PRIVATE_FLIGHT_SUB_UNITS)
+                    )
                 return new Flight(flightId, seats)
             default: 
                 throw new BadRequestException('Unknown Flight Type')
@@ -283,9 +295,12 @@ export class Flight {
         for (const seatRow of [...Array(flightRowCount).keys()]) {
             for (const seatCol of Object.values(SEAT_COLUMN)) {
                 const seatPosition = new SeatPosition(seatRow, seatCol)
-                const newUnits = basePrice.getUnitsCopy() + Math.floor(Math.random() * SEAT_VOLITILITY)
-                const seatPrice = new Price(basePrice.getCurrencyCopy(), newUnits, basePrice.getSubUnitsCopy())
-                const seat = Seat.CreateSeat(flightId, seatPosition, seatPrice)
+                const newUnits = 
+                    basePrice.getUnitsCopy() + Math.floor(Math.random() * SEAT_VOLITILITY)
+                const seatPrice = 
+                    new Price(basePrice.getCurrencyCopy(), newUnits, basePrice.getSubUnitsCopy())
+                const seat = 
+                    Seat.CreateSeat(flightId, seatPosition, seatPrice)
                 flightSeats.push(seat)
             }
         }
