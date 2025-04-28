@@ -463,6 +463,15 @@
                 messages are sent to kick off a process, typically with the UUID of a specific entity in the calling bounded context. 
             </p>
 
+            <h2>CQRS</h2>
+
+            <p>
+                CQRS stands for Command query response separation, and is a methodology often paired with DDD. Since SELECT queries do not effect the database
+                in any way, there are no invariants or business logic to uphold. With this being the case, the model for updating records and fetching data 
+                is often naturally different. With CQRS, aggregates can be used to inforce business rules, and separate models which do not relate to the 
+                aggregate models in any way can be created to load and display information to users. Utilizing aggregates to load and return data is 
+                not only overly complex, but also will effect the model in ways which are unnecssary.
+            </p>
 
             <h2>Code</h2>
             <p>
