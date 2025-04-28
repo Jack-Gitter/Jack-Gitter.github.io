@@ -226,6 +226,12 @@ export class Flight {
         this.schedule = null
     }
 } </pre> 
+
+            The above example represents the aggregate root for a flight in an application that helps people to book flights on airlines.
+            The aggregate is comprised of other Entities such as a list of reservations and a list of seats, but it also has a reference to another
+            entity, a flight schedule. This is because in this instsance, there are invariants preventing two reservations being booked for the same seat
+            but there are no invariants betweeen flights and flight scheduels. Thus, we need transactional consistency between a flight and its seats, but
+            we only need eventual consistency between a flight and its schedule.
             </p>
 
             <h2>Factory Pattern</h2>
