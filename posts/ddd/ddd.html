@@ -320,8 +320,7 @@
                 developers can truly take a code-first approach if desired. A typical workflow is that an aggregate root is loaded from the datbase via a 
                 repository for that specific aggregate, they are operated on, and then saved back into the database. 
 
-<pre class='prettyprint lang-typescript'>export class FlightFactory {
-export class AddSegmentService {
+<pre class='prettyprint lang-typescript'>export class AddSegmentService {
 
     constructor(
         @InjectRepository(FlightSchedule) private flightScheduleRepository: Repository<FlightSchedule>
@@ -443,14 +442,11 @@ export class AddSegmentService {
             <h2>Domain events</h2>
 
             <p>
-
-                for things that don't need to be immediately consistent. they are domain eventgs. domain events are messages typically delivered by queue
-                so that other aggregates can be updated at a later date. This is preffered in all cases, because this model allows for refactoring 
-                an aggregate into another microservice or bounded context later, since domain events means that the aggregate does not need to be included
-                in a database transaction
+                Domain events are used to communicate between aggregate roots. Because two aggregate roots do not need to be immediately consistent, 
+                they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal via eventual consistency.
+                Using this model allows for refactoring aggregate roots into separate microservice, since an eventually consistent model is already 
+                implemented.
             </p>
-
-
 
 
             <h2>Bounded Contexts and Microservices</h2>
