@@ -97,12 +97,12 @@ export class Reservation {
 
 </pre>
 
-            The above entity represents a reservation for a flight. It is comprised of a Value Object for the reservation's seat position, and also has
-            foreign references to the person entity who made the reservation, and the flight entity to which the reservation is associated with. Now that 
-            we have a more wholistic view on Entities and Value Objects, another way to describe the relationship between VO and Entities can be that 
-            value objects, such as SeatPosition make up a subset of the columns in a database entry, and the entire record is the Entity itself. If a reservation
-            gets upgraded to first class, the seat position might change, but the entire reservation itself does not. Thinking about things from a database
-            perspective is totally against DDD principals, but it was something that helped me get an understanding of VO vs Entity.
+            The above entity represents a reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
+            and also has foreign references to the person entity who made the reservation and the flight entity to which the reservation is associated to. 
+            With a more complete understanding of Entities and Value Objects, it can be seen that the relationship between VO and Entities can be described
+            as so: value objects, such as SeatPosition, make up a subset of the columns in a database entry. The entire record is the Entity itself. If a reservation
+            gets upgraded to first class, the seat position might change, but the reservation still holds the same intrinsic value it previously did. 
+            Thinking database-first is against the DDD methodology, but it is simply another way to distinguish VO and entities.
             </p>
 
             <h2>Aggregate Roots</h2>
