@@ -246,10 +246,11 @@ export class Flight {
             <h2>Factory Pattern</h2>
 
             <p>
-            The factory pattern is heavily used in DDD to construct complex aggregates, and enforce invariants during construction. In the case of a Flight, there 
-            might be many invariants that we want to enforce for a flight to exist in the first place, such as commercial flights having more and cheaper seats,
-            and private flights having less seats but more expensive ones. This allows for single responsibility principal, 
-            and ease of testing as the creation of an aggregate can be tested totally separately from the implementation.
+            The factory pattern is heavily used in DDD to construct complex aggregates, and enforce invariants while doing so. In the case of a Flight, there 
+            might some rules that exist for a flight to be created. Some of these could include commercial flights containing lots of cheap seats,
+            and private flights having less quantity but higher priced seats. Extracting this functionality from the Flight aggregate itself keeps the 
+            Flight aggregate and FlightFactory classes cleaner, and helps to enforce the single responsibility principal. Additionally testing the creation of
+            the aggregate can now be separated from the implementation.
 
 <pre class='prettyprint lang-typescript'>export class FlightFactory {
     public createFlight(flightType: FLIGHT_TYPE): Flight {
