@@ -238,9 +238,8 @@ export class Flight {
             The Flight aggregat root has a reference to the schedule that is associated with the current flight. For our business, there are no totalities 
             for the relationship between a flight schedule and a flight. Because of this, the flight schedule does not need to be encapsulated in the Flight 
             aggregate, but rather can be its own Entity. Communication between the two can occur via domain events, reaching an eventually consistent state. 
-            At a later point if needed, this object can be easily refactored into a separate service since no 
-            database transactions need to occur between the Flight and 
-            the corresponding schedule.
+            At a later point if needed, this object can be easily refactored into a separate service since no database transactions need to occur between 
+            the Flight and the corresponding schedule.
             </p>
 
             <h2>Factory Pattern</h2>
@@ -309,7 +308,10 @@ export class Flight {
     }
 }
 </pre>
+            Here, the complex logic of generating seats depending on what type of flight is created is localized only to this class itself. It does not clutter
+            the Flight entity isleft, nor is it relevant to Flight functionality. 
             </p>
+
 
             <h2>Repository Pattern</h2>
 
