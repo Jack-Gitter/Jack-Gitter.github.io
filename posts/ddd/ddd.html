@@ -451,11 +451,24 @@
 
             <h2>Bounded Contexts and Microservices</h2>
             <p>
-                Bounded context separate what entites "mean" in different contexts. for an order service, might need things like product id, 
-                person who ordered, address, etc. But for inventory, we just need an ID for that entity, we don't care about who ordered, and their address. 
-                Keep data as minimal as possible 
+                Different sections of business functionality are typically represented by different bounded contexts. For example, in the example of a 
+                flight reservation application, there might be one bounded context which handles all the information surrounding booking flights, and another
+                bounded context which is responsible for keeping track of user accounts and related information. Each bounded context in a microservice 
+                architecture is represented by a new microservice. Information in a bounded context's data model should be only relevant to the context 
+                of said bounded context. For example, in the bounded context which handles flight reservations, a flight is composed of seats, 
+                reservations, segments, etc. The reservation context needs all of this information to reason about the availability of flights and validity of 
+                attempted reservations. In the user acounts bounded context, a flight is simply a UUID, pointing to an entity in the reservation context.
+                The user context might only care about how many flights a user has taken, to set the user's status to "Premium" if they have flown over 
+                1000 times. Because of the separation of conerns, messages between bounded contexts should be thin, meaning that they contain little information.
+                This is because information is not duplicated accross microservies, so instead of sending data from one application to another, more event-style
+                messages are sent to kick off a process, typically with the UUID of a specific entity in the calling bounded context. 
             </p>
 
+
+            <h2>Code</h2>
+            <p>
+            For a full code example, please refer to the following <a href='https://github.com/Jack-Gitter/airplane-application'>Repo Link</a>
+            </p>
         </article>
     </main>
     <footer>
