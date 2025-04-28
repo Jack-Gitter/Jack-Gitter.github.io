@@ -228,10 +228,10 @@ export class Flight {
 } </pre> 
 
             The above example represents the aggregate root for a flight in an application that helps people to book flights on airlines.
-            The aggregate is comprised of other Entities such as a list of Reservation objects and a list of Seat objects. This is so that the flight
-            object can enforce the invariant that no seat must have more than one reservation associated with it at any given time. This invariant's 
-            implementation can be seen in the MakeReservation method, where we ensure that no other existing reservation currently exists for the given 
-            flight before allowing the user to book that seat.
+            The business has given us an invariant: at no time must a single seat ever be booked by more than one person at a time. With this, we 
+            know that the Seat and Reservation entities must be encapsulated within the Flight aggregate. This gives the Flight aggregate root the ability 
+            to know the state of all seats and reservations, and enforce the the required invariant. The implementation can be seen in the MakeReservation method, 
+            where we ensure that no other existing reservation currently exists for the given flight before allowing the user to book that seat.
 
             There is also another portion of the aggregate that references an entity, but does not contain the entity itself: the flightScheduleId. In
             this made up scenario, there are no invariants that must always be true between a flight schedule and a flight. Because of this, the flight
