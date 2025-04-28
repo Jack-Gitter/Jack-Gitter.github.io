@@ -45,7 +45,8 @@
 
                 A name might have first, middle, and last fields. Changing any part of this name completly makes it a new name. 
                 Lets consider a person who has a name. The person can change their name, but the person themselves is still intrinsically the same person
-                they previously were. In this instance, the name is a Value Object, and the person is an Entity.
+                they previously were. In this instance, the name is a Value Object, and the person is an Entity. Value Objects can also be thought of as 
+                columns in a database table, with the entire record being the Entity itself.
             </p>
 
 
@@ -68,7 +69,52 @@
                     Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
-                 <pre class='prettyprint lang-typescript'>@Entity('Segment')
+                <pre class='prettyprint lang-typescript'> 
+@Entity('Reservation')
+@Unique('flight_seatPosition', ['flight', 'seatPosition.row', 'seatPosition.column'])
+export class Reservation {
+
+    @PrimaryGeneratedColumn('uuid')
+    public id: UUID
+
+    @ManyToOne(() => Flight, (flight) => flight.reservations, {orphanedRowAction: 'delete'})
+    public flight: UUID
+
+    @Column(() => SeatPosition)
+    public seatPosition: SeatPosition
+
+    @Column('uuid')
+    public personId: UUID
+
+    private constructor(seatPosition: SeatPosition, personId: UUID, flight: UUID) {
+        this.seatPosition = seatPosition
+        this.personId = personId
+        this.flight = flight
+    }
+
+    static CreateReservation(seatPosition: SeatPosition, personId: UUID, flight: UUID): Reservation {
+        return new Reservation(seatPosition, personId, flight)
+    }
+}
+
+</pre>
+
+            The above entity represents a reservation for a flight. It is comprised of a Value Object for the reservation's seat position, and also has
+            foreign references to the person who made the reservation, and the flight to which the reservation is associated with. To figure out 
+
+            </p>
+
+            <h2>Aggregate Roots</h2>
+            <p>
+                an aggregate root is a collection of entities that typically belongs together in a database transaction. DDD relies heavily on 
+                doamin events and eventual consistency. An agggregate root represents a consisstency boundary. If two or more things
+                cannot by any means be out of sync, they need to be together in an aggregate. messages to one aggregate to another
+                must go through the aggregate root, either you could end up with inconsistencies as the job of an aggregate is also to enforce 
+                invariants: things that must always be true according to business logic, and can never afford to be false. it can be thought of 
+                as an entity "manager" as the root has a view on all of the entities within the aggregate. It can see the state of them, and because it has 
+                the context of all other entities in the aggreagte, it has the ability to make decisions.
+
+<pre class='prettyprint lang-typescript'>@Entity('Segment')
 export class Flight {
 
     @PrimaryGeneratedColumn('uuid')
@@ -180,25 +226,6 @@ export class Flight {
         this.schedule = null
     }
 } </pre> 
-
-            The above entity represent a flight in a domain associated with booking flights for users. It has a UUID to represent its intrinsic value, but also
-            is comprised of value objects such as an array of seats. Additionally it has method to perform logical operations on its members, and most 
-            importantly has no external dependencies so it can be tested easily.
-            </p>
-
-            <h2>Aggregate Roots</h2>
-            <p>
-                an aggregate root is a collection of entities that typically belongs together in a database transaction. DDD relies heavily on 
-                doamin events and eventual consistency. An agggregate root represents a consisstency boundary. If two or more things
-                cannot by any means be out of sync, they need to be together in an aggregate. messages to one aggregate to another
-                must go through the aggregate root, either you could end up with inconsistencies as the job of an aggregate is also to enforce 
-                invariants: things that must always be true according to business logic, and can never afford to be false. it can be thought of 
-                as an entity "manager" as the root has a view on all of the entities within the aggregate. It can see the state of them, and because it has 
-                the context of all other entities in the aggreagte, it has the ability to make decisions.
-
-                <div>
-                    code example of an aggregate root
-                </div>
             </p>
 
             <h2>Factory Pattern</h2>
