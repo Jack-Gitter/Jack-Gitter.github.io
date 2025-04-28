@@ -44,8 +44,8 @@
                 <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
 
                 A name might have first, middle, and last fields. Changing any part of this name completly makes it a new name. 
-                Lets consider a person who has a name. The person can change their name, but the person themselves is still intrinsically the same person
-                they previously were.             </p>
+                Lets take the example of someone's name. The person can change their name, but the person themselves is still intrinsically the same person
+                they previously were. This means that the name of the person is a Value Object, but the person is an Entity.</p>
 
 
             <h2>Entities</h2>
@@ -103,8 +103,6 @@ export class Reservation {
             value objects, such as SeatPosition make up a subset of the columns in a database entry, and the entire record is the Entity itself. If a reservation
             gets upgraded to first class, the seat position might change, but the entire reservation itself does not. Thinking about things from a database
             perspective is totally against DDD principals, but it was something that helped me get an understanding of VO vs Entity.
-
-
             </p>
 
             <h2>Aggregate Roots</h2>
