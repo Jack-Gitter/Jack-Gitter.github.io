@@ -113,8 +113,7 @@ export class Reservation {
                 An aggregate root can be thought of as an orchestrator for the sub-entities that it contains. It 
                 has a complete view of all its objects, so it can ensure that no invariants are ever violated when performing business logic.
 
-<pre class='prettyprint lang-typescript'>@Entity('Segment')
-export class Flight {
+<pre class='prettyprint lang-typescript'>export class Flight {
 
     @PrimaryGeneratedColumn('uuid')
     public id: UUID
@@ -316,16 +315,66 @@ export class Flight {
             <h2>Repository Pattern</h2>
 
             <p>
-                repositories are classes that fetch aggregate roots from a database. They help with the translation between the flat structure of a SQL database,
-                and reconstructing this data into an entity. Typically, entities are loaded from datbase via a repository, they are operated on, and then
-                loaded back into the datbase. Repositories load entire aggregates.
+                Repositories are classes on the interface layer responsible with interfacing with the underlying database to fetch aggregate roots. 
+                There should be one repository per aggregate root, and repositories should only ever load aggregate roots into memory. This is because
+                the aggregate-root enforces the invariants amongst sub-entities, and fetching a sub-entity directly and modifying it could bypass
+                an invariant check that would have otherwise been performed by the aggregate root. Many ORMs implement the repository pattern, so that 
+                developers can truly take a code-first approach if desired. A typical workflow is that an aggregate root is loaded from the datbase via a 
+                repository for that specific aggregate, they are operated on, and then saved back into the database. 
 
-                <div>
-                    code example
-                </div>
+<pre class='prettyprint lang-typescript'>export class FlightFactory {
+export class AddSegmentService {
+
+    constructor(
+        @InjectRepository(FlightSchedule) private flightScheduleRepository: Repository<FlightSchedule>
+    ) {}
+
+    public async addSegment(
+        scheduleId: UUID, 
+        toName: string, 
+        toLongitude: number, 
+        toLatitude: number, 
+        fromName: string, 
+        fromLongitude: number, 
+        fromLatitude: number, 
+        start: Date, 
+        end: Date
+    ) {
+        await this.flightScheduleRepository.manager.transaction(async (entityManager) => {
+            const to = new Location(toName, toLongitude, toLatitude)
+            const from = new Location(fromName, fromLongitude, fromLatitude)
+            const segment = new Segment(to, from, start, end)
+            const flightScheduleRepository = entityManager.getRepository(FlightSchedule)
+            
+            const flightSchedule = await flightScheduleRepository.findOne({
+                relations: ['segments'],
+                where: {id: scheduleId}
+            })
+
+            if (!flightSchedule) {
+                throw new BadRequestException(`No schedule with id ${scheduleId}`)
+            }
+
+            flightSchedule.addSegment(segment)
+
+            return await this.flightScheduleRepository.save(flightSchedule)
+        })
+    }
+
+}
+                </pre>
+
+                In the above example, we add a segment to a flightSchedule by loading it into memory, operating on it via methods, and then saving it back
+                to the database.
 
                 <div class='sidenote'>
-                    side note: need some sort of locking, transaction, select for update, or MVCC to avoid data races -- aggregate roots!
+                    When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
+                    method in place to avoid data races which can be caused by other threads or instances of the application loading the 
+                    same aggregate, performing a conflicting operation, and then saving it back to the database at the same time.
+                    The two most prominant ways to prevent a data race is to either use database pessimistic or optimistic locking. 
+                    Both implementations prevent the described undesired behavior, although pessimistic locking is better for applications
+                    which are expected to have more conflicts, and optimistic locking is better for instances where the application is
+                    not expected to have such problems often.
                 </div>
             </p>
 
@@ -333,16 +382,64 @@ export class Flight {
 
             <h2>Domain Services</h2>
             <p>
-                is used only to implement logic between two entities, when the business logic does not naturally fit into any entity itself
-
-                example is two users following each other, you have a followUserService
+                Domain services are used to implement domain logic between two entities, when that logic does not make sense to fall within a single
+                entity itself. Typically, domain entities should not have dependencies on anything outside of the domain layer. They are passed in
+                one or more aggregate roots, and implement pure business logic. One good example of this is a social media platform where users can 
+                follow eachother. It does not make sense to have the business logic implemented on a single user object, since it spans multiple users at once.
+                Rather, it would make the most sense to load both users into memory, pass them to a domain service, and allow the domain service to call
+                methods such as updateFollowers() and updateFollowing() on the respective Entities.
             </p>
 
 
             <h2>Application Services</h2>
 
             <p>
-                interacts with things outside of entities, like coordinating database, etc. It is just a coordinator of an entire feature
+                Applications are the orchestrators of different business functionality. They are responsible for loading entities from the database,
+                making the calls to business logic, saving entities back to the database, and making any other external calls the business logic needs.
+                Here is an example of a 
+                
+
+<pre class='prettyprint lang-typescript'>export class CreateReservationService {
+
+    public constructor(
+        @InjectDataSource() private dataSource: DataSource,
+        @Inject('RMQ_CLIENT') private rmqClient: ClientProxy
+    ) {}
+
+    public async createReservation(
+        flightId: UUID, 
+        personId: UUID, 
+        seatRow: number, 
+        seatCol: SEAT_COLUMN
+    ) {
+
+        await this.dataSource.transaction(async (entityManager) => {
+
+            const flightRepository = entityManager.getRepository(Flight)
+
+            const flight = await entityManager
+            .getRepository(Flight)
+            .createQueryBuilder('flight')
+            .innerJoinAndSelect('flight.seats', 'seats')
+            .where('flight.id = :flightId', {flightId})
+            .setLock('pessimistic_write')
+            .getOne()
+
+            if (!flight) {
+                throw new NotFoundException(`Cannot find flight with id ${flightId}`)
+            }
+
+            const seatPosition = new SeatPosition(seatRow, seatCol)
+
+            flight.makeReservation(seatPosition, personId)
+
+            await flightRepository.save(flight)
+
+            this.rmqClient.emit('PersonExistsCheck', personId)
+
+        })
+    }
+}</pre>
             </p>
 
             <h2>Domain events</h2>
