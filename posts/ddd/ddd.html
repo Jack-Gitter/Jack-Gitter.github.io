@@ -67,9 +67,7 @@
                     Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
-                <pre class='prettyprint lang-typescript'>@Entity('Reservation')
-@Unique('flight_seatPosition', ['flight', 'seatPosition.row', 'seatPosition.column'])
-export class Reservation {
+                <pre class='prettyprint lang-typescript'>export class Reservation {
 
     @PrimaryGeneratedColumn('uuid')
     public id: UUID
