@@ -232,7 +232,9 @@ export class Flight {
             know that the Seat and Reservation entities must be encapsulated within the Flight aggregate. This gives the Flight aggregate root the ability 
             to know the state of all seats and reservations, and enforce the the required invariant. The implementation can be seen in the MakeReservation method, 
             where we ensure that no other existing reservation currently exists for the given flight before allowing the user to book that seat.
+            </p>
 
+            <p>
             There is also another portion of the aggregate that references an entity, but does not contain the entity itself: the flightScheduleId. In
             this made up scenario, there are no invariants that must always be true between a flight schedule and a flight. Because of this, the flight
             schedule does not need to be within the Flight aggregate, it can be its own class. Eventual consistency can be reached via domain events,
