@@ -470,7 +470,7 @@
                 in any way, there are no invariants or business logic to uphold. With this being the case, the model for updating records and fetching data 
                 is often naturally different. With CQRS, aggregates can be used to inforce business rules, and separate models which do not relate to the 
                 aggregate models in any way can be created to load and display information to users. Utilizing aggregates to load and return data is 
-                not only overly complex, but also will effect the model in ways which are unnecssary.
+                not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
             </p>
 
             <h2>Code</h2>
