@@ -67,8 +67,7 @@
                     Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
-                <pre class='prettyprint lang-typescript'> 
-@Entity('Reservation')
+                <pre class='prettyprint lang-typescript'>@Entity('Reservation')
 @Unique('flight_seatPosition', ['flight', 'seatPosition.row', 'seatPosition.column'])
 export class Reservation {
 
@@ -235,11 +234,12 @@ export class Flight {
             </p>
 
             <p>
-            There is also another portion of the aggregate that references an entity, but does not contain the entity itself: the flightScheduleId. In
-            this made up scenario, there are no invariants that must always be true between a flight schedule and a flight. Because of this, the flight
-            schedule does not need to be within the Flight aggregate, it can be its own class. Eventual consistency can be reached via domain events,
-            and at a later point if needed this object can be removed into its own service entirely as we do not rely on a database transaction for 
-            business logic implementation.
+            Taking a close look at the aggregate, we can see that there is not only encapsulation, but also another form of a relationship: a reference. 
+            The Flight aggregat root has a reference to the schedule that is associated with the current flight. For our business, there are no totalities 
+            for the relationship between a flight schedule and a flight. Because of this, the flight schedule does not need to be encapsulated in the Flight 
+            aggregate, but rather can be its own Entity. Communication between the two can occur via domain events, reaching an eventually consistent state. 
+            At a later point if needed, this object can be refactored into a separate service since no database transactions need to occur between the Flight and 
+            the corresponding schedule.
             </p>
 
             <h2>Factory Pattern</h2>
