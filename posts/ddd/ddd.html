@@ -115,7 +115,7 @@
             <h2>Aggregate Roots</h2>
             <p>
                 An Aggregate is a collection of Entities that typically belongs together in a database transaction. An Aggregate Root is the Entity which
-                controls other Entities in any given Aggregate. An agggregate root represents a consisstency boundary. If two or more entities
+                controls other Entities in any given Aggregate. An Agggregate Root represents a consisstency boundary. If two or more entities
                 cannot be out of sync for any period of time, they must be organized together in an Aggregate. Because of this, all work done to an 
                 Aggregate must be done via the interface for the Aggregate Root, so that it can ensure business invariants are satisfied. 
                 An Aggregate Root can be thought of as an orchestrator for the sub-Entities that it contains. It 
