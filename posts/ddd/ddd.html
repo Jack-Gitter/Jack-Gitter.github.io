@@ -35,24 +35,33 @@
 
             <h2>Value Objects</h2>
             <p>
-                In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model that gain value soley 
-                based on the content of their components. To put it more concretely, a JSON Value Object who has the same exact fields as another JSON 
-                Value Object are equal. They are typically created as immutable, since changing one value of the value object would completly change the object. 
-                It is preffered to create another value object entirely instead of changing the field of a value object. A good example of a value object is a name.
+                In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model which obtain value soley 
+                on the content of their components. To put it more concretely, a JSON Value Object which has the same exact fields as another JSON 
+                Value Object are equal. They are typically created as immutable, as changing one value of the value object would completly change the object. 
+                In the circumstance where a Value Object is expected to change, it is preffered to create an entire new object. A good example of a 
+                Value Object is a name.
 
                 <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
 
-                A name might have first, middle, and last fields. Changing any part of this name completly makes it a new name. 
-                Lets take the example of someone's name. The person can change their name, but the person themselves is still intrinsically the same person
-                they previously were. This means that the name of the person is a Value Object, but the person is an Entity.</p>
+                A name might include first, middle, and last components. Changing any part of this name completly makes it a new name entirely. 
+                </p>
 
 
             <h2>Entities</h2>
 
             <p>
+
+
+
                 Entities are the next largest buliding blocks of DDD. They are the code representation of business objects, concepts, and logic. They always
                 have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real-life value separately from the value objects that
                 are used to compose them.
+
+                <div class='sidenote'>
+                    There is often confusion between entities and value objects when first learning DDD. The difference is best explained via an example.
+                    Lets take the example of a Person entity which has a name value object field. A person can change their name (swap it out for another
+                    value object), but the person themselves is still intrinsically the same person they previously were. 
+                </div>
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an entity.
                 Entities should have no external dependencies outside of the domain layer, only focused on implementing business logic as accurately as 
