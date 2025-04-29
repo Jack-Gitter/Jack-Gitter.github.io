@@ -332,7 +332,7 @@
                 to fetch Aggregate Roots. There should be one Repository per Aggregate Root, and Repositories should only ever load Aggregate Roots 
                 into memory. This is because the Aggregate Root enforces the invariants amongst sub-Entities, and fetching a sub-Entity directly 
                 would allow for bypassing the invariant checks that would have otherwise been performed by the Aggregate Root. 
-                Many ORMs implement the Repository pattern, so that developers can take a code-first approach. Typical repository usage is to load an 
+                Many ORMs implement the Repository pattern, so that developers can take a code-first approach. Typical Repository usage is to load an 
                 Aggregate Root from the datbase, perform business operations, and then use the Repository to save the Entity back to the database. 
 
 <pre class='prettyprint lang-typescript'>export class AddSegmentService {
