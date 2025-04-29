@@ -322,11 +322,11 @@
 
             <p>
                 Repositories are classes created in the infrastructure layer responsible with interfacing with the underlying data storage solution
-                to fetch Aggregate Roots. There should be one repository per aggregate root, and repositories should only ever load aggregate roots 
+                to fetch Aggregate Roots. There should be one Repository per aggregate root, and repositories should only ever load aggregate roots 
                 into memory. This is because the Aggregate Root enforces the invariants amongst sub-entities, and fetching a sub-Entity directly 
                 would allow for bypassing the invariant checks that would have otherwise been performed by the Aggregate Root. 
-                Many ORMs implement the repository pattern, so that developers can take a code-first approach. Typical repository usage is to load an 
-                Aggregate Root from the datbase, perform business operations, and then use the repository to save the Entity back to the database. 
+                Many ORMs implement the Repository pattern, so that developers can take a code-first approach. Typical repository usage is to load an 
+                Aggregate Root from the datbase, perform business operations, and then use the Repository to save the Entity back to the database. 
 
 <pre class='prettyprint lang-typescript'>export class AddSegmentService {
 
@@ -369,7 +369,7 @@
 }
                 </pre>
 
-                In the above example, we can see the process involved in adding a new segment to a flight schedule using a repository. 
+                In the above example, we can see the process involved in adding a new segment to a flight schedule using a Repository. 
 
                 <div class='sidenote'>
                     When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
