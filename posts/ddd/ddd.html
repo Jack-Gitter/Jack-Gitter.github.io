@@ -383,8 +383,8 @@
                     When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
                     method in place to avoid data races. Data races can be caused by other threads or instances of the application loading the 
                     same Aggregate as another thread or instance, performing a conflicting operation, 
-                    and then saving it back to the database at the same time. The two most prominant ways to prevent a data race are to either use database 
-                    pessimistic or optimistic locking. Both implementations prevent the described undesired behavior, 
+                    and then saving it back to the database at the same time. The two most prominant ways to prevent a data race are to either use 
+                    pessimistic or optimistic locking at the database level. Both implementations prevent the described undesired behavior, 
                     although pessimistic locking is better for applications which are expected to have more conflicts, and optimistic locking is better 
                     for instances where the application is not expected to have frequent concurrency issues.
                 </div>
