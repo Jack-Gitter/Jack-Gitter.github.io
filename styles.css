@@ -75,3 +75,13 @@ pre.prettyprint {
 pre.code {
     padding: 100px
 }
+
+.sidenote {
+        background-color: #f8f8f8;
+        border-left: 3px solid #ccc;
+        margin: 20px 0;
+        padding: 15px;
+        font-size: 0.9em;
+        color: #555;
+        width: 85%;
+    }

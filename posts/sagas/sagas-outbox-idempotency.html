@@ -34,15 +34,15 @@
                 Consider an ecommerce business where you can place orders for various different items, and have them shipped to you around the world.
                 This business might have services for keeping track of orders, managing inventory, and validating shipping requirements. These can be called
                 the <span class="inline-service">Orders</span>, <span class="inline-service">Inventory</span>, and <span class="inline-service">Shipping</span> 
-                microservices, respectively. When a user places an order, an <span class="inline-code">Order</span> entity is entered into the 
+                microservices, respectively. When a user places an order, an <span class="inline-code">Order</span> Entity is entered into the 
                 database as a record in a pending state. Afterwards a message is sent to the <span class="inline-service">Inventory</span> service to 
                 check whether there is enough inventory of the particular product. The <span class= "inline-service">Inventory</span> service then 
-                creates a <span class="inline-code">Reservation</span> entity, and stores it in the database to keep track of the current status of the warehouse,
+                creates a <span class="inline-code">Reservation</span> Entity, and stores it in the database to keep track of the current status of the warehouse,
                 after which it notifies the <span class="inline-service">Orders</span> of its success. Then, the <span class="inline-service">Orders</span> service 
                 must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
                 for the specific product. Only after which, can the <span class="inline-service">Orders</span> service then notify the 
-                <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> entity and corresponding 
-                inventory, and set the <span class="inline-code">Order</span> entity status to approved. All of these steps together form a Saga, 
+                <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> Entity and corresponding 
+                inventory, and set the <span class="inline-code">Order</span> Entity status to approved. All of these steps together form a Saga, 
                 a long running, evetually consistent business process. 
             </p>
 
@@ -114,9 +114,9 @@
                 so that sending a message and performing necessary business logic can all occur atomically. To get an idea of how this is structured, we can 
                 use the <span class='inline-service'>Orders</span> and <span class='inline-service'>Inventory</span> services one again. To kick off the process,
                 an HTTP request is routed to the <span class='inline-service'>Orders</span> service to place an order. The service starts a database transaction, 
-                writes the <span class='inline-code'>Order</span> entity to the database, and then writes a message to the 
+                writes the <span class='inline-code'>Order</span> Entity to the database, and then writes a message to the 
                 <span class='inline-code'>InventoryReservationOutbox</span> table. The service then commits the transaction, so that both the message and 
-                the entity are both written, or neither are. On startup, the <span class='inline-service'>Orders</span> service polls the 
+                the Entity are both written, or neither are. On startup, the <span class='inline-service'>Orders</span> service polls the 
                 <span class='inline-code'>InventoryReservationOutbox</span> table for outgoing messages every couple of seconds. Once this polling callback is 
                 triggered, all messagea are queries from the outbox table, converted into JSON, and sent into the queue for the 
                 <span class='inline-service'>Inventory</span> service to process at a later point. Once the message is in the queue, it is safe to 
@@ -132,19 +132,19 @@
             <p>
                 The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the the outbox pattern, just in reverse.
                 When using this pattern, incomming messages are written into a database table within a transaction which handles the work associated to the 
-                message itself. If the work (for example, creating an entity and inserting into the database) succeeds, 
+                message itself. If the work (for example, creating an Entity and inserting into the database) succeeds, 
                 then the message is written to the inbox table. If the work fails, then we can reprocess the message at a later point.
                 When a new message comes in, the inbox table is first checked to determine if an identical message
                 has already been processed to avoid duplicated work. To detect duplicate messages, a unique key must be assigned to each new message. 
                 To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto incrementing 
-                primary key for each specific <span class='inline-code'>Order</span> entity to the message it sends to the 
+                primary key for each specific <span class='inline-code'>Order</span> Entity to the message it sends to the 
                 <span class='inline-service'>Inventory</span> Service. With this identifier, the <span class='inline-service'>Inventory</span> service 
                 is able to detect duplicated messages. It recieves the message, begins a transaction, 
                 reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
                 to the Order service to continue on with the Saga
 
                 <div class='sidenote'>
-                    It is important to know that without this unique ID associated with each <span class='inline-code'>Order</span> entity attached to the message,
+                    It is important to know that without this unique ID associated with each <span class='inline-code'>Order</span> Entity attached to the message,
                     its impossible to differentiate two messages with the same contents. For example, if two customers place orders for the same product and quantity,
                     the <span class='inline-service'>Inventory</span> service would have no way to know that this message is not a duplicate
                 </div>
@@ -243,7 +243,7 @@
 
 
                 At a first glance, I felt pretty good about this. Once a message came in, I would write the <span class='inline-code'>Order</span> 
-                entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
+                Entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
                 for new messages. If any were found, I would create a Saga with the needed steps, add it to the <span class='inline-code'>activeSagas</span>
                 array in the service class, and simply call the begin() method to kick off the first message and delete the message from the outbox. The saga
                 itself listened on the corresponding response queues for incomming messages. This seemed great, until I noticed a pretty big flaw.
@@ -262,7 +262,7 @@
 
             <p>
                 How can we remedy this? We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga 
-                it belongs to. I decided to create a map, from the unique ID of each <span class='inline-code'>Order</span> entity to saga and attach the 
+                it belongs to. I decided to create a map, from the unique ID of each <span class='inline-code'>Order</span> Entity to saga and attach the 
                 ID to the message. When a message comes back, we will simply look up the saga in the map, and call next step. 
 
 
@@ -364,8 +364,8 @@
                 we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. This could be done by looking at 
                 all currently pending orders upon server restart and constructing a saga from them, but it was beginning to feel over-engineered. 
                 Rather, I ended up going a much simpler route. I created message handlers for each response queue, and I attached the ID of each 
-                <span class='inline-code'>Order</span> entity to every message to every service. This way, when the order
-                service got a message, it could simply look up the <span class='inline-code'>Order</span> entity details from the database, craft the next message 
+                <span class='inline-code'>Order</span> Entity to every message to every service. This way, when the order
+                service got a message, it could simply look up the <span class='inline-code'>Order</span> Entity details from the database, craft the next message 
                 with the data it got from the database, and then send it to the corresponding channel. 
             </p>
 

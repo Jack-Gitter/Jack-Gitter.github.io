@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Driven Design</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script> </head>
+<body>
+    <header>
+        <h1>Domain Driven Design</h1>
+    </header>
+    <main>
+        <article>
+            <h1>Benefits and Overview of DDD</h1>
+            <p class="date">April 29, 2025</p>
+
+            <p>
+                Domain Driven Design is an approach to developing software that puts a large emphasis on creating a model in code which mirrors the real 
+                business as closely as possible. At the core, DDD is all about the the data model. Things such as the database design come second, and 
+                are typically implemented with an ORM. There are many guidelines to follow when developing using DDD, and the process starts well before 
+                any code is written. The DDD philosophy begins by introducing a Ubiquitous Language which allows for seamlessly communicate 
+                between business experts and software engineers about the domain.
+            </p>
+
+            <h2>Ubiquitous Language</h2>
+
+            <p>
+                Trying to reason about code with business experts is often difficult. Code and logic typically has to be "translated" from 
+                the terms used in the software to the terms business experts use, and vice versa. With translation comes loss of information, 
+                and loss of information causes errors in implementation. A Ubiquitous Language eliminates these concerns by defining a set of terms 
+                used to describe the business so domain experts and developers can communicate flawlessly. Typically, terms from the business are utilized 
+                and integrated into the Ubiquitous Language when possible, to have the model remain as accurate as possible. </p>
+
+            <h2>Value Objects</h2>
+            <p>
+                In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model which obtain value soley 
+                on the content of their components. To put it more concretely, a JSON Value Object which has the same exact fields as another JSON 
+                Value Object are equal. They are typically created as immutable, as changing one value of the value object would completly change the object. 
+                In the circumstance where a Value Object is expected to change, it is preffered to create an entire new object. A good example of a 
+                Value Object is a name.
+
+                <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
+
+                A name might include first, middle, and last components. Changing any part of this name completly makes it a new name entirely. 
+                </p>
+
+
+            <h2>Entities</h2>
+
+            <p>
+                Entities are the next largest buliding blocks of DDD. They are the code representation of business objects, concepts, and logic. They always
+                have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real life value when compared to
+                the value objects that compose them.
+
+                <div class='sidenote'>
+                    There is often confusion between Entities and Value Objects when first learning DDD. The difference is best explained via an example.
+                    Lets take the example of a Person Entity which has a name value object field. A person can change their name (swap it out for another
+                    value object), but the person themselves is still intrinsically the same person they previously were. 
+                </div>
+
+                Most of the time, Entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an Entity.
+                Entities should have no external dependencies outside of the domain layer, only focused on implementing business logic as accurately as 
+                possible.
+
+                <div class='sidenote'>
+                    There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
+                    an Entity as methods, whereas a thin model's business logic is implemented in services which wrap Entities. DDD heavily 
+                    favors thick domain models, as the logic is isolated, reusable, and can tested without any dependencies. When developing a thin model,
+                    logic is not reusable between services, and is much harder to test. Services frequently have dependencies on repositories, 
+                    and this causes the need to mock datbase connections simply to test domain logic.
+                </div>
+
+                Here is an Entity implementation in code
+                <pre class='prettyprint lang-typescript'>export class Reservation {
+
+    @PrimaryGeneratedColumn('uuid')
+    public id: UUID
+
+    @ManyToOne(() => Flight, (flight) => flight.reservations, {orphanedRowAction: 'delete'})
+    public flight: UUID
+
+    @Column(() => SeatPosition)
+    public seatPosition: SeatPosition
+
+    @Column('uuid')
+    public personId: UUID
+
+    private constructor(seatPosition: SeatPosition, personId: UUID, flight: UUID) {
+        this.seatPosition = seatPosition
+        this.personId = personId
+        this.flight = flight
+    }
+
+    static CreateReservation(seatPosition: SeatPosition, personId: UUID, flight: UUID): Reservation {
+        return new Reservation(seatPosition, personId, flight)
+    }
+}
+
+</pre>
+
+            This Entity represents reservation for a flight. It is comprised of a Value Object called <span class='inline-code'>SeatPosition</span> 
+            which contains seat position information, 
+            and also has foreign references to both the person Entity (via <span class='inline-code'>personId</span> UUID) who made the reservation, 
+            and the flight Entity (via <span class='inline-code'>flight</span> UUID) to which the reservation 
+            is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the relationship 
+            between the two can be realized: Value Objects, such as <span class='inline-code'>SeatPosition</span>, 
+            make up a subset of the columns in a database entry. 
+            The entire record is the Entity itself. If a <span class='inline-code'>Reservation</span> gets upgraded to first class, 
+            the <span class='inline-code'>SeatPosition</span> would change, but the <span class='inline-code'>Reservation</span>
+            still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
+            but this analogy helps drive home the differences between these two fundamental building blocks.
+            </p>
+
+            <h2>Aggregate Roots</h2>
+            <p>
+                An Aggregate is a collection of Entities that typically belongs together in a database transaction. An Aggregate Root is the Entity which
+                controls other Entities in any given Aggregate. An Agggregate Root represents a consisstency boundary. If two or more entities
+                cannot be out of sync for any period of time, they must be organized together in an Aggregate. Because of this, all work done to an 
+                Aggregate must be done via the interface for the Aggregate Root, so that it can ensure business invariants are satisfied. 
+                An Aggregate Root can be thought of as an orchestrator for the sub-Entities that it contains. It 
+                has a complete view of all its objects, so it can ensure that no invariants are ever violated when performing business logic.
+
+<pre class='prettyprint lang-typescript'>export class Flight {
+
+    @PrimaryGeneratedColumn('uuid')
+    public id: UUID
+
+    @Column({type: 'enum', enum: FLIGHT_STATUS, default: FLIGHT_STATUS.ON_TIME})
+    public status: FLIGHT_STATUS
+
+    @OneToOne(() => FlightSchedule, (flightSchedule) => flightSchedule.flight, 
+    { cascade: true, onDelete: 'NO ACTION', nullable: true, createForeignKeyConstraints: false })
+    @JoinColumn()
+    public schedule: UUID
+
+    @OneToMany(() => Reservation, (reservation) => 
+    reservation.flight, { cascade: true, onDelete: 'CASCADE', orphanedRowAction: 'delete' })
+    public reservations: Array<Reservation>
+
+    @OneToMany(() => Seat, (seat) => 
+    seat.flight, { cascade: true, onDelete: 'CASCADE', orphanedRowAction: 'delete' })
+    public seats: Array<Seat>
+
+    constructor(id: UUID, seats: Array<Seat>) {
+        this.id = id
+        this.seats = seats
+        this.status = FLIGHT_STATUS.ON_TIME
+    }
+
+    public makeReservation(seatPosition: SeatPosition, personId: UUID) {
+
+        if (!this.reservations) {
+            this.reservations = new Array<Reservation>()
+        }
+
+        const seat = this.seats.find((seat) => seat.position.equals(seatPosition))
+
+        if (!seat) {
+            throw new BadRequestException(
+            `No seat found with the position ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const existingReservation = this.reservations.find((reservation) => 
+            reservation.seatPosition.equals(seatPosition))
+
+        if (existingReservation) {
+            throw new BadRequestException(
+            `Reservation already exists for seat ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const reservation = Reservation.CreateReservation(seatPosition, personId, this.id)
+
+        this.reservations.push(reservation)
+    }
+
+    public cancelReservation(seatPosition: SeatPosition, personId: UUID) {
+
+        if (!this.reservations) {
+            throw new BadRequestException(`No reservations exist for this flight!`)
+        }
+
+        const seat = this.seats.find((seat) => seat.position.equals(seatPosition))
+
+        if (!seat) {
+            throw new BadRequestException(
+            `No seat found with the position ${seatPosition} on the flight ${this.id}`
+            )
+        }
+
+        const existingReservation = this.reservations.find((reservation) => 
+            reservation.seatPosition.equals(seatPosition))
+
+        if (!existingReservation) {
+            throw new BadRequestException(
+            `No existing reservation with that information exists`
+            )
+        }
+
+        this.reservations = this.reservations.filter((reservation) => 
+            { reservation.id !== existingReservation.id })
+
+    }
+
+    public cancelReservationsByPerson(personId: UUID) {
+
+        if (!this.reservations) {
+            throw new BadRequestException(`No reservations exist for this flight!`)
+        }
+
+        const existingReservations = this.reservations.filter((reservation) => 
+            reservation.personId === personId)
+
+        if (existingReservations.length === 0) {
+            throw new BadRequestException(
+            `No existing reservation with that information exists`
+            )
+        }
+
+        this.reservations = this.reservations.filter((reservation) => 
+            reservation.personId !== personId)
+
+    }
+
+    public setSchedule(schedule: UUID) {
+        this.schedule = schedule
+    }
+
+    public removeSchedule() {
+        this.schedule = null
+    }
+} </pre> 
+
+            The above example represents the Aggregate Root for a flight in flight reservation software. The business requirements state that at no time 
+            must a single seat ever be booked by more than one person. With this, we know that the all the seats and reservations for a singular flight 
+            must be encapsulated within the Flight Aggregate. This gives the Flight Aggregate Root the ability to know the state of all 
+            seats and reservations, and enforce the the required invariant. The implementation can be seen in the 
+            <span class='inline-code'>MakeReservation</span> method, where logic ensures that no other reservation exists for the given flight 
+            before allowing a user to book a seat.
+            </p>
+
+            <p>
+            Taking a closer look at the <span class='inline-code'>Flight</span> Aggregate, we can see that there is not only encapsulation, 
+            but also another form of a relationship: a reference. The <span class='inline-code'>Flight</span> Aggregate Root has a reference to the 
+            schedule that is associated with the current flight. For our business, there are no totalities enforced on the 
+            relationship between a schedule and a flight. Due to this, the flight schedule does not need to be encapsulated in the 
+            <span class='inline-code'>Flight</span> Aggregate but rather can be its own Entity. 
+            Communication between the two can occur via domain events, reaching an eventually consistent state. 
+            At a later point if needed, this object can be easily refactored into a separate service since no database transactions 
+            need to contain both the <span class='inline-code'>Flight</span> and the corresponding schedule.
+            </p>
+
+            <h2>Factory Pattern</h2>
+
+            <p>
+            The factory pattern is heavily used in DDD to construct complex Aggregates, and enforce invariants while doing so. In the case of a 
+            <span class='inline-code'>Flight</span>, there might be some requirements that exist for a flight to be created. 
+            Some of these could include commercial flights containing a higher quantity of cheap seats, when compared to the private counterpart. 
+            Extracting this functionality from the <span class='inline-code'>Flight</span> Aggregate itself keeps the 
+            Aggregate and <span class='inline-code'>FlightFactory</span> classes cleaner, and helps to enforce the single responsibility principal. 
+            Additionally testing the creation of the Aggregate can now be separated from the implementation.
+
+<pre class='prettyprint lang-typescript'>export class FlightFactory {
+    public createFlight(flightType: FLIGHT_TYPE): Flight {
+        let seats: Array<Seat>
+        const flightId = randomUUID()
+        switch (flightType) {
+            case FLIGHT_TYPE.Commercial: 
+                seats = this.generateSeats(
+                    flightId, flightType, new Price(
+                        USD, 
+                        BASE_COMMERCIAL_FLIGHT_PRICE_UNITS, 
+                        BASE_COMMERCIAL_FLIGHT_PRICE_SUB_UNITS)
+                    )
+                return new Flight(flightId, seats)
+            case FLIGHT_TYPE.Private:
+                seats = this.generateSeats(
+                    flightId, 
+                    flightType, 
+                    new Price(
+                        USD, 
+                        BASE_PRIVATE_FLIGHT_SUB_UNITS, 
+                        BASE_PRIVATE_FLIGHT_SUB_UNITS)
+                    )
+                return new Flight(flightId, seats)
+            default: 
+                throw new BadRequestException('Unknown Flight Type')
+        }
+    }
+
+    private generateSeats(flightId: UUID, flightType: FLIGHT_TYPE, basePrice: Price): Array<Seat> {
+        switch (flightType) {
+            case FLIGHT_TYPE.Commercial: 
+                return this.seatAlgorithm(flightId, COMMERCIAL_FLIGHT_ROW_COUNT, basePrice)
+            case FLIGHT_TYPE.Private:
+                return this.seatAlgorithm(flightId, PRIVATE_FLIGHT_ROW_COUNT, basePrice)
+            default: 
+                throw new BadRequestException('Unknown Flight Type')
+        }
+    }
+
+    private seatAlgorithm(flightId: UUID, flightRowCount: number, basePrice: Price): Array<Seat> {
+        const flightSeats: Array<Seat> = new Array<Seat>()
+        for (const seatRow of [...Array(flightRowCount).keys()]) {
+            for (const seatCol of Object.values(SEAT_COLUMN)) {
+                const seatPosition = new SeatPosition(seatRow, seatCol)
+                const newUnits = 
+                    basePrice.getUnitsCopy() + Math.floor(Math.random() * SEAT_VOLITILITY)
+                const seatPrice = 
+                    new Price(basePrice.getCurrencyCopy(), newUnits, basePrice.getSubUnitsCopy())
+                const seat = 
+                    Seat.CreateSeat(flightId, seatPosition, seatPrice)
+                flightSeats.push(seat)
+            }
+        }
+        return flightSeats
+    }
+}
+</pre>
+            Here, the complex logic of generating seats depending on what type of flight is created is localized only to this class itself. 
+            It does not clutter the <span class='inline-code'>Flight</span> Entity itself, nor is it relevant to <span class='inline-code'>Flight</span> 
+            functionality. 
+            </p>
+
+
+            <h2>Repository Pattern</h2>
+
+            <p>
+                Repositories are classes created in the infrastructure layer responsible with interfacing with the underlying data storage solution
+                to fetch Aggregate Roots. There should be one Repository per Aggregate Root, and Repositories should only ever load Aggregate Roots 
+                into memory. This is because the Aggregate Root enforces the invariants amongst sub-Entities, and fetching a sub-Entity directly 
+                would allow for bypassing the invariant checks that would have otherwise been performed by the Aggregate Root. 
+                Many ORMs implement the Repository pattern, so that developers can take a code-first approach. Typical Repository usage is to load an 
+                Aggregate Root from the datbase, perform business operations, and then use the Repository to save the Entity back to the database. 
+
+<pre class='prettyprint lang-typescript'>export class AddSegmentService {
+
+    constructor(
+        @InjectRepository(FlightSchedule) private flightScheduleRepository: Repository<FlightSchedule>
+    ) {}
+
+    public async addSegment(
+        scheduleId: UUID, 
+        toName: string, 
+        toLongitude: number, 
+        toLatitude: number, 
+        fromName: string, 
+        fromLongitude: number, 
+        fromLatitude: number, 
+        start: Date, 
+        end: Date
+    ) {
+        await this.flightScheduleRepository.manager.transaction(async (EntityManager) => {
+            const to = new Location(toName, toLongitude, toLatitude)
+            const from = new Location(fromName, fromLongitude, fromLatitude)
+            const segment = new Segment(to, from, start, end)
+            const flightScheduleRepository = EntityManager.getRepository(FlightSchedule)
+            
+            const flightSchedule = await flightScheduleRepository.findOne({
+                relations: ['segments'],
+                where: {id: scheduleId}
+            })
+
+            if (!flightSchedule) {
+                throw new BadRequestException(`No schedule with id ${scheduleId}`)
+            }
+
+            flightSchedule.addSegment(segment)
+
+            return await this.flightScheduleRepository.save(flightSchedule)
+        })
+    }
+
+}
+                </pre>
+
+                In the above example, we can see the process involved in adding a new <span class='inline-code'>Segment</span> to a 
+                <span class='inline-code'>FlightSchedule</span> using a Repository. 
+
+                <div class='sidenote'>
+                    When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
+                    method in place to avoid data races. Data races can be caused by other threads or instances of the application loading the 
+                    same Aggregate as another thread or instance, performing a conflicting operation, 
+                    and then saving it back to the database at the same time. The two most prominant ways to prevent a data race are to either use 
+                    pessimistic or optimistic locking at the database level. Both implementations prevent the described undesired behavior, 
+                    although pessimistic locking is better for applications which are expected to have more conflicts, and optimistic locking is better 
+                    for instances where the application is not expected to have frequent concurrency issues.
+                </div>
+            </p>
+
+
+
+            <h2>Domain Services</h2>
+            <p>
+                Domain services are used to implement domain logic between two Entities when said logic does not fit well into a single
+                Entity. Typically, Domain Services should not depend on anything outside of the domain layer. They are passed in
+                one or more Aggregate Roots, and implement pure business logic. A concrete example of a domain in which a Domain Service should be used is
+                a social media platform. On this platform, users can follow eachother. It would not make sense to have the business logic for this feature
+                implemented on a single user object, since it spans multiple users at once. Rather, it would make the most sense to load both users 
+                into memory, pass them to a Domain Service, and allow the domain service to call methods such as 
+                <span class='inline-code'>updateFollowers()</span> and <span class='inline-code'>updateFollowing()</span> on the respective Entities.
+            </p>
+
+
+            <h2>Application Services</h2>
+
+            <p>
+                Application services are the orchestrators of different business functionality. They are responsible for loading Aggregate Roots from the 
+                database by using Repositories, making the calls to business logic through those Aggregates, saving Entities back to the database, 
+                and making any other external calls the business logic needs. The following is an example of an Application Service which 
+                implements logic to create a reservation on a particular flight.
+                
+
+<pre class='prettyprint lang-typescript'>export class CreateReservationService {
+
+    public constructor(
+        @InjectDataSource() private dataSource: DataSource,
+        @Inject('RMQ_CLIENT') private rmqClient: ClientProxy
+    ) {}
+
+    public async createReservation(
+        flightId: UUID, 
+        personId: UUID, 
+        seatRow: number, 
+        seatCol: SEAT_COLUMN
+    ) {
+
+        await this.dataSource.transaction(async (EntityManager) => {
+
+            const flightRepository = EntityManager.getRepository(Flight)
+
+            const flight = await EntityManager
+            .getRepository(Flight)
+            .createQueryBuilder('flight')
+            .innerJoinAndSelect('flight.seats', 'seats')
+            .where('flight.id = :flightId', {flightId})
+            .setLock('pessimistic_write')
+            .getOne()
+
+            if (!flight) {
+                throw new NotFoundException(`Cannot find flight with id ${flightId}`)
+            }
+
+            const seatPosition = new SeatPosition(seatRow, seatCol)
+
+            flight.makeReservation(seatPosition, personId)
+
+            await flightRepository.save(flight)
+
+            this.rmqClient.emit('PersonExistsCheck', personId)
+
+        })
+    }
+}</pre>
+            </p>
+
+            <h2>Domain events</h2>
+
+            <p>
+                Domain events are used to communicate between Aggregate Roots. Because two Aggregate Roots do not need to be immediately consistent, 
+                they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal.
+                Using this model allows for refactoring Aggregate Roots into separate microservice, since an eventually consistent model is already 
+                implemented.
+            </p>
+
+
+            <h2>Bounded Contexts and Microservices</h2>
+            <p>
+                Different sections of business functionality are typically represented by different Bounded Contexts. In the case of a 
+                flight reservation application, there might be one Bounded Context which handles all the information surrounding booking flights, 
+                and another Bounded Context which is responsible for keeping track of user accounts and related information. 
+                Each Bounded Context in a microservice architecture is represented by a new microservice. 
+                Information in one Bounded Context's data model should be only relevant to the context of that bounded context. 
+                In the Bounded Context which handles flight reservations, a flight is composed of seats, reservations, segments, etc. 
+                The reservation context needs all of this information to reason about the availability of flights and validity of attempted reservations. 
+                In the user acounts Bounded Context, a flight is simply a UUID, pointing to an Entity in the reservation context.
+                The user context might only care about how many flights a user has taken so it can set the user's status to "Premium" if they have flown over 
+                1000 times. 
+
+            </p>
+            <p>
+                Thanks to the separation of conerns, messages between Bounded Contexts can be thin, meaning that they contain little information.
+                This is because information is not duplicated accross microservies, so instead of sending data from one application to another, 
+                event-style messages are sent to kick off a process. This generallly contains the UUID of a specific Entity in the calling Bounded Context. 
+            </p>
+
+            <h2>CQRS</h2>
+
+            <p>
+                CQRS, or Command Query Response Separation, is a methodology often paired with DDD. Since SELECT queries do not effect the database
+                in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
+                then often naturally different. With CQRS, Aggregates are used to inforce business rules and update or create Entities, and separate 
+                models which are totally unrelated to the Aggregates can be created to load and display information to users. 
+                Utilizing Aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
+            </p>
+
+            <h2>Code</h2>
+            <p>
+            For a full code example, please refer to the following <a href='https://github.com/Jack-Gitter/airplane-application'>Repo Link</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">JSWE at Sentinel Group</span>
+    </footer>
+</body>
+</html>
