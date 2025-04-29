@@ -99,11 +99,15 @@
 
 </pre>
 
-            This Entity represents reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
-            and also has foreign references to both the person Entity who made the reservation, and the flight Entity to which the reservation 
-            is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the elationship 
-            between VO and Entities can be realized: value objects, such as SeatPosition, make up a subset of the columns in a database entry. 
-            The entire record is the Entity itself. If a reservation gets upgraded to first class, the seat position might change, but the reservation 
+            This Entity represents reservation for a flight. It is comprised of a Value Object called <span class='inline-code'>SeatPosition</span> 
+            which contains seat position information, 
+            and also has foreign references to both the person Entity (via <span class='inline-code'>personId</span> UUID) who made the reservation, 
+            and the flight Entity (via <span class='inline-code'>flight</span> UUID) to which the reservation 
+            is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the relationship 
+            between the two can be realized: Value Objects, such as <span class='inline-code'>SeatPosition</span>, 
+            make up a subset of the columns in a database entry. 
+            The entire record is the Entity itself. If a <span class='inline-code'>Reservation</span> gets upgraded to first class, 
+            the <span class='inline-code'>SeatPosition</span> would change, but the <span class='inline-code'>Reservation</span>
             still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
             but this analogy helps drive home the differences between these two fundamental building blocks.
             </p>
