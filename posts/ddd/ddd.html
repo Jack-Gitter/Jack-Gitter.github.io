@@ -369,17 +369,16 @@
 }
                 </pre>
 
-                In the above example, we add a segment to a flightSchedule by loading it into memory, operating on it via methods, and then saving it back
-                to the database.
+                In the above example, we can see the process involved in adding a new segment to a flight schedule using a repository. 
 
                 <div class='sidenote'>
                     When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
-                    method in place to avoid data races which can be caused by other threads or instances of the application loading the 
-                    same aggregate, performing a conflicting operation, and then saving it back to the database at the same time.
-                    The two most prominant ways to prevent a data race is to either use database pessimistic or optimistic locking. 
-                    Both implementations prevent the described undesired behavior, although pessimistic locking is better for applications
-                    which are expected to have more conflicts, and optimistic locking is better for instances where the application is
-                    not expected to have such problems often.
+                    method in place to avoid data races. Data races can be caused by other threads or instances of the application loading the 
+                    same aggregate as another thread or instance, performing a conflicting operation, 
+                    and then saving it back to the database at the same time. The two most prominant ways to prevent a data race is to either use database 
+                    pessimistic or optimistic locking. Both implementations prevent the described undesired behavior, 
+                    although pessimistic locking is better for applications which are expected to have more conflicts, and optimistic locking is better 
+                    for instances where the application is not expected to have frequent concurrency issues.
                 </div>
             </p>
 
