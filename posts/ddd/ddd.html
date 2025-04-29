@@ -59,13 +59,13 @@
                     value object), but the person themselves is still intrinsically the same person they previously were. 
                 </div>
 
-                Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an Entity.
+                Most of the time, Entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an Entity.
                 Entities should have no external dependencies outside of the domain layer, only focused on implementing business logic as accurately as 
                 possible.
 
                 <div class='sidenote'>
                     There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
-                    an Entity as methods, a thin model's business logic is implemented in services which wrap entities. DDD heavily 
+                    an Entity as methods, a thin model's business logic is implemented in services which wrap Entities. DDD heavily 
                     favors thick domain models, as the logic is isolated, reusable, and can tested without any dependencies. When developing a thin model,
                     logic is not reusable between services, and is much harder to test. Services frequently have dependencies on repositories, 
                     and this causes the need to mock datbase connections simply to test domain logic.
@@ -110,11 +110,11 @@
 
             <h2>Aggregate Roots</h2>
             <p>
-                An Aggregate is a collection of entities that typically belongs together in a database transaction. An Aggregate Root is the Entity which
-                controls other entities in any given Aggregate. An agggregate root represents a consisstency boundary. If two or more entities
+                An Aggregate is a collection of Entities that typically belongs together in a database transaction. An Aggregate Root is the Entity which
+                controls other Entities in any given Aggregate. An agggregate root represents a consisstency boundary. If two or more entities
                 cannot be out of sync for any period of time, they must be organized together in an Aggregate. Because of this, all work done to an 
                 Aggregate must be done via the interface for the Aggregate Root, so that it can ensure business invariants are satisfied. 
-                An Aggregate Root can be thought of as an orchestrator for the sub-entities that it contains. It 
+                An Aggregate Root can be thought of as an orchestrator for the sub-Entities that it contains. It 
                 has a complete view of all its objects, so it can ensure that no invariants are ever violated when performing business logic.
 
 <pre class='prettyprint lang-typescript'>export class Flight {
@@ -230,7 +230,7 @@
 } </pre> 
 
             The above example represents the Aggregate Root for a flight in flight reservation software. The business requirements state that at no time 
-            must a single seat ever be booked by more than one person. With this, we know that the Seat and Reservation entities must be encapsulated 
+            must a single seat ever be booked by more than one person. With this, we know that the Seat and Reservation Entities must be encapsulated 
             within the Flight Aggregate. This gives the Flight Aggregate Root the ability to know the state of all seats and reservations, 
             and enforce the the required invariant. The implementation can be seen in the MakeReservation method, where logic ensures that no other 
             reservation exists for the given flight before allowing a user to book a seat.
@@ -322,7 +322,7 @@
             <p>
                 Repositories are classes created in the infrastructure layer responsible with interfacing with the underlying data storage solution
                 to fetch Aggregate Roots. There should be one Repository per aggregate root, and repositories should only ever load aggregate roots 
-                into memory. This is because the Aggregate Root enforces the invariants amongst sub-entities, and fetching a sub-Entity directly 
+                into memory. This is because the Aggregate Root enforces the invariants amongst sub-Entities, and fetching a sub-Entity directly 
                 would allow for bypassing the invariant checks that would have otherwise been performed by the Aggregate Root. 
                 Many ORMs implement the Repository pattern, so that developers can take a code-first approach. Typical repository usage is to load an 
                 Aggregate Root from the datbase, perform business operations, and then use the Repository to save the Entity back to the database. 
@@ -385,7 +385,7 @@
 
             <h2>Domain Services</h2>
             <p>
-                Domain services are used to implement domain logic between two entities when said logic does not fit well into a single
+                Domain services are used to implement domain logic between two Entities when said logic does not fit well into a single
                 Entity. Typically, domain services should not depend on anything outside of the domain layer. They are passed in
                 one or more Aggregate Roots, and implement pure business logic. A concrete example of a domain in which a domain service could be used is
                 a social media platform. On this platform, users can follow eachother. It would not make sense to have the business logic for this feature
@@ -399,7 +399,7 @@
 
             <p>
                 Application services are the orchestrators of different business functionality. They are responsible for loading Aggregate Roots from the 
-                database by using repositories, making the calls to business logic through those Aggregates, saving entities back to the database, 
+                database by using repositories, making the calls to business logic through those Aggregates, saving Entities back to the database, 
                 and making any other external calls the business logic needs. The following is an example of an application service which 
                 implements logic to create a reservation on a particular flight.
                 
@@ -482,7 +482,7 @@
             <p>
                 CQRS, or Command query response separation, is a methodology often paired with DDD. Since SELECT queries do not effect the database
                 in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
-                then often naturally different. With CQRS, Aggregates are used to inforce business rules and update or create entities, and separate 
+                then often naturally different. With CQRS, Aggregates are used to inforce business rules and update or create Entities, and separate 
                 models which are totally unrelated to the Aggregates can be created to load and display information to users. 
                 Utilizing Aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
             </p>
