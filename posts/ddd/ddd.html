@@ -65,7 +65,7 @@
 
                 <div class='sidenote'>
                     There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
-                    an Entity as methods, a thin model's business logic is implemented in services which wrap Entities. DDD heavily 
+                    an Entity as methods, whereas a thin model's business logic is implemented in services which wrap Entities. DDD heavily 
                     favors thick domain models, as the logic is isolated, reusable, and can tested without any dependencies. When developing a thin model,
                     logic is not reusable between services, and is much harder to test. Services frequently have dependencies on repositories, 
                     and this causes the need to mock datbase connections simply to test domain logic.
