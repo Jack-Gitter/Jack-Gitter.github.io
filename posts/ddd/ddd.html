@@ -244,7 +244,7 @@
             Because of this, the flight schedule does not need to be encapsulated in the Flight aggregate but rather can be its own Entity. 
             Communication between the two can occur via domain events, reaching an eventually consistent state. 
             At a later point if needed, this object can be easily refactored into a separate service since no database transactions 
-            need to occur between the Flight and the corresponding schedule.
+            need to contain both the Flight and the corresponding schedule.
             </p>
 
             <h2>Factory Pattern</h2>
