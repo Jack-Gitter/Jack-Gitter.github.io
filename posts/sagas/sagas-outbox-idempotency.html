@@ -20,7 +20,7 @@
             <p>
                 Utilizing microserves in order to decouple a backend system into individually scalable and customizable applications is
                 an effective method to build sustainable infrastructure. Pair this with dockerized services and an orchestration platform such as
-                Kubernetes, and the infrastruture is robust
+                Kubernetes, and the infrastruture is robust.
             </p>
             <p>
                 With all these benefits, why would anyone ever decide to go in another direction? One of the biggest challenges when developing microservices
@@ -33,7 +33,8 @@
             <p>
                 Consider an ecommerce business where you can place orders for various different items, and have them shipped to you around the world.
                 This business might have services for keeping track of orders, managing inventory, and validating shipping requirements. These can be called
-                the <span class="inline-service">Orders</span>, <span class="inline-service">Inventory</span>, and <span class="inline-service">Shipping</span> 
+                the <span class="inline-service">Orders</span>, 
+                <span class="inline-service">Inventory</span>, and <span class="inline-service">Shipping</span> 
                 microservices, respectively. When a user places an order, an <span class="inline-code">Order</span> Entity is entered into the 
                 database as a record in a pending state. Afterwards a message is sent to the <span class="inline-service">Inventory</span> service to 
                 check whether there is enough inventory of the particular product. The <span class= "inline-service">Inventory</span> service then 
