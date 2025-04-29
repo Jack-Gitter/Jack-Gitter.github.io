@@ -50,12 +50,9 @@
             <h2>Entities</h2>
 
             <p>
-
-
-
                 Entities are the next largest buliding blocks of DDD. They are the code representation of business objects, concepts, and logic. They always
-                have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real-life value separately from the value objects that
-                are used to compose them.
+                have a unique ID, typically implemented as a simple UUID. This represents their intrinsic real-life value separately from the value 
+                objects that are used to compose them.
 
                 <div class='sidenote'>
                     There is often confusion between entities and value objects when first learning DDD. The difference is best explained via an example.
@@ -65,16 +62,17 @@
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an entity.
                 Entities should have no external dependencies outside of the domain layer, only focused on implementing business logic as accurately as 
-                possible
+                possible.
 
                 <div class='sidenote'>
                     There exists a notion betwen "thick" and "thin" domain models. A thick model is when business logic is implemented on 
                     an entity as methods, a thin model's business logic is implemented in services which wrap entities. DDD heavily 
                     favors thick domain models, as the logic is isolated, reusable, and can tested without any dependencies. When developing a thin model,
-                    logic is not reusable between services, and is much harder to test. 
-                    Services frequently have dependencies on repositories, and this causes the need to mock datbase connections simply to test domain logic.
+                    logic is not reusable between services, and is much harder to test. Services frequently have dependencies on repositories, 
+                    and this causes the need to mock datbase connections simply to test domain logic.
                 </div>
 
+                Here is an Entity implementation in code
                 <pre class='prettyprint lang-typescript'>export class Reservation {
 
     @PrimaryGeneratedColumn('uuid')
@@ -102,12 +100,13 @@
 
 </pre>
 
-            The above entity represents a reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
-            and also has foreign references to the person entity who made the reservation and the flight entity to which the reservation is associated to. 
-            With a more complete understanding of Entities and Value Objects, it can be seen that the relationship between VO and Entities can be described
-            as so: value objects, such as SeatPosition, make up a subset of the columns in a database entry. The entire record is the Entity itself. If a reservation
-            gets upgraded to first class, the seat position might change, but the reservation still holds the same intrinsic value it previously did. 
-            Thinking database-first is against the DDD methodology, but it is simply another way to distinguish VO and entities.
+            This entity represents reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
+            and also has foreign references to both the person entity who made the reservation, and the flight entity to which the reservation 
+            is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the elationship 
+            between VO and Entities can be realized: value objects, such as SeatPosition, make up a subset of the columns in a database entry. 
+            The entire record is the Entity itself. If a reservation gets upgraded to first class, the seat position might change, but the reservation 
+            still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
+            but this analogy helps drive home the differences between these two fundamental building blocks.
             </p>
 
             <h2>Aggregate Roots</h2>
