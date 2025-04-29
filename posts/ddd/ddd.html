@@ -111,8 +111,8 @@
 
             <h2>Aggregate Roots</h2>
             <p>
-                An aggregate is a collection of entities that typically belongs together in a database transaction. An Aggregate root is the entity which
-                "owns" the other entities in any given aggregate. An agggregate root represents a consisstency boundary. If two or more entities
+                An Aggregate is a collection of entities that typically belongs together in a database transaction. An Aggregate root is the entity which
+                controls other entities in any given aggregate. An agggregate root represents a consisstency boundary. If two or more entities
                 cannot be out of sync for any period of time, they must be organized together in an aggregate. Because of this, all work done to an 
                 aggregate must be done via the interface for the aggregate root, so that it can ensure business invariants are satisfied. 
                 An aggregate root can be thought of as an orchestrator for the sub-entities that it contains. It 
@@ -230,20 +230,21 @@
     }
 } </pre> 
 
-            The above example represents the aggregate root for a flight in an application that helps people to book flights on airlines.
-            The business has given us an invariant: at no time must a single seat ever be booked by more than one person at a time. With this, we 
-            know that the Seat and Reservation entities must be encapsulated within the Flight aggregate. This gives the Flight aggregate root the ability 
-            to know the state of all seats and reservations, and enforce the the required invariant. The implementation can be seen in the MakeReservation method, 
-            where we ensure that no other existing reservation currently exists for the given flight before allowing the user to book that seat.
+            The above example represents the aggregate root for a flight in flight reservation software. The business requirements state that at no time 
+            must a single seat ever be booked by more than one person. With this, we know that the Seat and Reservation entities must be encapsulated 
+            within the Flight aggregate. This gives the Flight aggregate root the ability to know the state of all seats and reservations, 
+            and enforce the the required invariant. The implementation can be seen in the MakeReservation method, where logic ensures that no other 
+            reservation exists for the given flight before allowing a user to book a seat.
             </p>
 
             <p>
-            Taking a close look at the aggregate, we can see that there is not only encapsulation, but also another form of a relationship: a reference. 
-            The Flight aggregat root has a reference to the schedule that is associated with the current flight. For our business, there are no totalities 
-            for the relationship between a flight schedule and a flight. Because of this, the flight schedule does not need to be encapsulated in the Flight 
-            aggregate, but rather can be its own Entity. Communication between the two can occur via domain events, reaching an eventually consistent state. 
-            At a later point if needed, this object can be easily refactored into a separate service since no database transactions need to occur between 
-            the Flight and the corresponding schedule.
+            Taking a closer look at the Flight aggregate, we can see that there is not only encapsulation, but also another form of a relationship: 
+            a reference. The Flight aggregate root has a reference to the schedule that is associated with the current flight. 
+            For our business, there are no totalities enforced on the relationship between a flight schedule and a flight. 
+            Because of this, the flight schedule does not need to be encapsulated in the Flight aggregate but rather can be its own Entity. 
+            Communication between the two can occur via domain events, reaching an eventually consistent state. 
+            At a later point if needed, this object can be easily refactored into a separate service since no database transactions 
+            need to occur between the Flight and the corresponding schedule.
             </p>
 
             <h2>Factory Pattern</h2>
