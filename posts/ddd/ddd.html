@@ -55,9 +55,9 @@
                 objects that are used to compose them.
 
                 <div class='sidenote'>
-                    There is often confusion between entities and value objects when first learning DDD. The difference is best explained via an example.
-                    Lets take the example of a Person Entity which has a name value object field. A person can change their name (swap it out for another
-                    value object), but the person themselves is still intrinsically the same person they previously were. 
+                    There is often confusion between entities and Value Objects when first learning DDD. The difference is best explained via an example.
+                    Lets take the example of a Person Entity which has a name Value Object field. A person can change their name (swap it out for another
+                    Value Object), but the person themselves is still intrinsically the same person they previously were. 
                 </div>
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an Entity.
@@ -103,7 +103,7 @@
             This Entity represents reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
             and also has foreign references to both the person Entity who made the reservation, and the flight Entity to which the reservation 
             is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the elationship 
-            between VO and Entities can be realized: value objects, such as SeatPosition, make up a subset of the columns in a database entry. 
+            between VO and Entities can be realized: Value Objects, such as SeatPosition, make up a subset of the columns in a database entry. 
             The entire record is the Entity itself. If a reservation gets upgraded to first class, the seat position might change, but the reservation 
             still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
             but this analogy helps drive home the differences between these two fundamental building blocks.
