@@ -399,9 +399,10 @@
             <h2>Application Services</h2>
 
             <p>
-                Applications are the orchestrators of different business functionality. They are responsible for loading entities from the database,
-                making the calls to business logic, saving entities back to the database, and making any other external calls the business logic needs.
-                Here is an example of a 
+                Application services are the orchestrators of different business functionality. They are responsible for loading aggregate roots from the 
+                database by using repositories, making the calls to business logic through those aggregates, saving entities back to the database, 
+                and making any other external calls the business logic needs. The following is an example of an application service which 
+                implements logic to create a reservation on a particular flight.
                 
 
 <pre class='prettyprint lang-typescript'>export class CreateReservationService {
@@ -451,7 +452,7 @@
 
             <p>
                 Domain events are used to communicate between aggregate roots. Because two aggregate roots do not need to be immediately consistent, 
-                they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal via eventual consistency.
+                they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal.
                 Using this model allows for refactoring aggregate roots into separate microservice, since an eventually consistent model is already 
                 implemented.
             </p>
