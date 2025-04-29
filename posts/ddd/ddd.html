@@ -481,11 +481,12 @@
             <h2>CQRS</h2>
 
             <p>
-                CQRS stands for Command query response separation, and is a methodology often paired with DDD. Since SELECT queries do not effect the database
-                in any way, there are no invariants or business logic to uphold. With this being the case, the model for updating records and fetching data 
-                is often naturally different. With CQRS, aggregates can be used to inforce business rules, and separate models which do not relate to the 
-                aggregate models in any way can be created to load and display information to users. Utilizing aggregates to load and return data is 
-                not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
+                CQRS, or Command query response separation, is a methodology often paired with DDD. Since SELECT queries do not effect the database
+                in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
+                then often naturally different. With CQRS, aggregates are used to inforce business rules and update or create entities, and separate 
+                models which are totally unrelated to the aggregates can be created to load and display information to users. 
+                Utilizing aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model 
+                in ways which are unnecssary.
             </p>
 
             <h2>Code</h2>
