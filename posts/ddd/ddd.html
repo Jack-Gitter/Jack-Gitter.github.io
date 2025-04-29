@@ -55,9 +55,9 @@
                 objects that are used to compose them.
 
                 <div class='sidenote'>
-                    There is often confusion between entities and Value Objects when first learning DDD. The difference is best explained via an example.
-                    Lets take the example of a Person Entity which has a name Value Object field. A person can change their name (swap it out for another
-                    Value Object), but the person themselves is still intrinsically the same person they previously were. 
+                    There is often confusion between entities and value objects when first learning DDD. The difference is best explained via an example.
+                    Lets take the example of a Person Entity which has a name value object field. A person can change their name (swap it out for another
+                    value object), but the person themselves is still intrinsically the same person they previously were. 
                 </div>
 
                 Most of the time, entities are implemented as classes in an OOP language. Mostly all business logic should reside as methods within an Entity.
@@ -103,7 +103,7 @@
             This Entity represents reservation for a flight. It is comprised of a Value Object called SeatPosition which contains seat position information, 
             and also has foreign references to both the person Entity who made the reservation, and the flight Entity to which the reservation 
             is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the elationship 
-            between VO and Entities can be realized: Value Objects, such as SeatPosition, make up a subset of the columns in a database entry. 
+            between VO and Entities can be realized: value objects, such as SeatPosition, make up a subset of the columns in a database entry. 
             The entire record is the Entity itself. If a reservation gets upgraded to first class, the seat position might change, but the reservation 
             still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
             but this analogy helps drive home the differences between these two fundamental building blocks.
@@ -112,9 +112,9 @@
             <h2>Aggregate Roots</h2>
             <p>
                 An Aggregate is a collection of entities that typically belongs together in a database transaction. An Aggregate Root is the Entity which
-                controls other entities in any given aggregate. An agggregate root represents a consisstency boundary. If two or more entities
-                cannot be out of sync for any period of time, they must be organized together in an aggregate. Because of this, all work done to an 
-                aggregate must be done via the interface for the Aggregate Root, so that it can ensure business invariants are satisfied. 
+                controls other entities in any given Aggregate. An agggregate root represents a consisstency boundary. If two or more entities
+                cannot be out of sync for any period of time, they must be organized together in an Aggregate. Because of this, all work done to an 
+                Aggregate must be done via the interface for the Aggregate Root, so that it can ensure business invariants are satisfied. 
                 An Aggregate Root can be thought of as an orchestrator for the sub-entities that it contains. It 
                 has a complete view of all its objects, so it can ensure that no invariants are ever violated when performing business logic.
 
@@ -232,16 +232,16 @@
 
             The above example represents the Aggregate Root for a flight in flight reservation software. The business requirements state that at no time 
             must a single seat ever be booked by more than one person. With this, we know that the Seat and Reservation entities must be encapsulated 
-            within the Flight aggregate. This gives the Flight Aggregate Root the ability to know the state of all seats and reservations, 
+            within the Flight Aggregate. This gives the Flight Aggregate Root the ability to know the state of all seats and reservations, 
             and enforce the the required invariant. The implementation can be seen in the MakeReservation method, where logic ensures that no other 
             reservation exists for the given flight before allowing a user to book a seat.
             </p>
 
             <p>
-            Taking a closer look at the Flight aggregate, we can see that there is not only encapsulation, but also another form of a relationship: 
+            Taking a closer look at the Flight Aggregate, we can see that there is not only encapsulation, but also another form of a relationship: 
             a reference. The Flight Aggregate Root has a reference to the schedule that is associated with the current flight. 
             For our business, there are no totalities enforced on the relationship between a flight schedule and a flight. 
-            Because of this, the flight schedule does not need to be encapsulated in the Flight aggregate but rather can be its own Entity. 
+            Because of this, the flight schedule does not need to be encapsulated in the Flight Aggregate but rather can be its own Entity. 
             Communication between the two can occur via domain events, reaching an eventually consistent state. 
             At a later point if needed, this object can be easily refactored into a separate service since no database transactions 
             need to contain both the Flight and the corresponding schedule.
@@ -250,11 +250,11 @@
             <h2>Factory Pattern</h2>
 
             <p>
-            The factory pattern is heavily used in DDD to construct complex aggregates, and enforce invariants while doing so. In the case of a Flight, there 
+            The factory pattern is heavily used in DDD to construct complex Aggregates, and enforce invariants while doing so. In the case of a Flight, there 
             might some rules that exist for a flight to be created. Some of these could include commercial flights containing lots of cheap seats,
-            and private flights having less quantity but higher priced seats. Extracting this functionality from the Flight aggregate itself keeps the 
-            Flight aggregate and FlightFactory classes cleaner, and helps to enforce the single responsibility principal. Additionally testing the creation of
-            the aggregate can now be separated from the implementation.
+            and private flights having less quantity but higher priced seats. Extracting this functionality from the Flight Aggregate itself keeps the 
+            Flight Aggregate and FlightFactory classes cleaner, and helps to enforce the single responsibility principal. Additionally testing the creation of
+            the Aggregate can now be separated from the implementation.
 
 <pre class='prettyprint lang-typescript'>export class FlightFactory {
     public createFlight(flightType: FLIGHT_TYPE): Flight {
@@ -374,7 +374,7 @@
                 <div class='sidenote'>
                     When performing in-memory manipulation of an object and then saving it back to the database, there must be some 
                     method in place to avoid data races. Data races can be caused by other threads or instances of the application loading the 
-                    same aggregate as another thread or instance, performing a conflicting operation, 
+                    same Aggregate as another thread or instance, performing a conflicting operation, 
                     and then saving it back to the database at the same time. The two most prominant ways to prevent a data race is to either use database 
                     pessimistic or optimistic locking. Both implementations prevent the described undesired behavior, 
                     although pessimistic locking is better for applications which are expected to have more conflicts, and optimistic locking is better 
@@ -400,7 +400,7 @@
 
             <p>
                 Application services are the orchestrators of different business functionality. They are responsible for loading Aggregate Roots from the 
-                database by using repositories, making the calls to business logic through those aggregates, saving entities back to the database, 
+                database by using repositories, making the calls to business logic through those Aggregates, saving entities back to the database, 
                 and making any other external calls the business logic needs. The following is an example of an application service which 
                 implements logic to create a reservation on a particular flight.
                 
@@ -483,9 +483,9 @@
             <p>
                 CQRS, or Command query response separation, is a methodology often paired with DDD. Since SELECT queries do not effect the database
                 in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
-                then often naturally different. With CQRS, aggregates are used to inforce business rules and update or create entities, and separate 
-                models which are totally unrelated to the aggregates can be created to load and display information to users. 
-                Utilizing aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
+                then often naturally different. With CQRS, Aggregates are used to inforce business rules and update or create entities, and separate 
+                models which are totally unrelated to the Aggregates can be created to load and display information to users. 
+                Utilizing Aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecssary.
             </p>
 
             <h2>Code</h2>
