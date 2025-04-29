@@ -408,8 +408,8 @@
 
             <p>
                 Application services are the orchestrators of different business functionality. They are responsible for loading Aggregate Roots from the 
-                database by using repositories, making the calls to business logic through those Aggregates, saving Entities back to the database, 
-                and making any other external calls the business logic needs. The following is an example of an application service which 
+                database by using Repositories, making the calls to business logic through those Aggregates, saving Entities back to the database, 
+                and making any other external calls the business logic needs. The following is an example of an Application Service which 
                 implements logic to create a reservation on a particular flight.
                 
 
@@ -459,7 +459,7 @@
             <h2>Domain events</h2>
 
             <p>
-                Domain events are used to communicate between Aggregate Roots. Because two aggregate roots do not need to be immediately consistent, 
+                Domain events are used to communicate between Aggregate Roots. Because two Aggregate Roots do not need to be immediately consistent, 
                 they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal.
                 Using this model allows for refactoring Aggregate Roots into separate microservice, since an eventually consistent model is already 
                 implemented.
@@ -483,7 +483,7 @@
             <p>
                 Thanks to the separation of conerns, messages between Bounded Contexts can be thin, meaning that they contain little information.
                 This is because information is not duplicated accross microservies, so instead of sending data from one application to another, 
-                event-style messages are sent to kick off a process, typically with the UUID of a specific Entity in the calling Bounded Context. 
+                event-style messages are sent to kick off a process. This generallly contains the UUID of a specific Entity in the calling Bounded Context. 
             </p>
 
             <h2>CQRS</h2>
