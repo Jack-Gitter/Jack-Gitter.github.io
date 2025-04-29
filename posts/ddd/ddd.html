@@ -386,12 +386,13 @@
 
             <h2>Domain Services</h2>
             <p>
-                Domain services are used to implement domain logic between two entities, when that logic does not make sense to fall within a single
-                entity itself. Typically, domain entities should not have dependencies on anything outside of the domain layer. They are passed in
-                one or more aggregate roots, and implement pure business logic. One good example of this is a social media platform where users can 
-                follow eachother. It does not make sense to have the business logic implemented on a single user object, since it spans multiple users at once.
-                Rather, it would make the most sense to load both users into memory, pass them to a domain service, and allow the domain service to call
-                methods such as updateFollowers() and updateFollowing() on the respective Entities.
+                Domain services are used to implement domain logic between two entities when said logic does not fit well into a single
+                entity. Typically, domain services should not depend on anything outside of the domain layer. They are passed in
+                one or more aggregate roots, and implement pure business logic. A concrete example of a domain in which a domain service could be used is
+                a social media platform. On this platform, users can follow eachother. It would not make sense to have the business logic for this feature
+                implemented on a single user object, since it spans multiple users at once. Rather, it would make the most sense to load both users 
+                into memory, pass them to a domain service, and allow the domain service to call methods such as 
+                updateFollowers() and updateFollowing() on the respective Entities.
             </p>
 
 
