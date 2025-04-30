@@ -42,9 +42,9 @@
                 after which it notifies the <span class="inline-service">Orders</span> of its success. Then, the <span class="inline-service">Orders</span> service 
                 must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
                 for the specific product. Only after which, can the <span class="inline-service">Orders</span> service then notify the 
-                <span class="inline-service">Inventory</span> application delete the <span class="inline-code">Reservation</span> Entity and corresponding 
-                inventory, and set the <span class="inline-code">Order</span> Entity status to approved. All of these steps together form a Saga, 
-                a long running, evetually consistent business process. 
+                <span class="inline-service">Inventory</span> application to delete the <span class="inline-code">Reservation</span> 
+                Entity and corresponding inventory, and set the <span class="inline-code">Order</span> 
+                Entity status to approved. All of these steps together form a Saga, a long running, evetually consistent business process. 
             </p>
 
             <h2>Queues</h2>
