@@ -41,7 +41,7 @@
                 creates a <span class="inline-code">Reservation</span> Entity, and stores it in the database to keep track of the current status of the warehouse,
                 after which it notifies the <span class="inline-service">Orders</span> of its success. Then, the <span class="inline-service">Orders</span> service 
                 must reach out to the <span class="inline-service">Shipping</span> service to validate that the customer is within the allowed shipping range 
-                for the specific product. Only after which, can the <span class="inline-service">Orders</span> service then notify the 
+                for the specific product. Only after which, can the <span class="inline-service">Orders</span> service notify the 
                 <span class="inline-service">Inventory</span> application to delete the <span class="inline-code">Reservation</span> 
                 Entity and corresponding inventory, and set the <span class="inline-code">Order</span> 
                 Entity status to approved. All of these steps together form a Saga, a long running, evetually consistent business process. 
