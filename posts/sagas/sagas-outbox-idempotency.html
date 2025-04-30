@@ -139,7 +139,7 @@
                 has already been processed to avoid duplicated work. To detect duplicate messages, a unique key must be assigned to each new message. 
                 To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto incrementing 
                 primary key for each specific <span class='inline-code'>Order</span> Entity to the message it sends to the 
-                <span class='inline-service'>Inventory</span> Service. With this identifier, the <span class='inline-service'>Inventory</span> service 
+                <span class='inline-service'>Inventory</span> service. With this identifier, the <span class='inline-service'>Inventory</span> service 
                 is able to detect duplicated messages. It recieves the message, begins a transaction, 
                 reserves inventory, writes the incomming message to the outbox, and a response message to the InventoryReservation outbox table, to later be sent
                 to the Order service to continue on with the Saga
