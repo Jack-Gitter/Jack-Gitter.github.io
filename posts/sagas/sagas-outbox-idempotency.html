@@ -246,7 +246,8 @@
                 At a first glance, I felt pretty good about this. Once a message came in, I would write the <span class='inline-code'>Order</span> 
                 Entity and the <span class='inline-code'>InventoryReserve</span> message to the database. Then, every 5 seconds I would poll the outbox 
                 for new messages. If any were found, I would create a Saga with the needed steps, add it to the <span class='inline-code'>activeSagas</span>
-                array in the service class, and simply call the begin() method to kick off the first message and delete the message from the outbox. The saga
+                array in the service class, and simply call the <span class='inline-code'>begin()</span> method to kick off the first message 
+                and delete the message from the outbox. The saga
                 itself listened on the corresponding response queues for incomming messages. This seemed great, until I noticed a pretty big flaw.
             </p>
 
