@@ -265,7 +265,7 @@
             <p>
                 How can we remedy this? We need one sort of "global" listener per response queue, and we need to be able to route it to the specific Saga 
                 it belongs to. I decided to create a map, from the unique ID of each <span class='inline-code'>Order</span> Entity to saga and attach the 
-                ID to the message. When a message comes back, we will simply look up the saga in the map, and call next step. 
+                ID to the message. When a message comes back, we will simply look up the saga in the map and call the next step. 
 
 
 <div class="interface-title">ISagaOrchestrator Interface</div>
