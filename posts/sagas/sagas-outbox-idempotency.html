@@ -156,7 +156,7 @@
                 What happens if one of the steps of our Saga fails? For example, after reserving inventory, the <span class='inline-service'>Shipping</span> service 
                 says that we do not ship this particular product to the requested destination. We currently have 
                 <span class='inline-code'>InventoryReservation</span> and pending <span class='inline-code'>Order</span> entities in our other services, and 
-                they need to be removed. To do so, messages can be sent to each respective service to remove the corresponding resources, these messages
+                they need to be removed. To do so, messages can be sent to each respective service to remove the corresponding resources. These messages
                 are better known as compensating actions. For each step in a Saga that persists data or changes state, there must be a compensating action. 
                 If any step in the Saga fails, then all previously successful steps must be compensated. 
 
