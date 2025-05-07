@@ -90,15 +90,20 @@
 
 
             <h2>Context/Async/Thread Local Storage and Interceptors</h2>
-                Moving to more sophisticated solutions, we can take advantage of something called thread local storage. Also known
-                as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
-                This makes it possible to initilize a transaction and expose the database connection via thread local storage, and then 
-                have each individual repository check first if there is an avaialble connection in the thread local storage, and if not
-                simply grab a connection in the pool and use that one. In order to create the database connection in the first place, 
-                we need to know whether a method needs to use a transaction or not. This can be done with somethign called interceptors 
+                A more sophisticated solution of sharing a database connection amongst repositories involves utilizing thread local storage. 
+                Also known as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
+                This makes it possible to initilize a transaction and expose the database connection via thread local storage, and for each 
+                repository check if there is an avaialble connection in the thread local storage. If one exists, it will be used to execute 
+                any given query. If not, the repository can grab a connection from the pool. In order to create the initial database connection 
+                and start the transaction, it must be known whether or not a service method requires a transaction. 
+
+                <p>
+                Interceptors
                 in nestjs, but other frameworks have similar patterns. The idea is to decorate a method, and have code run before the 
                 handler for each business action. In our case, if we decorate our method with a transaction interceptor, we want to create
                 a transaction and populate the context local storage with that database connection, so that we can access it via our repositories
+                </p>
+                
 
                 This can be seen like so 
 
