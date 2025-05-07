@@ -25,13 +25,15 @@
                 transaction must be shared between multiple separate repositories. There are multiple methods to achieve this, but depending on how 
                 the underlying data is structured, it might not be necessary at all. 
             </p>
-            <h2>Avoid with DDD</h2>
+
+            <h2>DDD</h2>
             <p>
-                One of my other articles goes in depth about DDD and its usage of the repository pattern, although with a smart domain model
-                transactions which span repositories should be unnecessary. Repositories should fetch an aggregate root, which contains enough
+                With a smart domain model emphasized by <a href="https://Jack-Gitter.github.io/posts/ddd/ddd.html">DDD</a>
+                transactions which span repositories is actually a code smell. Repositories fetch aggregate roots, which contains enough
                 information to make decisions about business functionality which must be transactionally consistent. With this approach, 
-                if transactions must span mutliple repositories, the domain model must be reconsidered.
+                if transactions must span mutliple repositories the domain model must be reconsidered.
             </p>
+
             <h2>Naive passing of database connection from application layer</h2>
             <p>
                 One very simple approach to managing consistency across repositories is to make each repository method accept an optional 
