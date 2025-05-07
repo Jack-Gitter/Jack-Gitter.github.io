@@ -17,11 +17,11 @@
             <h1>How to Propegate Transactions Across Repositories</h1>
             <p class="date">May 7, 2025</p>
             <p>
-                When handling requests within a backend application, multiple database queries will typically need to occur in order to 
-                acomplish needed business functionality. Dealing with multiple queries to the database often means that a transaction will
-                need to be used in order to ensure data consistency. Assuming a basic three layer architecture, an application will typically have
-                some form of repositories or DAOs living in the infrastructure layer used to interface with databases. 
-                Often times business functionality spans multiple repositories, meaning that a singular database connection which starts a
+                Often times when handling requests within a backend application, multiple database queries need to occur in order to 
+                acomplish some business functionality. Dealing with multiple queries to the database often means that a transaction is 
+                required in order to ensure data consistency. Assuming a basic three layer architecture, an application typically has
+                some form of repositories or DAO living in the infrastructure layer which is used to interface with databases. 
+                When utilizing multiple repositories within a single request, one database connection which starts a
                 transaction must be shared between multiple separate repositories. There are multiple methods to achieve this, but depending on how 
                 the underlying data is structured, it might not be necessary at all. 
             </p>
