@@ -139,7 +139,6 @@
 export class InventoryDAO {
   private queryRunner: EntityManager;
   constructor(cls: ClsService, dataSource: DataSource) {
-    console.log('in inventory dao');
   constructor(
     private cls: ClsService,
     private dataSource: DataSource,
@@ -201,7 +200,8 @@ Injectable();
 export class TransactionManager {
   constructor(private pool: Pool) {}
 
-  // the end user must call repository.close() when done with use on transaction, that way the connection is closed!
+  /* the end user must call repository.close() when done with use 
+  on transaction, that way the connection is closed! */
   async getDAOsForTransaction(
     ...constructors: DAO<any>[]
   ): Promise<[any[], PoolClient]> {
