@@ -34,12 +34,12 @@
                 if transactions must span mutliple repositories the domain model must be reconsidered.
             </p>
 
-            <h2>Naive passing of database connection from application layer</h2>
+            <h2>Repository Functions Accepting DB Connections</h2>
             <p>
-                One very simple approach to managing consistency across repositories is to make each repository method accept an optional 
-                database connection. If one is provided, it will use that for the query to the database, otherwise it will grab a connection
-                from the pool that it has access to and make an isolated request. The following is some basic golang code that I wrote for a 
-                distributed system backend application for a website that mimics the functionality of letterboxdd, but for music
+                The most naive approach to managing consistency across repositories is have each repository method accept an optional 
+                database connection. If one is provided, the method will utilize it to query to the database, and otherwise it can grab a connection
+                from a database pool to make an isolated request. The following example comes from a golang distributed backend system 
+                for a website that mimics the functionality of letterboxd, but for music.
 
   <pre class="prettyprint lang-go">func(p *PostsDAO) LikePost(executor db.QueryExecutor, 
                            spotifyID string, 
