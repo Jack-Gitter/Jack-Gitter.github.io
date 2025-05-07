@@ -205,17 +205,17 @@ export class InventoryService {
             <h2>Unit of Work Pattern</h2>
 
             <p>
-            The unit of work pattern is a way to abstract all functionality that occurs within the database across the application, 
-            to make changes across repositories and then commit them all at once. At its core, the unit of work pattern
-            manages request scoped instance of repositories. The unit of work class starts a database transaction and provides the 
-            request scoped repositories with an instance of the database connection using the transaction. There are methods on the 
-            unit of work class to fetch these repositories, and then there is also a method to commit or rollback the overarching transaction. 
-            This way, the unit of work is injected into services, can be mocked, encapsulates the database transaction information to reduce
-            leaky abstractions, and allows for multiple repositories to participate in the same transaction. It can also be implemented 
-            a bit more "raw", returning the connection to the user and having them manually begin, commit, and rollback connections. This does
-            leak the abstraction, but it was the implementation that I went with beacuse I was inspired by 
+            The Unit of Work pattern is a way to abstract all functionality that occurs within the database across the lifetime of a request. 
+            It allows an application to make changes across multiple different repositories commit them all at once. At its core, the Unit of Work 
+            pattern manages request scoped instance of repositories. Upon a new request, it starts a database transaction and provides the 
+            request scoped repositories with an instance of the database connection. Methods exist on the Unit of Work class to fetch these 
+            repositories. There are also typically methods to commit and rollback the overarching transaction shared between repositories. 
+            This implementation has many benefits. The Unit of Work is injected into services so it can be mocked for testing, it eliminates the leaky 
+            abstraction by encapsulating the database connection, hiding it away from the application service. It can also be implemented 
+            in a slightly different manner, returning the connection to the user and having them manually begin, commit, and rollback connections. This does
+            leak the abstraction, but it was the implementation that I went with as I was inspired by 
     <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>Typeorm.</a>
-            We can see here that I've created my unit of work class, called transaction manager
+            The Unit of Work class is implemented below as the <span class='inline-code'>TransactionManager</span>
             </p>
 
 
@@ -242,8 +242,8 @@ export class TransactionManager {
 }
             </pre>
 
-            it, given the names of repositories, will instantiate the list of repositories with the newly grabbed connection from the pool. 
-            it then returns the repositories and the connection to the user, to use. It can be used like so
+            Given the names of repositories, the <span class='inline-code'>TransactionManager</span> instantiates the list of repositories with the 
+            individual connection taken from the pool. It returns the repositories and the connection to the user.
 
 <pre class="prettyprint lang-typescript">@Injectable()
 export class OrdersService {
@@ -289,13 +289,16 @@ export class OrdersService {
 
             </pre>
 
-            Here I've got a class which injects the transaction manager, grabs repositories from it, and then starts a transaction. 
-            it then executes multiple repository functions all which utilize the same transaction, and then commits or rollsback. It also 
-            releases the connection back to the pool
+            The <span class='inline-code'>OrdersService</span>injects the <span class='inline-code'>TransactionManager</span>, fetches repositories 
+            from it, and then starts a transaction. It executes multiple repository functions all which utilize the same transaction, 
+            and then performs a commit or rollback accordingly. It also releases the connection back to the pool.
             
             <p>
-            Here are links to the repos <a href="https://github.com/Jack-Gitter/tunes">golang repo</a>,  
-            <a href="https://github.com/Jack-Gitter/TransactionInterceptor">ts repo</a>
+            Two example repos were used in this article. The first is a <a href="https://github.com/Jack-Gitter/tunes">Golang repository</a>
+            which is a distributed backend service. The second is an isolated 
+            <a href="https://github.com/Jack-Gitter/TransactionInterceptor">NestJS repository</a>specifically created to examine this
+            problem
+            
             </p>
         </article>
     </main>
