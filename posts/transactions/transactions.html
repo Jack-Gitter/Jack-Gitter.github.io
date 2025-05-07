@@ -135,8 +135,7 @@
 
   DAO accessing the cls in order to check if a database connection exists before grabbing one from the pool
 
-<pre class="prettyprint lang-typescript">
-  @Injectable({ scope: Scope.REQUEST })
+<pre class="prettyprint lang-typescript">@Injectable({ scope: Scope.REQUEST })
 export class InventoryDAO {
   private queryRunner: EntityManager;
   constructor(cls: ClsService, dataSource: DataSource) {
@@ -161,9 +160,8 @@ export class InventoryDAO {
 
   usage of the decorator
 
-<pre class="prettyprint lang-typescript">
-@Controller('orders')
-  @UseInterceptors(TransactionInterceptor)
+<pre class="prettyprint lang-typescript">@Controller('orders')
+@UseInterceptors(TransactionInterceptor)
 @UseInterceptors(TransactionInterceptor)
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
@@ -175,11 +173,108 @@ export class OrdersController {
   }
 }
   </pre>
+  This is good, but I wanted a more foundational understanding of how this could be achieved, 
+  and I happened to stumble upon the unit of work pattern
+
 
             <h2>Unit of work pattern</h2>
+
+
+            The unit of work pattern is a way to abstract all functionality that occurs within the database across the application, 
+            to make changes across repositories and then commit them all at once. At its core, the unit of work pattern
+            manages request scoped instance of repositories. The unit of work class starts a database transaction and provides the 
+            request scoped repositories with an instance of the database connection using the transaction. There are methods on the 
+            unit of work class to fetch these repositories, and then there is also a method to commit or rollback the overarching transaction. 
+            This way, the unit of work is injected into services, can be mocked, encapsulates the database transaction information to reduce
+            leaky abstractions, and allows for multiple repositories to participate in the same transaction. It can also be implemented 
+            a bit more "raw", returning the connection to the user and having them manually begin, commit, and rollback connections. This does
+            leak the abstraction, but it was the implementation that I went with beacuse I was inspired by <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>typeorm.</a>
+            We can see here that I've created my unit of work class, called transaction manager
+
+
+<pre class="prettyprint lang-typescript">
+import { Injectable } from '@nestjs/common';
+import { Pool, PoolClient } from 'pg';
+import { DAO } from '../types';
+
+Injectable();
+export class TransactionManager {
+  constructor(private pool: Pool) {}
+
+  // the end user must call repository.close() when done with use on transaction, that way the connection is closed!
+  async getDAOsForTransaction(
+    ...constructors: DAO<any>[]
+  ): Promise<[any[], PoolClient]> {
+    const connection = await this.pool.connect();
+    return [
+      constructors.map((constructor) => new constructor(connection)),
+      connection,
+    ];
+  }
+}
+            </pre>
+
+            it, given the names of repositories, will instantiate the list of repositories with the newly grabbed connection from the pool. 
+            it then returns the repositories and the connection to the user, to use. It can be used like so
+
+<pre class="prettyprint lang-typescript">@Injectable()
+export class OrdersService {
+  constructor(
+    private paymentService: PaymentService,
+    private inventoryService: InventoryService,
+    private invoiceService: InvoiceService,
+    private transactionManager: TransactionManager,
+  ) {}
+  async placeOrder(itemName: string, user: string) {
+    const price = await this.inventoryService.getPrice(itemName);
+    await this.paymentService.checkAndChargePayment(user, price);
+    await this.inventoryService.checkAndReduceStock(itemName);
+    await this.invoiceService.provideInvoice(user, price);
+  }
+  async placeOrderTransaction(itemName: string, user: string) {
+    const [daosForTransaction, connection] =
+      await this.transactionManager.getDAOsForTransaction(
+        InventoryDAO,
+        InvoiceDAO,
+        AccountBalanceDAO,
+      );
+
+    const inventoryService = new InventoryService(daosForTransaction[0]);
+    const invoiceService = new InvoiceService(daosForTransaction[1]);
+    const paymentService = new PaymentService(daosForTransaction[2]);
+
+    connection.query('BEGIN TRANSACTION');
+
+    try {
+      const price = await this.inventoryService.getPrice(itemName);
+      await paymentService.checkAndChargePayment(user, price);
+      await inventoryService.checkAndReduceStock(itemName);
+      await invoiceService.provideInvoice(user, price);
+    } catch (e: unknown) {
+      connection.query('ROLLBACK');
+      throw e;
+    } finally {
+      connection.release();
+    }
+  }
+}
+            </pre>
+
+            here I've got a class which injects the transaction manager, grabs repositories from it, and then starts a transaction. 
+            it then executes multiple repository functions all which utilize the same transaction, and then commits or rollsback. It also 
+            releases the connection back to the pool
             
             <p>
-            <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
+            Here are links to the repos 
+            <ul>
+                <li>
+                    <a href="https://github.com/Jack-Gitter/tunes">golang repo</a>
+                </li>
+                <li>
+                    <a href="https://github.com/Jack-Gitter/TransactionInterceptor">ts repo</a>
+                </li>
+            </ul>
+            <a href="https://github.com/yourusername/repository">/a>
             </p>
         </article>
     </main>
