@@ -82,10 +82,10 @@
 }
 </pre>
                 
-                As you can see, the first argument to the function is a query exectutor, and interface that I created which wraps
-                a database connection so that you can swap out the underlying database connection without any issues.
-                This might seem ok, although it creates unnecssary complexity within the application layer, meaing that the application layer 
-                must manage the database connection which leads into a leaky abstraction between the application layer and infrastructure layer
+                The first argument to the function is a <span class='inline-code'>db.QueryExectutor</span>, an interface that wraps
+                a database connection so that the underlying database connection can be replaced with minimal changes.
+                This implementation works, although it creates unnecssary complexity within the application layer. Services 
+                must manage the database connection which causes an abstraction leak between the application layer and infrastructure layer.
 
             </p>
             <h2>Context/Async/Thread local storage and interceptors (required request scoped repositories for singleton apps)</h2>
