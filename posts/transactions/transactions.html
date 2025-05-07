@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactional Consistency In Frameworks</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Transactional Consistency In Frameworks</h1>
+    </header>
+    <main>
+        <article>
+            <h1>How to Propegate Transactions Across Repositories</h1>
+            <p class="date">May 7, 2025</p>
+            <p>
+                Within a backend application, most business functionality will need to occur within a database transaction. 
+                With the typical basic three layer architecture, you will have some sort of repositories living in the 
+                infrasturcture layer which interface with databases. Often times business functionality
+                spans multiple repositories, meaning that each query to the database need to be encompassed in an overall
+                transaction. There are multiple ways to share a singular database connection across repositories involved in a request, 
+                so that they can all be encompassed in a transaction.
+            </p>
+            <h2>Avoid with DDD</h2>
+            <p>
+                One of my other articles goes in depth about DDD and its usage of the repository pattern, although with a smart domain model
+                transactions which span repositories should be unnecessary. Repositories should fetch an aggregate root, which contains enough
+                information to make decisions about business functionality which must be transactionally consistent. With this approach, 
+                if transactions must span mutliple repositories, the domain model must be reconsidered.
+            </p>
+            <h2>Naive passing of database connection from application layer</h2>
+            <p>
+                One very simple approach to managing consistency across repositories is to make each repository method accept an optional 
+                database connection. If one is provided, it will use that for the query to the database, otherwise it will grab a connection
+                from the pool that it has access to and make an isolated request. The following is some basic golang code that I wrote for a 
+                distributed system backend application for a website that mimics the functionality of letterboxdd, but for music
+
+  <pre class="prettyprint lang-go">func(p *PostsDAO) LikePost(executor db.QueryExecutor, 
+                           spotifyID string, 
+                           posterSpotifyID string, 
+                           songID string) error {
+    query := 
+        `INSERT INTO post_votes 
+            (voterspotifyid, posterspotifyid, postsongid, createdat, updatedat, liked) 
+        VALUES 
+            ($1, $2, $3, $4, $5, $6) 
+        ON CONFLICT 
+            (voterspotifyid, posterspotifyid, postsongid) 
+        DO UPDATE SET 
+            updatedat=$5, liked=$6`
+
+    res, err := executor.Exec(query,
+        spotifyID,
+        posterSpotifyID,
+        songID,
+        time.Now().UTC(),
+        time.Now().UTC(),
+        true)
+
+    if err != nil {
+        return customerrors.WrapBasicError(err)
+    }
+
+    rows, err := res.RowsAffected()
+
+    if err != nil {
+        return customerrors.WrapBasicError(err)
+    }
+
+    if rows < 1 {
+        return customerrors.WrapBasicError(sql.ErrNoRows)
+    }
+
+    return nil
+
+}
+</pre>
+                
+                As you can see, the first argument to the function is a query exectutor, and interface that I created which wraps
+                a database connection so that you can swap out the underlying database connection without any issues.
+                This might seem ok, although it creates unnecssary complexity within the application layer, meaing that the application layer 
+                must manage the database connection which leads into a leaky abstraction between the application layer and infrastructure layer
+
+            </p>
+            <h2>Context/Async/Thread local storage and interceptors (required request scoped repositories for singleton apps)</h2>
+                Moving to more sophisticated solutions, we can take advantage of something called thread local storage. Also known
+                as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
+                This makes it possible to initilize a transaction and expose the database connection via thread local storage, and then 
+                have each individual repository check first if there is an avaialble connection in the thread local storage, and if not
+                simply grab a connection in the pool and use that one. In order to create the database connection in the first place, 
+                we need to know whether a method needs to use a transaction or not. This can be done with somethign called interceptors 
+                in nestjs, but other frameworks have similar patterns. The idea is to decorate a method, and have code run before the 
+                handler for each business action. In our case, if we decorate our method with a transaction interceptor, we want to create
+                a transaction and populate the context local storage with that database connection, so that we can access it via our repositories
+
+                This can be seen like so 
+
+
+
+  <pre class="prettyprint lang-typescript">export class TransactionInterceptor implements NestInterceptor {
+  constructor(
+    private dataSource: DataSource,
+    private cls: ClsService,
+  ) {}
+
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    queryRunner.connect();
+    queryRunner.startTransaction();
+    const manager = queryRunner.manager;
+    this.cls.set('connection', manager);
+    return next.handle().pipe(
+      concatMap(async (data) => {
+        await queryRunner.commitTransaction();
+        return data;
+      }),
+      catchError(async (error) => {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      }),
+      finalize(async () => {
+        await queryRunner.release();
+      }),
+    );
+  }
+}
+  </pre>
+
+
+  DAO accessing the cls in order to check if a database connection exists before grabbing one from the pool
+
+  <pre>
+  @Injectable({ scope: Scope.REQUEST })
+export class InventoryDAO {
+  private queryRunner: EntityManager;
+  constructor(cls: ClsService, dataSource: DataSource) {
+    console.log('in inventory dao');
+  constructor(
+    private cls: ClsService,
+    private dataSource: DataSource,
+  ) {
+    this.queryRunner = cls.get('connection') ?? dataSource.manager;
+  }
+
+  // return the id of the item if in stock
+  async getStock(itemName: string): Promise<number> {
+    this.queryRunner = this.cls.get('connection') ?? this.dataSource.manager;
+    const res = await this.queryRunner.query<Inventory>(
+      `SELECT count(*) FROM inventory WHERE "itemName" = $1`,
+      [itemName],
+    );
+    return res[0].count;
+  }
+  </pre>
+
+  usage of the decorator
+
+  <pre>
+@Controller('orders')
+  @UseInterceptors(TransactionInterceptor)
+@UseInterceptors(TransactionInterceptor)
+export class OrdersController {
+  constructor(private ordersService: OrdersService) {}
+
+  @Post()
+  async placeOrder() {
+    return await this.ordersService.placeOrder('test', 'blah', 1);
+    return await this.ordersService.placeOrder('test', 'jack', 1000);
+  }
+}
+  </pre>
+
+            <h2>Unit of work pattern</h2>
+            
+            <p>
+            <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">JSWE at Sentinel Group</span>
+    </footer>
+</body>
+</html>
