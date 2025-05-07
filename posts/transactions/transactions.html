@@ -90,24 +90,22 @@
 
 
             <h2>Context/Async/Thread Local Storage and Interceptors</h2>
+            <p>
                 A more sophisticated solution of sharing a database connection amongst repositories involves utilizing thread local storage. 
                 Also known as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
                 This makes it possible to initilize a transaction and expose the database connection via thread local storage, and for each 
                 repository check if there is an avaialble connection in the thread local storage. If one exists, it will be used to execute 
                 any given query. If not, the repository can grab a connection from the pool. In order to create the initial database connection 
                 and start the transaction, it must be known whether or not a service method requires a transaction. 
+            </p>
 
                 <p>
-                Interceptors
-                in nestjs, but other frameworks have similar patterns. The idea is to decorate a method, and have code run before the 
-                handler for each business action. In our case, if we decorate our method with a transaction interceptor, we want to create
-                a transaction and populate the context local storage with that database connection, so that we can access it via our repositories
+                Interceptors allow for code execution before service methods. Most backend frameworks have some form of interceptors, 
+                although for this example I'll be using NestJS. Interceptors are implemented as decorators, and can help to grab a database connection
+                from a pool, begin a transaction, and store the connection into context local storage. The connection can then be accessed by the 
+                repositories used in the method itself. The Interceptor manages the entire lifecyle of the transaction, starting the transaction and 
+                observing the http response. If an error is detected, it will rollback the transaction.
                 </p>
-                
-
-                This can be seen like so 
-
-
 
   <pre class="prettyprint lang-typescript">export class TransactionInterceptor implements NestInterceptor {
   constructor(
@@ -141,9 +139,6 @@
 }
   </pre>
 
-
-  DAO accessing the cls in order to check if a database connection exists before grabbing one from the pool
-
 <pre class="prettyprint lang-typescript">@Injectable({ scope: Scope.REQUEST })
 export class InventoryDAO {
   private queryRunner: EntityManager;
@@ -166,23 +161,44 @@ export class InventoryDAO {
   }
   </pre>
 
-  usage of the decorator
+<pre class="prettyprint lang-typescript">export class OrdersService {
+  constructor(
+    private paymentService: PaymentService,
+    private inventoryService: InventoryService,
+    private invoiceService: InvoiceService,
+  ) {}
 
-<pre class="prettyprint lang-typescript">@Controller('orders')
-@UseInterceptors(TransactionInterceptor)
-@UseInterceptors(TransactionInterceptor)
-export class OrdersController {
-  constructor(private ordersService: OrdersService) {}
-
-  @Post()
-  async placeOrder() {
-    return await this.ordersService.placeOrder('test', 'blah', 1);
-    return await this.ordersService.placeOrder('test', 'jack', 1000);
+  @UseInterceptors(TransactionInterceptor)
+  async placeOrder(itemName: string, user: string, price: number) {
+    await this.inventoryService.checkAndReduceStock(itemName);
+    await this.paymentService.checkAndChargePayment(user, price);
+    await this.invoiceService.provideInvoice(user, price);
   }
 }
-  </pre>
-  This is good, but I wanted a more foundational understanding of how this could be achieved, 
-  and I happened to stumble upon the unit of work pattern
+</pre>
+
+
+<pre class="prettyprint lang-typescript">
+@Injectable()
+export class InventoryService {
+  constructor(private inventoryDAO: InventoryDAO) {}
+  async checkAndReduceStock(itemName: string) {
+    const stock = await this.inventoryDAO.getStock(itemName);
+    if (stock <= 0) {
+      throw new NotFoundException(
+        'unable to process request. Not enough inventory',
+      );
+    }
+    this.inventoryDAO.reduceStock(itemName);
+  }
+}
+</pre>
+
+  <p>
+  The individual services utilize repositories in order to interact with the database, and those repositories will utilize the shared connection
+  created by the interceptor. With frameworks that implement decorators such as Springboot's @Transactional(), this is typically 
+  how it is implemented. However I wanted a more foundational understanding of how this could be achieved, and discovered the Unit of Work Pattern.
+  </p>
 
 
             <h2>Unit of work pattern</h2>
@@ -267,9 +283,10 @@ export class OrdersService {
     }
   }
 }
+
             </pre>
 
-            here I've got a class which injects the transaction manager, grabs repositories from it, and then starts a transaction. 
+            Here I've got a class which injects the transaction manager, grabs repositories from it, and then starts a transaction. 
             it then executes multiple repository functions all which utilize the same transaction, and then commits or rollsback. It also 
             releases the connection back to the pool
             
