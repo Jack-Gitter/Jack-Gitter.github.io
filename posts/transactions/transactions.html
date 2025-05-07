@@ -135,7 +135,7 @@
 
   DAO accessing the cls in order to check if a database connection exists before grabbing one from the pool
 
-  <pre>
+<pre class="prettyprint lang-typescript">
   @Injectable({ scope: Scope.REQUEST })
 export class InventoryDAO {
   private queryRunner: EntityManager;
@@ -161,7 +161,7 @@ export class InventoryDAO {
 
   usage of the decorator
 
-  <pre>
+<pre class="prettyprint lang-typescript">
 @Controller('orders')
   @UseInterceptors(TransactionInterceptor)
 @UseInterceptors(TransactionInterceptor)
