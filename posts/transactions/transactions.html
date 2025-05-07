@@ -202,9 +202,9 @@ export class InventoryService {
   </p>
 
 
-            <h2>Unit of work pattern</h2>
+            <h2>Unit of Work Pattern</h2>
 
-
+            <p>
             The unit of work pattern is a way to abstract all functionality that occurs within the database across the application, 
             to make changes across repositories and then commit them all at once. At its core, the unit of work pattern
             manages request scoped instance of repositories. The unit of work class starts a database transaction and provides the 
@@ -213,8 +213,10 @@ export class InventoryService {
             This way, the unit of work is injected into services, can be mocked, encapsulates the database transaction information to reduce
             leaky abstractions, and allows for multiple repositories to participate in the same transaction. It can also be implemented 
             a bit more "raw", returning the connection to the user and having them manually begin, commit, and rollback connections. This does
-            leak the abstraction, but it was the implementation that I went with beacuse I was inspired by <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>typeorm.</a>
+            leak the abstraction, but it was the implementation that I went with beacuse I was inspired by 
+    <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>Typeorm.</a>
             We can see here that I've created my unit of work class, called transaction manager
+            </p>
 
 
 <pre class="prettyprint lang-typescript">
