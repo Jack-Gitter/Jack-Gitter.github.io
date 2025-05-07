@@ -86,9 +86,10 @@
                 a database connection so that the underlying database connection can be replaced with minimal changes.
                 This implementation works, although it creates unnecssary complexity within the application layer. Services 
                 must manage the database connection which causes an abstraction leak between the application layer and infrastructure layer.
-
             </p>
-            <h2>Context/Async/Thread local storage and interceptors (required request scoped repositories for singleton apps)</h2>
+
+
+            <h2>Context/Async/Thread Local Storage and Interceptors</h2>
                 Moving to more sophisticated solutions, we can take advantage of something called thread local storage. Also known
                 as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
                 This makes it possible to initilize a transaction and expose the database connection via thread local storage, and then 
