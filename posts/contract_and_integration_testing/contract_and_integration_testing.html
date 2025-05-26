@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract and Integration Testing with Prism and TestContainers</title>
     <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script> 
 </head>
 <body>
     <header>
@@ -42,7 +43,7 @@
                 brutally simple to focus on the testing aspect.
                 
 
-        <span>
+    <pre class='prettyprint lang-typescript'>
 @Controller('homes')
 export class HomesController {
   constructor(private homesService: HomesService) {}
@@ -69,10 +70,9 @@ export class HomesController {
       reserveHomeDto.zip,
     );
   }
-}
-        </span>
+}</pre>
 
-        <span>
+    <pre class='prettyprint lang-typescript'>
 @Injectable()
 export class HomesService {
   constructor(
@@ -106,16 +106,307 @@ export class HomesService {
       throw new NotFoundException('Home does not exist');
     }
   }
-}
-        </span>
+}</pre>
 
-            </p>
+    <p>
+    There are a couple of simple endopoints, mainly just fetching data from a database and returning it directly to the user, with no business logic.
+    </p>
+
             <h1>Databases and Running Migrations on TestContainers</h1>
             <p>
-            </p>
+            We are using typeorm to manage database connections, and entities/migrations. In
+            We have a singular homes entity that looks liek this
+
+
+<pre class='prettyprint lang-typescript'>
+@Entity()
+export class Home {
+  constructor(
+    street: string,
+    city: string,
+    zip: string,
+    pricePerNight: number,
+  ) {
+    this.street = street;
+    this.city = city;
+    this.zip = zip;
+    this.pricePerNight = pricePerNight;
+  }
+
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar', name: 'street', nullable: false })
+  public street: string;
+
+  @Column({ type: 'varchar', name: 'city', nullable: false })
+  public city: string;
+
+  @Column({ type: 'varchar', name: 'zip', nullable: false })
+  public zip: string;
+
+  @Column({ type: 'int', name: 'price_per_night', nullable: false })
+  public pricePerNight: number;
+
+  toJson() {
+    return {
+      id: this.id,
+      street: this.street,
+      city: this.city,
+      zip: this.zip,
+      pricePerNight: this.pricePerNight,
+    };
+  }
+}</pre>
+
+
+<p>
+In order to actually generate the proper database tables, we have typeorm generate migraitons for us automatically
+</p>
+
+<pre class='prettyprint lang-typescript'>
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class Init1748110788902 implements MigrationInterface {
+  name = 'Init1748110788902';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `CREATE TABLE "home" ("id" SERIAL NOT NULL, "street" character varying NOT NULL, "city" character varying NOT NULL, "zip" character varying NOT NULL, "price_per_night" integer NOT NULL, CONSTRAINT "PK_012205783b51369c326a1ad4a64" PRIMARY KEY ("id"))`,
+    );
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "home"`);
+  }
+}
+</pre>
+<p>
+These migrations are what runs against the database upon application startup, to ensure that the database is in a consistent state and allows our application to interact with it properly. When runnign tests, we want our database schema to be the same as the schme that we have in our real database. As such,
+we can utilize the same typeorm migrations on our TestContainers database to ensure that no matter what, it is in the same exact state that we expect
+our real database to be in
+</p>
+
+<pre class='prettyprint lang-typescript'>
+describe(HomesService.name, () =&gt {
+  jest.setTimeout(60000);
+  let homesService: HomesService;
+  let container: StartedPostgreSqlContainer;
+  let homeRepo: Repository&ltHome&gt;
+  let datasource: DataSource;
+
+  beforeAll(async () =&gt {
+    container = await new PostgreSqlContainer()
+      .withDatabase('contract_testing')
+      .withUsername('postgres')
+      .withPassword('postgres')
+      .start();
+  });
+
+  afterAll(async () =&gt {
+    await container.stop();
+  });
+
+  beforeEach(async () =&gt {
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'postgres',
+          host: container.getHost(),
+          port: container.getPort(),
+          username: container.getUsername(),
+          password: container.getPassword(),
+          database: container.getDatabase(),
+          migrationsRun: true,
+          entities: [Home],
+          migrations: [Init1748110788902],
+        }),
+        TypeOrmModule.forFeature([Home]),
+      ],
+      controllers: [],
+      providers: [HomesService],
+    }).compile();
+
+    homesService = moduleRef.get(HomesService);
+    homeRepo = moduleRef.get(getRepositoryToken(Home));
+    datasource = moduleRef.get(DataSource);
+  });
+
+  afterEach(async () =&gt {
+    await homeRepo.deleteAll();
+  });
+})</pre>
+    <p>
+        our test container setup begins in the beforeall, so we set up our docker container which runs postgres
+        we the initialize our typeorm connection, and have migrationsrun set to true which auto runs migrations on the connected database
+        we use the container connection information to supply to typeorm, so that our typeorm instance is connected to our database
+        then the migrations run, same as they would on our real database and our test container postgres instance is as exepected
+    </p>
             <h1>Seeding TestContainers</h1>
             <p>
-            </p>
+                With the database set up, the next thing to do would be to seed it. There are a number of different ways this could happen.
+                One would be to seed on a per-test basis, making it extremely clear what we would want the outcome of our tests to return
+
+<pre class='prettyprint lang-typescript'>
+
+    it('Fetches homes properly', async () =&gt {
+      const home = new Home('Street', 'City', 'Zip', 123);
+      await homeRepo.save([home]);
+      const homes = await homesService.getHomes();
+      expect(homes).toMatchObject([home.toJson()]);
+    });
+                </pre>
+
+                <p>
+                Another way would be to have a seed script initialize the database with random data. In order to develop locally, we have developed 
+                a seed script that can run on a local database to populate some example homes. We can use this also on our test container, so that
+                the seeding script works both for testing and local development
+                </p>
+
+                <pre class='prettyprint lang-typescript'>
+                    it('properly fetches a lot of homes', async () => {
+                      await runSeed(datasource);
+                      const homes = await homesService.getHomes();
+                      expect(homes).toHaveLength(20);
+                    });
+                </pre>
+
+                
+                <pre class='prettyprint lang-typescript'>
+const streets = [
+  '123 Oak Street',
+  '456 Maple Avenue',
+  '789 Pine Lane',
+  '321 Elm Drive',
+  '654 Cedar Court',
+  '987 Birch Boulevard',
+  '147 Willow Way',
+  '258 Spruce Street',
+  '369 Aspen Avenue',
+  '741 Hickory Hill',
+  '852 Dogwood Drive',
+  '963 Magnolia Manor',
+  '159 Cherry Circle',
+  '357 Poplar Place',
+  '486 Sycamore Street',
+];
+
+const cities = [
+  'New York',
+  'Los Angeles',
+  'Chicago',
+  'Houston',
+  'Phoenix',
+  'Philadelphia',
+  'San Antonio',
+  'San Diego',
+  'Dallas',
+  'San Jose',
+  'Austin',
+  'Jacksonville',
+  'Fort Worth',
+  'Columbus',
+  'Charlotte',
+  'San Francisco',
+  'Indianapolis',
+  'Seattle',
+  'Denver',
+  'Boston',
+];
+
+const zipCodes = [
+  '10001',
+  '90210',
+  '60601',
+  '77001',
+  '85001',
+  '19101',
+  '78201',
+  '92101',
+  '75201',
+  '95101',
+  '73301',
+  '32099',
+  '76101',
+  '43085',
+  '28201',
+  '94102',
+  '46201',
+  '98101',
+  '80202',
+  '02101',
+];
+
+function getRandomElement&ltT&gt(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function generateRandomPrice(): number {
+  // Generate prices between $50 and $500 per night
+  return Math.floor(Math.random() * 450) + 50;
+}
+
+async function seedHomes(ds: DataSource, count: number = 10)  {
+  const homeRepository = ds.getRepository(Home);
+
+  console.log(`Seeding ${count} homes...`);
+
+  const homes: Home[] = [];
+
+  for (let i = 0; i &lt count; i++) {
+    const home = new Home(
+      getRandomElement(streets),
+      getRandomElement(cities),
+      getRandomElement(zipCodes),
+      generateRandomPrice(),
+    );
+
+    homes.push(home);
+  }
+
+  try {
+    console.log('here!');
+    await homeRepository.save(homes);
+    console.log(`Successfully seeded ${count} homes!`);
+  } catch (error) {
+    console.error('Error seeding homes:', error);
+    throw error;
+  }
+}
+
+export async function runSeed(ds: DataSource) {
+  try {
+    if (!ds.isInitialized) {
+      await ds.initialize();
+    }
+    console.log('Database connection established');
+
+    // Check if homes already exist
+    const homeRepository = ds.getRepository(Home);
+    const existingCount = await homeRepository.count();
+
+    if (existingCount > 0) {
+      console.log(
+        `Database already has ${existingCount} homes. Skipping seed.`,
+      );
+      return;
+    }
+
+    // Seed 15 random homes
+    await seedHomes(ds, 20);
+  } catch (error) {
+    console.error('Seeding failed:', error);
+  }
+}
+
+// Run the seed if this file is executed directly
+if (require.main === module) {
+  runSeed(dataSource).catch(console.error);
+}
+        </pre>
+        <p>
+        With these approaches, we can effectively test the communication between our application and a real database in a repeatable, maintainable manner
+        </p>
             <h1>Contract Testing</h1>
             <p>
             </p>
