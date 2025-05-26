@@ -409,27 +409,235 @@ if (require.main === module) {
         </p>
             <h1>Contract Testing</h1>
             <p>
+            Contract esting is an easy way to screen any basic initial problems that would occur when communicating with another application over 
+            a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that we would
+            want to be able to test the interaction between the two. Integration tests that require another whole instance of the application running
+            are robust and complex, especially if the dependant application has many dependencies itslef. This is where contract testing comes in.
+            Contract testing is a way to ensure that our service implements the contract of the service we are calling properly; making HTTP requests 
+            with the proper path parameters, the propery types in the JSON body, etc. This can all occur without needing a full instance of an application 
+            running. A service can simply generate its contract, a definintion of what it expects to recieve, distribute it to other services, and then
+            those services can run tests using the contract
             </p>
             <h1>OpenAPI Specification</h1>
             <p>
+            One common API contract format is the openAPI standard format. This is either a YAML or JSON file which describes in varying levels of detail
+            what the API expects, potential response codes, and potential responses. These can be used by applications for contract testing. There 
+            are many tools to generate openAPI specifications for existing APIs, but here is an example of the way that we are doing it in NestJS
             </p>
-            <h1>Profiles Service</h1>
-            <p>
-            </p>
+
+
             <h1>Contract Generation</h1>
+            <pre>
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe({transform:true}));
+
+  const config = new DocumentBuilder()
+    .setTitle('Contract Testing')
+    .setDescription('Contract Testing Application')
+    .setVersion('1.0')
+    .addTag('homes');
+
+  await OpenApiNestFactory.configure(app, config, {
+    webServerOptions: { enabled: true, path: 'api-docs' },
+    fileGeneratorOptions: { enabled: true, outputFilePath: './openapi.json' },
+  });
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();
+            </pre>
+
             <p>
+            With this approach, every time the application runs it generates an openAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
             </p>
+            <pre>
+{"openapi":"3.0.0","paths":{"/homes":{"get":{"operationId":"getHomes","parameters":[],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Home"}}}}}},"tags":["Homes"]}},"/homes/{city}/{street}/{zip}":{"get":{"operationId":"findHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Home"}}}}},"tags":["Homes"]}},"/homes/reservation/{city}/{street}/{zip}":{"post":{"operationId":"reserveHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":""}},"tags":["Homes"]}}},"info":{"title":"Contract Testing","description":"Contract Testing Application","version":"1.0","contact":{}},"tags":[{"name":"homes","description":""}],"servers":[],"components":{"schemas":{"Home":{"type":"object","properties":{"id":{"type":"number"},"street":{"type":"string"},"city":{"type":"string"},"zip":{"type":"string"},"pricePerNight":{"type":"number"}},"required":["id","street","city","zip","pricePerNight"]}}}}
+            </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
+            In order to utilize the openapi specification to its full extent, there are services such as Prism, which will spin up http servers based on 
+            existing openAPI specifications. These servers can be as simple as serving static content that you define in your openAPI spec for each 
+            response, or even generating dynamic content based on the specification provided. Prism provides a docker container which allows for 
+            easily spinning up an instance of an HTTP server based on a spec
+
             </p>
-            <h1>Static vs Dynamic Responses with Prism</h1>
+
+            <pre>
+                    services:
+                      prism:
+                        profiles: ['prism']
+                        image: stoplight/prism
+                        command: 'mock -d -h 0.0.0.0 --json-schema-faker-fillProperties=false /tmp/homesapi.json'
+                        volumes:
+                          - ./homesapi.json:/tmp/homesapi.json:ro
+                        ports:
+                          - '4010:4010'
+            </pre>
+
             <p>
+            In this example, we are running the prism command with -d, meaining we want it to generate dynamic responses for us. We run it on host 0.0.0.0,
+            and we provide the homesapi.json file which is the openaAPI JSON spec shown above. Once this is running, we are able to run tests that make real 
+            http calls to the homes service, and get real mock responses back.
             </p>
-            <h1>Prism docker container</h1>
+
+            <h1>Profiles Service</h1>
             <p>
+            To show the contract testing in action, I have created another extremely basic and contrived service which makes an HTTP request to the homes service,
+            this is called the profiles service. The methods are extremely simple, and can be seen below
             </p>
-            <h1>Keeping Contracts up to Date</h1>
+
+            <pre>
+
+import { Controller, Get, Param } from '@nestjs/common';
+import { ProfilesService } from './profiles.service';
+import { ProfileHomeDto } from './profiles.dto';
+
+@Controller('profile')
+export class ProfilesController {
+  constructor(private profileService: ProfilesService) {}
+
+  @Get('/:id')
+  public async getProfile(@Param('id') id: number) {
+    return await this.profileService.getProfile(id);
+  }
+
+  @Get('/:id/:city/:street/:zip')
+  public async findProfileHome(@Param() param: ProfileHomeDto) {
+    return await this.profileService.findProfileHome(
+      param.id,
+      param.city,
+      param.street,
+      param.zip,
+    );
+  }
+}
+            </pre>
+
+            <pre>
+@Injectable()
+export class ProfilesService {
+  constructor(
+    private httpService: HttpService,
+    private homesServiceBaseUrl: string,
+  ) {}
+
+  names = ['someone1', 'someone2', 'someone3', 'someone4'];
+
+  public async getProfile(id: number) {
+    if (id &gt= this.names.length) {
+      throw new BadRequestException('no users found with that ID');
+    }
+    const url = `${this.homesServiceBaseUrl}/homes`;
+    const res = await firstValueFrom(this.httpService.get(url));
+    const homes: any[] = res.data;
+    const profileHomes = homes.filter((home) => {
+      return home.id === id;
+    });
+
+    return {
+      name: this.names[id],
+      homes: profileHomes,
+    };
+  }
+
+  public async findProfileHome(
+    id: number,
+    city: string,
+    street: string,
+    zip: string,
+  ) {
+    if (id &gt= this.names.length) {
+      throw new BadRequestException('no users found with that ID');
+    }
+    try {
+      const url = `${this.homesServiceBaseUrl}/homes/${city}/${street}/${zip}`;
+      const res = await firstValueFrom(this.httpService.get(url));
+      const home: any = res.data;
+      return {
+        name: this.names[id],
+        home: home,
+      };
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException();
+    }
+  }
+}
+            </pre>
             <p>
+            this service simply makes some basic HTTP calls to the homes service to fetch data, and returns it with some static data defined to the user
+            </p>
+
+            <h1>
+            Writing the contract tests for Profiles Service
+            </h1>
+            <p>
+                Writing the contract tests for the profiles service is quite simple. All we need to do is spin up the homes api utilizing prism, and then 
+                have our http service point to the locally hosted version of the service to make its requests. Prism will handle the rest, with accurate
+                responses based on the schema we've provdided
+            </p>
+            <pre>
+describe(ProfilesService.name, () =&gt {
+  jest.setTimeout(60000);
+  let profileService: ProfilesService;
+  beforeAll(async () =&gt {
+    const moduleRef = await Test.createTestingModule({
+      imports: [HttpModule],
+      controllers: [ProfilesController],
+      providers: [
+        {
+          provide: ProfilesService,
+          useFactory: (httpService: HttpService) => {
+            return new ProfilesService(httpService, 'http://localhost:4010');
+          },
+          inject: [HttpService],
+        },
+      ],
+    }).compile();
+
+    profileService = moduleRef.get(ProfilesService);
+
+    exec('npm run mock:up');
+    await new Promise((resolve) =&gt setTimeout(resolve, 5000));
+  });
+
+  afterAll(async () =&gt {
+    exec('npm run mock:down');
+  });
+
+  describe('Get Profile', () =&gt {
+    it('properly integrates with the homes service', async () =&gt {
+      const res = await profileService.getProfile(1);
+      expect(res).not.toBeNull();
+      expect(res.homes).not.toBeNull();
+    });
+    it('properly integrates with the homes service', async () =&gt {
+      const res = await profileService.findProfileHome(
+        1,
+        'random',
+        'street',
+        '12345',
+      );
+
+      expect(res.home).not.toBeNull();
+      expect(res.name).not.toBeNull();
+    });
+  });
+});
+            </pre>
+
+            <p>
+            There are a couple of execSync calls here, which can be seen in the package.json here
+            <pre>
+    "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
+    "mock:down": "docker compose --profile prism down"
+            </pre>
+            mock:up fetches the openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
+            mock server with that newly fetched file. 
+            mock:down on the other hand simply tears down the mock server. With this approach,
+            No mocking of the http service is required, we can test real http requests and if we are abiding by the contracts provided by the homes service, 
+            all without having to worry about having a real instance spun up and its dependencies in order
             </p>
         </article>
     </main>
