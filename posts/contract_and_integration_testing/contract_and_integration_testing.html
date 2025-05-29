@@ -27,13 +27,13 @@
             </p>
             <h1>Test Containers</h1>
             <p>
-                Using docker test containers, it is very easy to spin up an instance of an applications dependencies for testing. There are many 
-                SDKs for all sorts of different languages, making the creation of a database for testing purposes a trivial activity. In order to make 
-                sure that the system you are developing interacts with another properly, test containers can be used to manage an instance of another
-                application for the duration of the test. It will spin up the dependency, allow for the tests to make real network connections to 
-                the resources, run real network requests, and recieve real responses. With this, no mocking is necessary, and the integration between the 
-                two system is what is being tested. In the folliwng examples, I'll use a postgres docker testcontainer in order to test the intergration of a 
-                simple microservice with the database.
+                Using docker TestContainers, it is very easy to spin up instances of any dependency that is available to be run via docker. 
+                In order to make sure that an application interacts with another properly, TestContainers can be used to manage an instance of another
+                service for the duration of a test suite. TestContainers can spin up at the beginning of the suite, 
+                allow for the tests to make real network connections to the resources, run real network requests, and recieve real responses. 
+                With this, no mocking is necessary, and greater certainty of application performance is achieved. 
+                In the folliwng examples, I'll use a postgres docker testcontainer in order to test the intergration of a 
+                simple microservice with a database.
             </p>
             <h1>Homes Service</h1>
             <p>
