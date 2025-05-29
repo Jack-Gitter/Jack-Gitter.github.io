@@ -427,7 +427,7 @@ if (require.main === module) {
 
 
             <h1>Contract Generation</h1>
-            <pre>
+                <pre class='prettyprint lang-typescript'>
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({transform:true}));
@@ -451,7 +451,7 @@ bootstrap();
             <p>
             With this approach, every time the application runs it generates an openAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
             </p>
-            <pre>
+                <pre class='prettyprint lang-typescript'>
 {"openapi":"3.0.0","paths":{"/homes":{"get":{"operationId":"getHomes","parameters":[],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Home"}}}}}},"tags":["Homes"]}},"/homes/{city}/{street}/{zip}":{"get":{"operationId":"findHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Home"}}}}},"tags":["Homes"]}},"/homes/reservation/{city}/{street}/{zip}":{"post":{"operationId":"reserveHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":""}},"tags":["Homes"]}}},"info":{"title":"Contract Testing","description":"Contract Testing Application","version":"1.0","contact":{}},"tags":[{"name":"homes","description":""}],"servers":[],"components":{"schemas":{"Home":{"type":"object","properties":{"id":{"type":"number"},"street":{"type":"string"},"city":{"type":"string"},"zip":{"type":"string"},"pricePerNight":{"type":"number"}},"required":["id","street","city","zip","pricePerNight"]}}}}
             </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
@@ -463,7 +463,7 @@ bootstrap();
 
             </p>
 
-            <pre>
+                <pre class='prettyprint lang-typescript'>
                     services:
                       prism:
                         profiles: ['prism']
@@ -487,7 +487,7 @@ bootstrap();
             this is called the profiles service. The methods are extremely simple, and can be seen below
             </p>
 
-            <pre>
+                <pre class='prettyprint lang-typescript'>
 
 import { Controller, Get, Param } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
@@ -514,7 +514,7 @@ export class ProfilesController {
 }
             </pre>
 
-            <pre>
+                <pre class='prettyprint lang-typescript'>
 @Injectable()
 export class ProfilesService {
   constructor(
@@ -577,7 +577,7 @@ export class ProfilesService {
                 have our http service point to the locally hosted version of the service to make its requests. Prism will handle the rest, with accurate
                 responses based on the schema we've provdided
             </p>
-            <pre>
+                <pre class='prettyprint lang-typescript'>
 describe(ProfilesService.name, () =&gt {
   jest.setTimeout(60000);
   let profileService: ProfilesService;
@@ -629,7 +629,7 @@ describe(ProfilesService.name, () =&gt {
 
             <p>
             There are a couple of execSync calls here, which can be seen in the package.json here
-            <pre>
+                <pre class='prettyprint lang-typescript'>
     "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
     "mock:down": "docker compose --profile prism down"
             </pre>
