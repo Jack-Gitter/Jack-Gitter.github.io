@@ -235,11 +235,10 @@ describe(HomesService.name, () =&gt {
   });
 })</pre>
     <p>
-        our test container setup begins in the beforeall, so we set up our docker container which runs postgres
-        we the initialize our typeorm connection, and have migrationsrun set to true which auto runs migrations on the connected database
-        we use the container connection information to supply to typeorm, so that our typeorm instance is connected to our database
-        then the migrations run, same as they would on our real database and our test container postgres instance is as exepected
-    </p>
+        The TestContainer setup begins in the beforeAll() method, creating the postgres database. In the beforeEach() method, 
+        the database connection is initialized via Typeorm. Because we have specified the path to the migrations file, 
+        and we have the migrationsrun field set to true, the migrations that are run on the primary database are also ran on the test database. 
+        To connect to the test database, the container connection is used programatically</p>
             <h1>Seeding TestContainers</h1>
             <p>
                 With the database set up, the next thing to do would be to seed it. There are a number of different ways this could happen.
