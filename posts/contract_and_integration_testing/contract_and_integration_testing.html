@@ -181,9 +181,8 @@ export class Init1748110788902 implements MigrationInterface {
 }
 </pre>
 <p>
-These migrations are what runs against the database upon application startup, to ensure that the database is in a consistent state and allows our application to interact with it properly. When runnign tests, we want our database schema to be the same as the schme that we have in our real database. As such,
-we can utilize the same typeorm migrations on our TestContainers database to ensure that no matter what, it is in the same exact state that we expect
-our real database to be in
+These migrations are run against the database upon startup, to ensure the database is in a consistent state and allows our application to interact with it properly. When running tests, the goal is to have the database schema identical to the schema that exists in the primary database. As such,
+the same Typeorm migrations are ran on the TestContainers database to ensure consistency 
 </p>
 
 <pre class='prettyprint lang-typescript'>
