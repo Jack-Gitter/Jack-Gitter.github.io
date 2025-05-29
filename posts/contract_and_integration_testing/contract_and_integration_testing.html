@@ -172,7 +172,10 @@ export class Init1748110788902 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "home" ("id" SERIAL NOT NULL, "street" character varying NOT NULL, "city" character varying NOT NULL, "zip" character varying NOT NULL, "price_per_night" integer NOT NULL, CONSTRAINT "PK_012205783b51369c326a1ad4a64" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "home" ("id" SERIAL NOT NULL, "street" character varying NOT NULL, 
+      "city" character varying NOT NULL, "zip" character varying NOT NULL, 
+      "price_per_night" integer NOT NULL, 
+      CONSTRAINT "PK_012205783b51369c326a1ad4a64" PRIMARY KEY ("id"))`,
     );
   }
 
@@ -248,14 +251,12 @@ describe(HomesService.name, () =&gt {
                 One would be to seed on a per-test basis, making it extremely clear what we would want the outcome of our tests to return
 
 <pre class='prettyprint lang-typescript'>
-
-    it('Fetches homes properly', async () =&gt {
+it('Fetches homes properly', async () =&gt {
       const home = new Home('Street', 'City', 'Zip', 123);
       await homeRepo.save([home]);
       const homes = await homesService.getHomes();
       expect(homes).toMatchObject([home.toJson()]);
-    });
-                </pre>
+});</pre>
 
                 <p>
                 Another way would be to have a seed script initialize the database with random data. In order to develop locally, we have developed 
@@ -263,16 +264,16 @@ describe(HomesService.name, () =&gt {
                 the seeding script works both for testing and local development
                 </p>
 
-                <pre class='prettyprint lang-typescript'>
-                    it('properly fetches a lot of homes', async () => {
-                      await runSeed(datasource);
-                      const homes = await homesService.getHomes();
-                      expect(homes).toHaveLength(20);
-                    });
-                </pre>
+<pre class='prettyprint lang-typescript'>
+it('properly fetches a lot of homes', async () => {
+  await runSeed(datasource);
+  const homes = await homesService.getHomes();
+  expect(homes).toHaveLength(20);
+});
+</pre>
 
                 
-                <pre class='prettyprint lang-typescript'>
+<pre class='prettyprint lang-typescript'>
 const streets = [
   '123 Oak Street',
   '456 Maple Avenue',
@@ -403,7 +404,7 @@ export async function runSeed(ds: DataSource) {
 if (require.main === module) {
   runSeed(dataSource).catch(console.error);
 }
-        </pre>
+</pre>
         <p>
         With these approaches, we can effectively test the communication between our application and a real database in a repeatable, maintainable manner
         </p>
@@ -446,14 +447,171 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-            </pre>
+</pre>
 
             <p>
             With this approach, every time the application runs it generates an openAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
             </p>
-                <pre class='prettyprint lang-typescript'>
-{"openapi":"3.0.0","paths":{"/homes":{"get":{"operationId":"getHomes","parameters":[],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Home"}}}}}},"tags":["Homes"]}},"/homes/{city}/{street}/{zip}":{"get":{"operationId":"findHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Home"}}}}},"tags":["Homes"]}},"/homes/reservation/{city}/{street}/{zip}":{"post":{"operationId":"reserveHome","parameters":[{"name":"street","required":true,"in":"path","schema":{"type":"string"}},{"name":"city","required":true,"in":"path","schema":{"type":"string"}},{"name":"zip","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":""}},"tags":["Homes"]}}},"info":{"title":"Contract Testing","description":"Contract Testing Application","version":"1.0","contact":{}},"tags":[{"name":"homes","description":""}],"servers":[],"components":{"schemas":{"Home":{"type":"object","properties":{"id":{"type":"number"},"street":{"type":"string"},"city":{"type":"string"},"zip":{"type":"string"},"pricePerNight":{"type":"number"}},"required":["id","street","city","zip","pricePerNight"]}}}}
-            </pre>
+<pre class='prettyprint lang-typescript'>
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/homes": {
+      "get": {
+        "operationId": "getHomes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Home"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Homes"
+        ]
+      }
+    },
+    "/homes/{city}/{street}/{zip}": {
+      "get": {
+        "operationId": "findHome",
+        "parameters": [
+          {
+            "name": "street",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zip",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Home"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Homes"
+        ]
+      }
+    },
+    "/homes/reservation/{city}/{street}/{zip}": {
+      "post": {
+        "operationId": "reserveHome",
+        "parameters": [
+          {
+            "name": "street",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zip",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Homes"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Contract Testing",
+    "description": "Contract Testing Application",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "homes",
+      "description": ""
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "Home": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "street": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "pricePerNight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "street",
+          "city",
+          "zip",
+          "pricePerNight"
+        ]
+      }
+    }
+  }
+}
+</pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
             In order to utilize the openapi specification to its full extent, there are services such as Prism, which will spin up http servers based on 
@@ -463,17 +621,17 @@ bootstrap();
 
             </p>
 
-                <pre class='prettyprint lang-typescript'>
-                    services:
-                      prism:
-                        profiles: ['prism']
-                        image: stoplight/prism
-                        command: 'mock -d -h 0.0.0.0 --json-schema-faker-fillProperties=false /tmp/homesapi.json'
-                        volumes:
-                          - ./homesapi.json:/tmp/homesapi.json:ro
-                        ports:
-                          - '4010:4010'
-            </pre>
+<pre class='prettyprint lang-typescript'>
+services:
+  prism:
+    profiles: ['prism']
+    image: stoplight/prism
+    command: 'mock -d -h 0.0.0.0 --json-schema-faker-fillProperties=false /tmp/homesapi.json'
+    volumes:
+      - ./homesapi.json:/tmp/homesapi.json:ro
+    ports:
+      - '4010:4010'
+</pre>
 
             <p>
             In this example, we are running the prism command with -d, meaining we want it to generate dynamic responses for us. We run it on host 0.0.0.0,
@@ -487,8 +645,7 @@ bootstrap();
             this is called the profiles service. The methods are extremely simple, and can be seen below
             </p>
 
-                <pre class='prettyprint lang-typescript'>
-
+<pre class='prettyprint lang-typescript'>
 import { Controller, Get, Param } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { ProfileHomeDto } from './profiles.dto';
@@ -512,9 +669,9 @@ export class ProfilesController {
     );
   }
 }
-            </pre>
+</pre>
 
-                <pre class='prettyprint lang-typescript'>
+<pre class='prettyprint lang-typescript'>
 @Injectable()
 export class ProfilesService {
   constructor(
@@ -564,7 +721,7 @@ export class ProfilesService {
     }
   }
 }
-            </pre>
+</pre>
             <p>
             this service simply makes some basic HTTP calls to the homes service to fetch data, and returns it with some static data defined to the user
             </p>
@@ -577,7 +734,7 @@ export class ProfilesService {
                 have our http service point to the locally hosted version of the service to make its requests. Prism will handle the rest, with accurate
                 responses based on the schema we've provdided
             </p>
-                <pre class='prettyprint lang-typescript'>
+<pre class='prettyprint lang-typescript'>
 describe(ProfilesService.name, () =&gt {
   jest.setTimeout(60000);
   let profileService: ProfilesService;
@@ -625,14 +782,14 @@ describe(ProfilesService.name, () =&gt {
     });
   });
 });
-            </pre>
+</pre>
 
             <p>
             There are a couple of execSync calls here, which can be seen in the package.json here
-                <pre class='prettyprint lang-typescript'>
-    "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
-    "mock:down": "docker compose --profile prism down"
-            </pre>
+<pre class='prettyprint lang-typescript' style='overflow-x: auto; white-space: pre;'>
+"mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
+"mock:down": "docker compose --profile prism down"
+</pre>
             mock:up fetches the openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             mock:down on the other hand simply tears down the mock server. With this approach,
