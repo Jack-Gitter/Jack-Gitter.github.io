@@ -608,7 +608,7 @@ bootstrap();
 </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
-            In order to utilize the Openapi specification to it's full extent, there are services such as Prism, which will spin up http servers based on 
+            In order to utilize the OpenAPI specification to it's full extent, there are services such as Prism, which can spin up HTTP servers based on 
             existing OpenAPI specifications. These servers can be as simple as serving static content that you define in your spec for each 
             response, or even generating dynamic content based on the specification provided. Prism provides a docker container which allows for 
             easily spinning up an instance of an HTTP server 
@@ -777,7 +777,7 @@ describe(ProfilesService.name, () =&gt {
 </pre>
 
             <p>
-            There are a couple of execSync calls here, which can be seen in the package.json here
+            There are a couple of exec calls here, which can be seen in the package.json here
 <pre class='prettyprint lang-typescript' style='overflow-x: auto; white-space: pre;'>
 "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
 "mock:down": "docker compose --profile prism down"
