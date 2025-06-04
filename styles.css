@@ -33,11 +33,12 @@ li {
 }
 
 a {
-    color: #0066cc;
+    color: pink;
     text-decoration: none;
 }
 
 a:hover {
+    color: red;
     text-decoration: underline;
 }
 
