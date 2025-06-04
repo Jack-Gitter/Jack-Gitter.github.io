@@ -235,7 +235,7 @@ describe(HomesService.name, () =&gt {
   });
 })</pre>
     <p>
-        The TestContainer setup begins in the beforeAll() method, creating the postgres database. In the beforeEach() method, 
+    The TestContainer setup begins in the <span class='inline-code'>beforeAll()</span> method, creating the postgres database. In the <span class='inline-code'>beforeEach()</span> method, 
         the database connection is initialized via Typeorm. Because we have specified the path to the migrations file, 
         and we have the migrationsrun field set to true, the migrations that are run on the primary database are also ran on the test database. 
         To connect to the test database, the container connection is used programatically</p>
@@ -627,7 +627,8 @@ services:
 </pre>
 
             <p>
-            In this example, "prism -d" signifies prism should generate dynamic responses from the API. It runs on host 0.0.0.0,
+            In this example, <span class='inline-code'>prism -d"</span> 
+            signifies prism should generate dynamic responses from the API. It runs on host 0.0.0.0,
             and the homesapi.json file is provided as the specification. Once running, tests can send real 
             http requests to the homes service, and get valid responses back.
             </p>
@@ -777,14 +778,14 @@ describe(ProfilesService.name, () =&gt {
 </pre>
 
             <p>
-            There are a couple of exec calls here, which can be seen in the package.json here
+            There are a couple of <span class='inline-code'>exec</span> calls here, which can be seen in the package.json here
 <pre class='prettyprint lang-typescript' style='overflow-x: auto; white-space: pre;'>
 "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
 "mock:down": "docker compose --profile prism down"
 </pre>
-            mock:up fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
+<span class='inline-code'>mock:up</span> fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
-            mock:down simply tears down the mock server. With this approach,
+            <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
             No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring the compatability 
             with the homes service contract. Most important of all, it occurs without having to worry about having a real 
             instance spun up, and its dependencies in order
