@@ -608,11 +608,10 @@ bootstrap();
 </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
-            In order to utilize the openapi specification to its full extent, there are services such as Prism, which will spin up http servers based on 
-            existing openAPI specifications. These servers can be as simple as serving static content that you define in your openAPI spec for each 
+            In order to utilize the openapi specification to it's full extent, there are services such as Prism, which will spin up http servers based on 
+            existing openAPI specifications. These servers can be as simple as serving static content that you define in your spec for each 
             response, or even generating dynamic content based on the specification provided. Prism provides a docker container which allows for 
-            easily spinning up an instance of an HTTP server based on a spec
-
+            easily spinning up an instance of an HTTP server 
             </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -628,15 +627,15 @@ services:
 </pre>
 
             <p>
-            In this example, we are running the prism command with -d, meaining we want it to generate dynamic responses for us. We run it on host 0.0.0.0,
-            and we provide the homesapi.json file which is the openaAPI JSON spec shown above. Once this is running, we are able to run tests that make real 
-            http calls to the homes service, and get real mock responses back.
+            In this example, "prism -d" signifies prism should generate dynamic responses from the API. It runs on host 0.0.0.0,
+            and the homesapi.json file is provided as the specification. Once running, tests can send real 
+            http requests to the homes service, and get valid responses back.
             </p>
 
             <h1>Profiles Service</h1>
             <p>
-            To show the contract testing in action, I have created another extremely basic and contrived service which makes an HTTP request to the homes service,
-            this is called the profiles service. The methods are extremely simple, and can be seen below
+            To show the contract testing in action, I have created another extremely basic and contrived service which makes 
+            an HTTP request to the homes service, called the profiles service. The methods are extremely simple as seen below
             </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -717,16 +716,15 @@ export class ProfilesService {
 }
 </pre>
             <p>
-            this service simply makes some basic HTTP calls to the homes service to fetch data, and returns it with some static data defined to the user
+            basic HTTP calls to the homes service fetch data, and return it along side some static data. 
             </p>
 
             <h1>
             Writing the contract tests for Profiles Service
             </h1>
             <p>
-                Writing the contract tests for the profiles service is quite simple. All we need to do is spin up the homes api utilizing prism, and then 
-                have our http service point to the locally hosted version of the service to make its requests. Prism will handle the rest, with accurate
-                responses based on the schema we've provdided
+                Writing the contract tests for the profiles service is quite simple. All we need to do is spin up a mock homes API via prism, and then 
+                swap the url for http requests to point to the locally hosted version of the service. Prism will handle the rest!
             </p>
 <pre class='prettyprint lang-typescript'>
 describe(ProfilesService.name, () =&gt {
@@ -786,9 +784,10 @@ describe(ProfilesService.name, () =&gt {
 </pre>
             mock:up fetches the openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
-            mock:down on the other hand simply tears down the mock server. With this approach,
-            No mocking of the http service is required, we can test real http requests and if we are abiding by the contracts provided by the homes service, 
-            all without having to worry about having a real instance spun up and its dependencies in order
+            mock:down simply tears down the mock server. With this approach,
+            No mocking of the http service within nestJS is required. The tests can contain real http requests, ensuring the compatability 
+            with the homes service contract. Most important of all, it occurs without having to worry about having a real 
+            instance spun up, and its dependencies in order
             </p>
         </article>
     </main>
