@@ -32,13 +32,13 @@
                 service for the duration of a test suite. TestContainers can spin up at the beginning of the suite, 
                 allow for the tests to make real network connections to the resources, run real HTTP requests, and recieve accurate responses. 
                 With this, no mocking is necessary, and greater certainty of application performance is achieved. 
-                In the folliwng examples, I'll use a postgres docker testcontainer in order to test the intergration of a 
+                In the following examples, I'll use a postgres docker TestContainer in order to check the intergration of a 
                 simple microservice with a database.
             </p>
             <h1>Homes Service</h1>
             <p>
                 For the duration of the article, I'll be referncing code from a very basic NestJS project that I've developed. The sole purpose of this 
-                service is to manage homes for an application. This service can fetch all the homes that are currently stored in the database,
+                service is to manage homes. This service can fetch all the homes that are currently stored in the database,
                 fetch homes based on specific criteria, or "reserve" a home, which really doesn't do anything. The service is kept 
                 brutally simple to focus on the testing.
                 
@@ -157,7 +157,7 @@ export class Home {
 
 
 <p>
-In order to generate database tables, Typeorm was used to generate migraitons automatically based off the entity
+In order to generate database tables, Typeorm was used to create migraitons automatically based off the entity
 </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -241,7 +241,7 @@ describe(HomesService.name, () =&gt {
         To connect to the test database, the container connection is used programatically</p>
             <h1>Seeding TestContainers</h1>
             <p>
-                With the database set up, the next thing to do would be to seed it. There are a number of different ways this could happen.
+                With the database set up, the next thing to do would be to seed it. There are a number of different to do so.
                 One would be to seed on a per-test basis, making it extremely clear what we would want the outcome of our tests to return
 
 <pre class='prettyprint lang-typescript'>
@@ -404,7 +404,7 @@ if (require.main === module) {
         </p>
             <h1>Contract Testing</h1>
             <p>
-            Contract esting is an easy way to screen any basic initial problems that would occur when communicating with another application over 
+            Contract testing is an easy way to screen any basic initial problems that would occur when communicating with another application over 
             a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that we would
             want to be able to test the interaction between the two. Integration tests that require another whole instance of the application running
             are robust and complex, especially if the dependant application has many dependencies itslef. This is where contract testing comes in.
