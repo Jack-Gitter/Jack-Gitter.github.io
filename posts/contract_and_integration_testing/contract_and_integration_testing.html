@@ -415,9 +415,9 @@ if (require.main === module) {
             </p>
             <h1>OpenAPI Specification</h1>
             <p>
-            One common API contract format is the openAPI standard format. This is either a YAML or JSON file which describes in varying levels of detail
+            One common API contract format is the OpenAPI standard format. This is either a YAML or JSON file which describes in varying levels of detail
             what the API expects, potential response codes, and potential responses. These can be used by applications for contract testing. There 
-            are many tools to generate openAPI specifications for existing APIs, but here is an example of the way that we are doing it in NestJS
+            are many tools to generate OpenAPI specifications for existing APIs, but here is an example of the way that we are doing it in NestJS
             </p>
 
 
@@ -444,7 +444,7 @@ bootstrap();
 </pre>
 
             <p>
-            With this approach, every time the application runs it generates an openAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
+            With this approach, every time the application runs it generates an OpenAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
             </p>
 <pre class='prettyprint lang-typescript'>
 {
@@ -608,8 +608,8 @@ bootstrap();
 </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
-            In order to utilize the openapi specification to it's full extent, there are services such as Prism, which will spin up http servers based on 
-            existing openAPI specifications. These servers can be as simple as serving static content that you define in your spec for each 
+            In order to utilize the Openapi specification to it's full extent, there are services such as Prism, which will spin up http servers based on 
+            existing OpenAPI specifications. These servers can be as simple as serving static content that you define in your spec for each 
             response, or even generating dynamic content based on the specification provided. Prism provides a docker container which allows for 
             easily spinning up an instance of an HTTP server 
             </p>
@@ -782,7 +782,7 @@ describe(ProfilesService.name, () =&gt {
 "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
 "mock:down": "docker compose --profile prism down"
 </pre>
-            mock:up fetches the openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
+            mock:up fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             mock:down simply tears down the mock server. With this approach,
             No mocking of the http service within nestJS is required. The tests can contain real http requests, ensuring the compatability 
