@@ -22,22 +22,22 @@
                It's important to have systems in place that ensure any application that has dependencies is integrated properly.
                This is applicable for all types of dependencies, whether it be an HTTP request to another microservice, 
                or a call to a database. If the microservice changes its endpoints, or the DBMS changes, it is important to know whether 
-               the application can handle these changes or if intervention is needed. Integeration testing allows for this process to be automated, 
+               the application can handle these changes or if intervention is needed. Integration testing allows for this process to be automated, 
                and ensure proper communication between an application and its dependencies. 
             </p>
             <h1>Test Containers</h1>
             <p>
                 Using docker TestContainers, it is very easy to spin up instances of any dependency that is available to be run via docker. 
-                In order to make sure that an application interacts with another properly, TestContainers can be used to manage an instance of another
+                In order to make sure that an application interacts with another service properly, TestContainers can be used to manage an instance of another
                 service for the duration of a test suite. TestContainers can spin up at the beginning of the suite, 
-                allow for the tests to make real network connections to the resources, run real HTTP requests, and recieve accurate responses. 
+                allow for the tests to make real network connections to the resources, run real HTTP requests, and receive accurate responses. 
                 With this, no mocking is necessary, and greater certainty of application performance is achieved. 
-                In the following examples, I'll use a postgres docker TestContainer in order to check the intergration of a 
+                In the following examples, I'll use a postgres docker TestContainer in order to check the integration of a 
                 simple microservice with a database.
             </p>
             <h1>Homes Service</h1>
             <p>
-                For the duration of the article, I'll be referncing code from a very basic NestJS project that I've developed. The sole purpose of this 
+                For the duration of the article, I'll be referencing code from a very basic NestJS project that I've developed. The sole purpose of this 
                 service is to manage homes. This service can fetch all the homes that are currently stored in the database,
                 fetch homes based on specific criteria, or "reserve" a home, which really doesn't do anything. The service is kept 
                 brutally simple to focus on the testing.
@@ -157,7 +157,7 @@ export class Home {
 
 
 <p>
-In order to generate database tables, Typeorm was used to create migraitons automatically based off the entity
+In order to generate database tables, Typeorm was used to create migrations automatically based on the entity
 </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -241,7 +241,7 @@ describe(HomesService.name, () =&gt {
         To connect to the test database, the container connection is used programatically</p>
             <h1>Seeding TestContainers</h1>
             <p>
-                With the database set up, the next thing to do would be to seed it. There are a number of different to do so.
+                With the database set up, the next thing to do would be to seed it. There are a number of different ways to do so.
                 One would be to seed on a per-test basis, making it extremely clear what we would want the outcome of our tests to return
 
 <pre class='prettyprint lang-typescript'>
@@ -407,10 +407,10 @@ if (require.main === module) {
             Contract testing is an easy way to screen any basic initial problems that would occur when communicating with another application over 
             a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that we would
             want to be able to test the interaction between the two. Integration tests that require another whole instance of the application running
-            are complex, especially if the dependant application has many dependencies itslef. This is where contract testing comes in.
+            are complex, especially if the dependent application has many dependencies itslef. This is where contract testing comes in.
             Contract testing is a way to ensure that our service implements the contract of the service we are calling properly: making HTTP requests 
             with the proper path parameters, the propery types in the JSON body, etc. This can all occur without needing a full instance of an application 
-            running. A service can simply generate its contract, a definintion of what it expects to recieve, distribute it to other services, and then
+            running. A service can simply generate its contract, a definition of what it expects to receive, distribute it to other services, and then
             those services can run tests using the contract
             </p>
             <h1>OpenAPI Specification</h1>
@@ -627,7 +627,7 @@ services:
 </pre>
 
             <p>
-            In this example, <span class='inline-code'>prism -d"</span> 
+            In this example, <span class='inline-code'>"prism -d"</span> 
             signifies prism should generate dynamic responses from the API. It runs on host 0.0.0.0,
             and the homesapi.json file is provided as the specification. Once running, tests can send real 
             http requests to the homes service, and get valid responses back.
@@ -786,10 +786,9 @@ describe(ProfilesService.name, () =&gt {
 <span class='inline-code'>mock:up</span> fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
-            No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring the compatability 
+            No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring the compatibility 
             with the homes service contract. Most important of all, it occurs without having to worry about having a real 
-            instance spun up, and its dependencies in order
-            </p>
+            instance spun up, with its dependencies running</p>
 
             <p>
             Here is the <a href="https://github.com/Jack-Gitter/contract-testing">repo</a> link
