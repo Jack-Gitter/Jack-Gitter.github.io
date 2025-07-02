@@ -360,9 +360,9 @@ export default function () {
             </p>
 
             <p>
-            The test itself is quite simple. It fetches all boats, and has the user attempt to rent the first available boat. If they can, then 
+            The test itself is quite simple. It fetches all boats, and has the user attempt to rent the first available boat. If successful 
             they wait a second and attempt to return that boat. If both of those return 200, it is a success. If the user cannot rent the boat and a 409
-            is returned, that is also considered a pass. Here is the output
+            is returned, that is also considered a pass. Here is the output.
             </p>
 
             <div class='img_contaier'>
@@ -370,9 +370,10 @@ export default function () {
             </div>
 
             <p>
-            Here, some differences can be seen. Rigth away there is a new "thresholds" area, showing the results for the threshold we defined for API response
-            time. Additionally, we show our custom check of response status being 200 or 409 in green text below the total results section. You can also see some
-            vus information under the execution header. Since some requests responded with 409 status code, the HTTP section displays some errors. This is 
+            Here some differences can be seen as well. Rigth away there is a new "Thresholds" header, 
+            showing the results for the threshold defined for API response time. Additionally, the results of the custom check for 200 or 409 status codes are 
+            in green text below the total results section. Vus information is also available under the execution header. 
+            Since some requests responded with 409 status code, the HTTP section displays some errors. This is 
             simply a metric meant to show how many requests did not return a successful response, In this case, there were 37 conflict exceptions thrown 
             due to concurrent attempts to rent boats.
             </p>
