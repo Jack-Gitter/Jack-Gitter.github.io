@@ -1,10 +1,11 @@
-.img_container {
-    display: flex;
-    justify-content: center;
-    margin: 2rem 0;
+.img_contaier {
+    max-width: 100%;
+    overflow: hidden;
 }
-    
-.img_container img {
-    max-width: 30%;
+
+.img_contaier img {
+    margin-top: 30px;
+    max-width: 100%;
     height: auto;
+    display: block;
 }
