@@ -31,13 +31,13 @@
                 With a smart domain model emphasized by <a href="https://Jack-Gitter.github.io/posts/ddd/ddd.html">DDD</a>
                 transactions that span repositories are actually a code smell. Repositories fetch aggregate roots, which contain enough
                 information to make decisions about business functionality which must be transactionally consistent. With this approach, 
-                if transactions must span multiple repositories the domain model must be reconsidered.
+                if transactions must span multiple repositories, the domain model must be reconsidered.
             </p>
 
             <h2>Repository Functions Accepting DB Connections</h2>
             <p>
                 The most naive approach to managing consistency across repositories is to have each repository method accept an optional 
-                database connection. If one is provided, the method will utilize it to query to the database, and otherwise it can grab a connection
+                database connection. If one is provided, the method will utilize it to query the database, and otherwise it can grab a connection
                 from the database pool to make an isolated request. The following example comes from a golang distributed backend system 
                 for a website that mimics the functionality of letterboxd, but for music.
 
@@ -85,7 +85,7 @@
                 The first argument to the function is a <span class='inline-code'>db.QueryExectutor</span>, an interface that wraps
                 a database connection so that the underlying database connection can be replaced with minimal changes.
                 This implementation works, although it creates unnecessary complexity within the application layer. Services 
-                must manage the database connection which causes an abstraction leak between the application layer and infrastructure layer.
+                must manage the database connection, which causes an abstraction leak between the application layer and infrastructure layer.
             </p>
 
 
@@ -104,7 +104,7 @@
                 although for this example I'll be using NestJS. Interceptors are implemented as decorators, and can help to grab a database connection
                 from a pool, begin a transaction, and store the connection into context local storage. The connection can then be accessed by the 
                 repositories used in the method itself. The Interceptor manages the entire lifecycle of the transaction, starting the transaction and 
-                observing the http response. If an error is detected, it will rollback the transaction.
+                observing the HTTP response. If an error is detected, it will rollback the transaction.
                 </p>
 
   <pre class="prettyprint lang-typescript">export class TransactionInterceptor implements NestInterceptor {
@@ -206,13 +206,13 @@ export class InventoryService {
 
             <p>
             The Unit of Work pattern is a way to abstract all functionality that occurs within the database across the lifetime of a request. 
-            It allows an application to make changes across multiple different repositories commit them all at once. At its core, the Unit of Work 
-            pattern manages request scoped instance of repositories. Upon a new request, it starts a database transaction and provides the 
-            request scoped repositories with an instance of the database connection. Methods exist on the Unit of Work class to fetch these 
+            It allows an application to make changes across multiple different repositories and commit them all at once. At its core, the Unit of Work 
+            pattern manages request-scoped instance of repositories. Upon a new request, it starts a database transaction and provides the 
+            request-scoped repositories with an instance of the database connection. Methods exist on the Unit of Work class to fetch these 
             repositories. There are also typically methods to commit and rollback the overarching transaction shared between repositories. 
             This implementation has many benefits. The Unit of Work is injected into services so it can be mocked for testing, it eliminates the leaky 
             abstraction by encapsulating the database connection, hiding it away from the application service. It can also be implemented 
-            in a slightly different manner, returning the connection to the user and having them manually begin, commit, and rollback connections. This does
+            in a slightly different manner, returning the connection to the user and having them manually begin, commit, and roll back connections. This does
             leak the abstraction, but it was the implementation that I went with as I was inspired by 
     <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>Typeorm.</a>
             The Unit of Work class is implemented below as the <span class='inline-code'>TransactionManager</span>
