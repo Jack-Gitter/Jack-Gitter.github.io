@@ -30,9 +30,9 @@
                 Using docker TestContainers, it is very easy to spin up instances of any dependency that is available to be run via docker. 
                 In order to make sure that an application interacts with another service properly, TestContainers can be used to manage an instance of another
                 service for the duration of a test suite. TestContainers can spin up at the beginning of the suite, 
-                allow for the tests to make real network connections to the resources, run real HTTP requests, and receive accurate responses. 
+                allowing for the tests to make real network connections to the resources, run real HTTP requests, and receive accurate responses. 
                 With this, no mocking is necessary, and greater certainty of application performance is achieved. 
-                In the following examples, I'll use a postgres docker TestContainer in order to check the integration of a 
+                In the following examples, I'll use a Postgres docker TestContainer in order to check the integration of a 
                 simple microservice with a database.
             </p>
             <h1>Homes Service</h1>
@@ -444,7 +444,7 @@ bootstrap();
 </pre>
 
             <p>
-            With this approach, every time the application runs it generates an OpenAPI specification in JSON format with the most up to date representation of the application. Here is an example for our homes app
+            With this approach, every time the application runs it generates an OpenAPI specification in JSON format with the most up-to-date representation of the application. Here is an example for the homes app
             </p>
 <pre class='prettyprint lang-typescript'>
 {
@@ -786,7 +786,7 @@ describe(ProfilesService.name, () =&gt {
 <span class='inline-code'>mock:up</span> fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
-            No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring the compatibility 
+            No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring compatibility 
             with the homes service contract. Most importantly, it occurs without having to worry about having a real 
             instance spun up, with its dependencies running</p>
 
