@@ -236,7 +236,7 @@
             The above example represents the Aggregate Root for a flight in flight reservation software. The business requirements state that at no time 
             must a single seat ever be booked by more than one person. With this, we know that the all the seats and reservations for a singular flight 
             must be encapsulated within the Flight Aggregate. This gives the Flight Aggregate Root the ability to know the state of all 
-            seats and reservations, and enforce the the required invariant. The implementation can be seen in the 
+            seats and reservations, and enforce the required invariant. The implementation can be seen in the 
             <span class='inline-code'>MakeReservation</span> method, where logic ensures that no other reservation exists for the given flight 
             before allowing a user to book a seat.
             </p>
