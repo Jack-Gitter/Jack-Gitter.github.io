@@ -16,17 +16,17 @@
             <p class="date">April 29, 2025</p>
 
             <p>
-                Domain Driven Design is an approach to developing software that puts a large emphasis on creating a model in code which mirrors the real 
+                Domain Driven Design is an approach to developing software that puts a large emphasis on creating a model in code that mirrors the real 
                 business as closely as possible. At its core, DDD is all about the data model. Aspects such as database design come second, and 
                 are typically implemented with an ORM. There are many guidelines to follow when developing using DDD, and the process starts well before 
-                any code is written. The DDD philosophy begins by introducing a Ubiquitous Language which allows for seamless communication
+                any code is written. The DDD philosophy begins by introducing a Ubiquitous Language that allows for seamless communication
                 between business experts and software engineers about the domain.
             </p>
 
             <h2>Ubiquitous Language</h2>
 
             <p>
-                Trying to reason about code with business experts is often difficult. Code and logic typically has to be "translated" from 
+                Trying to reason about code with business experts is often difficult. Code and logic typically have to be "translated" from 
                 the terms used in the software to the terms business experts use, and vice versa. With translation comes loss of information, 
                 and loss of information causes errors in implementation. A Ubiquitous Language eliminates these concerns by defining a set of terms 
                 used to describe the business so domain experts and developers can communicate flawlessly. Typically, terms from the business are utilized 
@@ -34,7 +34,7 @@
 
             <h2>Value Objects</h2>
             <p>
-                In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model that obtain value solely 
+                In DDD, the smallest building block is typically a Value Object. Value Objects are pieces of a model that obtain value solely 
                 from the content of their components. To put it more concretely, a JSON Value Object that has the same exact fields as another JSON 
                 Value Object are equal. They are typically created as immutable, as changing one value of the value object would completely change it. 
                 In the circumstances where a Value Object is expected to change, it is preferred to create an entirely new object. A good example of a 
@@ -42,7 +42,7 @@
 
                 <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
 
-                A name might include first, middle, and last components. Changing any part of this name makes it a totally new name. 
+                A name might include the first, middle, and last components. Changing any part of this name makes it a totally new name. 
                 </p>
 
 
@@ -460,7 +460,7 @@
 
             <p>
                 Domain events are used to communicate between Aggregate Roots. Because two Aggregate Roots do not need to be immediately consistent, 
-                they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal.
+                they can be decoupled and communicated via a message broker or other asynchronous means to achieve a common goal.
                 Using this model allows for refactoring Aggregate Roots into separate microservices, since an eventually consistent model is already 
                 implemented.
             </p>
