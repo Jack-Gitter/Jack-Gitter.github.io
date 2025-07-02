@@ -37,12 +37,12 @@
                 In DDD, the smallest unit of building block is typically a Value Object. Value Objects are pieces of a model that obtain value solely 
                 from the content of their components. To put it more concretely, a JSON Value Object that has the same exact fields as another JSON 
                 Value Object are equal. They are typically created as immutable, as changing one value of the value object would completely change it. 
-                In the circumstances where a Value Object is expected to change, it is preferred to create an entire new object. A good example of a 
+                In the circumstances where a Value Object is expected to change, it is preferred to create an entirely new object. A good example of a 
                 Value Object is a name.
 
                 <pre class='prettyprint lang-typescript'> export type Name = { first: string; middle?: string; last: string; } </pre>
 
-                A name might include first, middle, and last components. Changing any part of this name completely makes it a new name entirely. 
+                A name might include first, middle, and last components. Changing any part of this name makes it a totally new name. 
                 </p>
 
 
@@ -106,7 +106,7 @@
             is associated with. Given a more complete understanding of Entities and Value Objects, another viewpoint of the relationship 
             between the two can be realized: Value Objects, such as <span class='inline-code'>SeatPosition</span>, 
             make up a subset of the columns in a database entry. 
-            The entire record is the Entity itself. If a <span class='inline-code'>Reservation</span> gets upgraded to first class, 
+            The entire record is the Entity itself. If a <span class='inline-code'>Reservation</span> is upgraded to first class, 
             the <span class='inline-code'>SeatPosition</span> would change, but the <span class='inline-code'>Reservation</span>
             still holds the same intrinsic value it previously did. Thinking database-first is against the DDD methodology, 
             but this analogy helps drive home the differences between these two fundamental building blocks.
@@ -234,7 +234,7 @@
 } </pre> 
 
             The above example represents the Aggregate Root for a flight in flight reservation software. The business requirements state that at no time 
-            must a single seat ever be booked by more than one person. With this, we know that the all the seats and reservations for a singular flight 
+            must a single seat ever be booked by more than one person. With this, we know that all the seats and reservations for a singular flight 
             must be encapsulated within the Flight Aggregate. This gives the Flight Aggregate Root the ability to know the state of all 
             seats and reservations, and enforce the required invariant. The implementation can be seen in the 
             <span class='inline-code'>MakeReservation</span> method, where logic ensures that no other reservation exists for the given flight 
@@ -328,7 +328,7 @@
             <h2>Repository Pattern</h2>
 
             <p>
-                Repositories are classes created in the infrastructure layer responsible with interfacing with the underlying data storage solution
+                Repositories are classes created in the infrastructure layer responsible for interfacing with the underlying data storage solution
                 to fetch Aggregate Roots. There should be one Repository per Aggregate Root, and Repositories should only ever load Aggregate Roots 
                 into memory. This is because the Aggregate Root enforces the invariants amongst sub-Entities, and fetching a sub-Entity directly 
                 would allow for bypassing the invariant checks that would have otherwise been performed by the Aggregate Root. 
@@ -397,7 +397,7 @@
                 Domain services are used to implement domain logic between two Entities when said logic does not fit well into a single
                 Entity. Typically, Domain Services should not depend on anything outside of the domain layer. They are passed in
                 one or more Aggregate Roots, and implement pure business logic. A concrete example of a domain in which a Domain Service should be used is
-                a social media platform. On this platform, users can follow eachother. It would not make sense to have the business logic for this feature
+                a social media platform. On this platform, users can follow each other. It would not make sense to have the business logic for this feature
                 implemented on a single user object, since it spans multiple users at once. Rather, it would make the most sense to load both users 
                 into memory, pass them to a Domain Service, and allow the domain service to call methods such as 
                 <span class='inline-code'>updateFollowers()</span> and <span class='inline-code'>updateFollowing()</span> on the respective Entities.
@@ -461,7 +461,7 @@
             <p>
                 Domain events are used to communicate between Aggregate Roots. Because two Aggregate Roots do not need to be immediately consistent, 
                 they can be decoupled and communicate via a message broker or other asynchronous means to achieve a common goal.
-                Using this model allows for refactoring Aggregate Roots into separate microservice, since an eventually consistent model is already 
+                Using this model allows for refactoring Aggregate Roots into separate microservices, since an eventually consistent model is already 
                 implemented.
             </p>
 
@@ -489,9 +489,9 @@
             <h2>CQRS</h2>
 
             <p>
-                CQRS, or Command Query Response Separation, is a methodology often paired with DDD. Since SELECT queries do not effect the database
+                CQRS, or Command Query Response Separation, is a methodology often paired with DDD. Since SELECT queries do not affect the database
                 in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
-                then often naturally different. With CQRS, Aggregates are used to enforce business rules and update or create Entities, and separate 
+                are often naturally different. With CQRS, Aggregates are used to enforce business rules and update or create Entities, and separate 
                 models which are totally unrelated to the Aggregates can be created to load and display information to users. 
                 Utilizing Aggregates to load and return data is not only overly complex, but also will likely negatively impact the accuracy of the model in ways which are unnecessary.
             </p>
