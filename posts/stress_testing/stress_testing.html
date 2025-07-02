@@ -382,10 +382,8 @@ export default function () {
             <h1>Running tests</h1>
 
 
-            In order to run these tests, we need to have a database connection to a database with some data inside. For this, I'm using docker to spin up 
+            In order to run these tests, a database connection is required with some data pre-populated. For this, I'm using docker to spin up 
             a simple postgres database
-
-            Docker container for postgres
 
 <pre class="prettyprint lang-typescript">
 services:
@@ -406,7 +404,7 @@ volumes:
   postgres_data:
 </pre>
 
-    Additionally, I'm using another command, wait-on, which can be installed as so
+    Additionally, another command is used, wait-on, which can be installed as so
         
 <pre class="prettyprint lang-typescript">
 npm i -g wait-on
