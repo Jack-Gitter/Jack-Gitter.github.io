@@ -489,7 +489,7 @@
             <h2>CQRS</h2>
 
             <p>
-                CQRS, or Command Query Response Separation, is a methodology often paired with DDD. Since SELECT queries do not affect the database
+                CQRS, or Command Query Responsibility Separation, is a methodology often paired with DDD. Since SELECT queries do not affect the database
                 in any way, there are no invariants or business logic to uphold. The model for updating records and fetching data 
                 are often naturally different. With CQRS, Aggregates are used to enforce business rules and update or create Entities, and separate 
                 models which are totally unrelated to the Aggregates can be created to load and display information to users. 
