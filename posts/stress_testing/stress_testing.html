@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stress Testing with NestJS and K6</title>
     <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
     <header>
@@ -27,9 +28,206 @@
             <h1>Basic Application Setup</h1>
             
             In order to demonstrate how to go about stress testing an application, I've developed an extremely simple NestJS application which acts as a 
-            backend to a boating rental service. I've created necessary controllers, services, and database conections as shown below
+            backend to a boating rental service. I've created necessary controllers, services, entities, and database conections as shown below
 
 
+<pre class="prettyprint lang-typescript">@Controller('boats')
+export class BoatsController {
+  constructor(private boatsService: BoatsService) {}
+
+  @Patch('rent/:id')
+  public async rentBoat(@Param('id') id: UUID): Promise&ltvoid&gt {
+    await this.boatsService.rentBoat(id);
+  }
+
+  @Get('available')
+  public async findAvailableBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsService.findAvailableBoats();
+  }
+
+  @Get()
+  public async findBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsService.findBoats();
+  }
+
+  @Patch('return/:id')
+  public async returnBoat(@Param('id') id: UUID): Promise&ltvoid&gt {
+    await this.boatsService.returnBoat(id);
+  }
+
+  @Patch('all/rent')
+  public async rentAllBoats() {
+    return await this.boatsService.rentAllBoats();
+  }
+
+  @Patch('all/return')
+  public async returnAllBoats() {
+    return await this.boatsService.returnAllBoats();
+  }
+
+  @Post()
+  public async createBoat(@Body() body: CreateBoatDTO): Promise&ltBoat&gt {
+    return await this.boatsService.createBoat(
+      body.price,
+      body.topSpeedInKnots,
+      body.capacity,
+      body.name,
+    );
+  }
+}
+</pre>
+
+
+
+
+<pre class="prettyprint lang-typescript">@Controller('boats')
+@Injectable()
+export class BoatsService {
+  constructor(
+    @InjectRepository(Boat) private boatsRepository: Repository&ltBoat&gt,
+    private dataSource: DataSource,
+  ) {}
+
+  public async rentAllBoats(): Promise&ltBoat[]&gt {
+    return await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const allBoats = await boatRepo.find({
+        where: {
+          currentlyRented: false,
+        },
+      });
+      const rentedBoats = allBoats.map((boat) =&gt {
+        boat.rentBoat();
+        return boat;
+      });
+      await boatRepo.save(rentedBoats);
+      return allBoats;
+    });
+  }
+
+  public async returnAllBoats() {
+    await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const allBoats = await boatRepo.find({
+        where: {
+          currentlyRented: true,
+        },
+      });
+      const rentedBoats = allBoats.map((boat) =&gt {
+        boat.returnBoat();
+        return boat;
+      });
+      await boatRepo.save(rentedBoats);
+    });
+  }
+  public async rentBoat(id: UUID): Promise&ltvoid&gt {
+    await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const boat = await boatRepo.findOneByOrFail({ id });
+      boat.rentBoat();
+      await boatRepo.save(boat);
+    });
+  }
+
+  public async findAvailableBoats(): Promise&ltBoat[]&gt {
+    const boats = await this.boatsRepository.find({
+      where: {
+        currentlyRented: false,
+      },
+    });
+    return boats;
+  }
+
+  public async findBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsRepository.find();
+  }
+
+  public async returnBoat(id: UUID): Promise&ltvoid&gt {
+    await this.dataSource.transaction(async (manager) => {
+      const boatRepo = manager.getRepository(Boat);
+      const boat = await boatRepo.findOneByOrFail({ id });
+      boat.returnBoat();
+      boatRepo.save(boat);
+    });
+  }
+
+  public async createBoat(
+    price: number,
+    topSpeedInKnots: number,
+    capacity: number,
+    name: string,
+  ): Promise&ltBoat&gt {
+    const boat = new Boat(
+      price,
+      topSpeedInKnots,
+      capacity,
+      name,
+      BOAT_CONDITION.NEW,
+      false,
+    );
+    await this.boatsRepository.save(boat);
+    return boat;
+  }
+}
+</pre>
+            
+
+<pre class="prettyprint lang-typescript">@Controller('boats')
+@Entity('boat')
+export class Boat {
+  @Column({ name: 'price', type: 'int' })
+  public price: number;
+
+  @Column({ name: 'top_speed_in_knots', type: 'int' })
+  public topSpeedInKnots: number;
+
+  @Column({ name: 'capacity', type: 'int' })
+  public capacity: number;
+
+  @Column({ name: 'name', type: 'varchar' })
+  public name: string;
+
+  @Column({ name: 'condition', type: 'enum', enum: BOAT_CONDITION })
+  public condition: BOAT_CONDITION;
+
+  @Column({ name: 'currentlyRented', type: 'boolean' })
+  public currentlyRented: boolean;
+
+  @PrimaryGeneratedColumn('uuid')
+  id: UUID;
+
+  constructor(
+    price: number,
+    topSpeedInKnots: number,
+    capacity: number,
+    name: string,
+    condition: BOAT_CONDITION,
+    currentlyRented: boolean,
+  ) {
+    this.price = price;
+    this.topSpeedInKnots = topSpeedInKnots;
+    this.capacity = capacity;
+    this.name = name;
+    this.condition = condition;
+    this.currentlyRented = currentlyRented;
+  }
+
+  public updateCondition(newCondition: BOAT_CONDITION) {
+    this.condition = newCondition;
+  }
+
+  public rentBoat() {
+    if (this.currentlyRented) {
+      throw new ConflictException('Boat is currently rented already!');
+    }
+    this.currentlyRented = true;
+  }
+
+  public returnBoat() {
+    this.currentlyRented = false;
+  }
+}
+</pre>
 
             <h1>Importance of environment and resource replication</h1>
 
