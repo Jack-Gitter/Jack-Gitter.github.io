@@ -254,8 +254,8 @@
 
             <p>
                 To explain the issue, I'll give an example. Let's say that we receive two incoming HTTP requests to the <span class='inline-service'>Orders</span>
-                service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to the 
-                to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenForReserveInventoryResponse()</span> method, 
+                service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to 
+                reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenForReserveInventoryResponse()</span> method, 
                 meaning that they both are waiting for a message to come back on the same queue. This is known as the competing consumer pattern, 
                 and can be great in some cases. A response will come to the queue, and either Saga1 or Saga2 can get the message, but only one of them. 
                 In some cases, this allows for essentially multithreading functionality. But in our scenario, 
