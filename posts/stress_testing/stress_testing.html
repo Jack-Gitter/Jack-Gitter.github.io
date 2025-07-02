@@ -15,15 +15,15 @@
     <main>
         <article>
             <h1>How To Know if an Application Can Handle Production Traffic</h1>
-            Many efforts are typically focused around unit, integration, and e2e tests to ensure that applications
+            Many efforts are typically focused on unit, integration, and e2e tests to ensure that applications
             and APIs function as expected. These tests are extremely vital as, for the most part, they ensure that there are no logical bugs. 
             One aspect that might be overlooked is stress testing. With an upsurge of traffic coming to an API, 
             how can developers be certain of the performance capabilities of an application?
             What test can be used to ensure that an application scales properly and a system won't crash under heavy load? 
             Along with these questions, bugs such as data races often do not make themselves apparent in simple tests. 
-            Only when a high number of concurrent users are utilizing the system do these aches
-            reveal themselves and come with the potential to cause catostrophic issues. 
-            To answer all of the aformentioned questions, stress testing can be utilized to simulate how an application repsonds under varying 
+            Only when a high number of concurrent users are utilizing the system do these issues
+            reveal themselves and come with the potential to cause catastrophic issues. 
+            To answer all of the aforementioned questions, stress testing can be utilized to simulate how an application responds under varying 
             types of usage.
             <p class="date">July 2, 2025</p>
 
@@ -31,7 +31,7 @@
             <h1>Basic Application Setup</h1>
             
             In order to demonstrate stress testing an application, I've developed an extremely simple NestJS API which acts as a 
-            backend to a boating rental service. I've created the necessary controllers, services, entities, and database conections as shown below
+            backend to a boating rental service. I've created the necessary controllers, services, entities, and database connections as shown below
 
 
 <pre class="prettyprint lang-typescript">@Controller('boats')
@@ -235,18 +235,18 @@ export class Boat {
             <h1>Environment Replication</h1>
 
             Before jumping right into stress testing, it is important to recognize the prerequisites that actually make stress testing effective. The 
-            most important assurance is that an enviroment which closely replicates the production 
+            most important assurance is that an environment which closely replicates the production 
             environment is used to host the application while the tests are running. This includes all factors,
             from network latency to a databases all the way to processing power, RAM, and 
-            other physical resources on the machine. If stress tests are ran on a machine that is more powerful than the production environment,
+            other physical resources on the machine. If stress tests are run on a machine that is more powerful than the production environment,
             false positives may be recorded. Contrarily, false negatives can be recorded if running on a much less powerful machine than production. 
 
             <h1>K6</h1>
 
-            In order to write the tests themsevles, K6 is used, which performs much of the heavy lifting for the 
-            developer. Once aquanited with the syntax, it is very easy to run tests, set thresholds, and analyze results. 
-            K6 is actually not built upon the NodeJS runtime but rather a propriatary runtime. 
-            As such, K6 files are self contained and are not meant to be encoroportated into existing tests such as 
+            In order to write the tests themselves, K6 is used, which performs much of the heavy lifting for the 
+            developer. Once acquainted with the syntax, it is very easy to run tests, set thresholds, and analyze results. 
+            K6 is actually not built upon the NodeJS runtime but rather a proprietary runtime. 
+            As such, K6 files are self contained and are not meant to be incorporated into existing tests such as 
             Jest tests. In order to install, any package manager should do. I am running on mac, so I used brew.
 
 <pre class="prettyprint lang-typescript">
@@ -286,7 +286,7 @@ export default function () {
             Here the user first queries for all of the boats, similar to what a frontend application would request from the backend. 
             The test then sleeps for one second to simulate the time it takes for a user to click the button to rent all boats and for the request to reach the API.
             After the request comes back, another second of end user and network time is simulated before returning 
-            all of the boats. This example is quite contrived, but it is a valuable introductary example to gain insight into 
+            all of the boats. This example is quite contrived, but it is a valuable introductory example to gain insight into 
             the framework syntax and use cases. The output of this test is shown below.
 
             <div class='img_contaier'>
@@ -345,7 +345,7 @@ export default function () {
             This options object is described in detail in K6 documentation, but it is automatically analyzed and can be used to set specific parameters
             and tweak test execution. In this case, the iterations have been set to 100, meaning that the test will run 100 times. 
             Additionally, the vus (virtual users) setting is at 10, meaning 10 virtual users will be running the tests in parallel. The 100 total requests 
-            are dispursed between the 10 users. Finally, a threshold has been defined to ensure that 95% of test iterations must
+            are dispersed between the 10 users. Finally, a threshold has been defined to ensure that 95% of test iterations must
             run within 50 milliseconds, otherwise the test will fail. This ensures that the API is responding in a timely manner.
             </p>
 
@@ -353,9 +353,9 @@ export default function () {
             On to the test itself. The patch request to /boats/rent has the possibility of returning a 409 conflict, as if one of the virtual users 
             attempts to rent a boat that another virtual user has already rented it will return this error. This is a prime example of where a data race
             can be easily detected in stress tests. A 409 is not an error in this specific case, but the default checks that K6 implements analyzes 
-            responses and flags any response code other than 200 as an error. This can be fixed by writing a custom check to see if our respose is either
+            responses and flags any response code other than 200 as an error. This can be fixed by writing a custom check to see if our response is either
             200 or 409. Additionally, the API response is parsed by stringifying the ArrayBuffer that
-            is recieved. In the application there exists an available boats endpoint, but it is important to recognize that responses can be utilized
+            is received. In the application there exists an available boats endpoint, but it is important to recognize that responses can be utilized
             in K6 tests.
             </p>
 
@@ -370,7 +370,7 @@ export default function () {
             </div>
 
             <p>
-            Here some differences can be seen as well. Rigth away there is a new "Thresholds" header, 
+            Here some differences can be seen as well. Right away there is a new "Thresholds" header, 
             showing the results for the threshold defined for API response time. Additionally, the results of the custom check for 200 or 409 status codes are 
             in green text below the total results section. Vus information is also available under the execution header. 
             Since some requests responded with 409 status code, the HTTP section displays some errors. This is 
@@ -421,7 +421,7 @@ test looks like so
 </pre>
 
 
-First the docker container in spun up in the background. Next, the application is ran in the background. wait-on waits for the port 3000 to be occupied by our API, 
+First, the docker container in spun up in the background. Next, the application is run in the background. wait-on waits for the port 3000 to be occupied by our API, 
 but also sleeps for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, K6 is used to run both of the tests. Finally,
 the application is cleaned up by killing port 3000. 
             <p>
