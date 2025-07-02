@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stress Testing with NestJS and K6</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./stress_testing.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -281,7 +282,15 @@ export default function () {
             Here you can see the user first queries for all of the boats, similar to what a frontend application would request from the backend. 
             We then sleep a second to simulate the time it takes for a user to click the button to rent all boats, and the request to reach the API.
             After the request comes back, we then simulate another second of end user time, and return all of the boats. This example is quite contrived,
-            but it serves the purpose as an introduction into the framework syntax and use cases. 
+            but it serves the purpose as an introduction into the framework syntax and use cases. The output of this test is shown below
+
+            <div class='img_contaier'>
+                <img src="./k6-stress-test1.png"/>
+            </div>
+
+            <p>
+            Next, we'll examine a slightly more complex example of a stress test
+            </p>
 
             <p>
             Your content goes here. This is the first paragraph of your blog post.

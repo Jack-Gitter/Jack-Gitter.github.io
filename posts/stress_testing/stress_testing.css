@@ -1,0 +1,10 @@
+.img_container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+    
+.img_container img {
+    max-width: 30%;
+    height: auto;
+}
