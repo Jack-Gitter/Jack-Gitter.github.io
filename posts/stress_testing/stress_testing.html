@@ -241,8 +241,10 @@ export class Boat {
 
             <h1>K6</h1>
 
-            In order to write the stress tests themsevles, we will be utilizing k6, a NodeJS library which performs much of the heavy lifting for the 
-            developer. Once aquanited, it is very easy to run tests, set thresholds, and analyze results.
+            In order to write the stress tests themsevles, we will be utilizing k6, a tool which performs much of the heavy lifting for the 
+            developer. Once aquanited, it is very easy to run tests, set thresholds, and analyze results. K6 is actually not built upon the NodeJS runtime, 
+            but rather a propriatary runtime. As such, K6 files are self contained, and are not meant to be encoroportated into existing tests such as 
+            Jest tests.
 
             <h1>Integration with Existing API</h1>
 
