@@ -259,7 +259,29 @@ npm install --save @types/k6
 
             <h1>Writing tests</h1>
 
+            In order to write tests in K6, each test is defined in its own file. The most basic requirements for a test file is that is exports a 
+            default function. This function is what is ran when the test itself is ran. Here is a simple test created for the boats API that 
+            attempts to rent all available boats, and then returns them. Sleep is utilized in order to simulate real world delay from and end user
 
+
+<pre class="prettyprint lang-typescript">
+import http from 'k6/http';
+import { sleep } from 'k6';
+
+export default function () {
+  http.get('http://localhost:3000/boats');
+  sleep(1);
+  http.patch('http://localhost:3000/boats/all/rent');
+  sleep(1);
+  http.patch('http://localhost:3000/boats/all/return');
+  sleep(1);
+}
+</pre>
+
+            Here you can see the user first queries for all of the boats, similar to what a frontend application would request from the backend. 
+            We then sleep a second to simulate the time it takes for a user to click the button to rent all boats, and the request to reach the API.
+            After the request comes back, we then simulate another second of end user time, and return all of the boats. This example is quite contrived,
+            but it serves the purpose as an introduction into the framework syntax and use cases. 
 
             <p>
             Your content goes here. This is the first paragraph of your blog post.
