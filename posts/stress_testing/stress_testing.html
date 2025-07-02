@@ -80,8 +80,7 @@ export class BoatsController {
 
 
 
-<pre class="prettyprint lang-typescript">@Controller('boats')
-@Injectable()
+<pre class="prettyprint lang-typescript">@Injectable()
 export class BoatsService {
   constructor(
     @InjectRepository(Boat) private boatsRepository: Repository&ltBoat&gt,
@@ -172,8 +171,7 @@ export class BoatsService {
 </pre>
             
 
-<pre class="prettyprint lang-typescript">@Controller('boats')
-@Entity('boat')
+<pre class="prettyprint lang-typescript">@Entity('boat')
 export class Boat {
   @Column({ name: 'price', type: 'int' })
   public price: number;
@@ -244,7 +242,19 @@ export class Boat {
             In order to write the stress tests themsevles, we will be utilizing k6, a tool which performs much of the heavy lifting for the 
             developer. Once aquanited, it is very easy to run tests, set thresholds, and analyze results. K6 is actually not built upon the NodeJS runtime, 
             but rather a propriatary runtime. As such, K6 files are self contained, and are not meant to be encoroportated into existing tests such as 
-            Jest tests.
+            Jest tests. In order to install, simply use a package manager of choice. I am running on mac, so I simply installed using 
+
+<pre class="prettyprint lang-typescript">
+brew install k6
+</pre>
+
+            K6 is typescript compatible. In order to install types, you can run
+
+<pre class="prettyprint lang-typescript">
+npm install --save @types/k6
+</pre>
+
+
 
             <h1>Integration with Existing API</h1>
 
