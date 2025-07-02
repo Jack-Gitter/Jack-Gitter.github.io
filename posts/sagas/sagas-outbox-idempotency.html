@@ -163,7 +163,7 @@
 
                 <div class='sidenote'>
                     It might at first seem advantageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
-                    Lets say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
+                    Let's say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
                     at the same time. The shipping validation message comes back first, and is unsuccessful. What is there to do? The inventory reservation message
                     cannot yet be compensated, because we don't know if it was successful or not! 
                 </div>
@@ -175,8 +175,8 @@
             <h2>Failed Implementations</h2>
 
             <p>
-                Lets talk about the journey to get to the solution described above. For the code examples, I'll be using NodeJS, and NestJS, a backend framework
-                which wraps express. When sitting down to implement this saga, my first thought was to implement a representation of a 
+                Let's talk about the journey to get to the solution described above. For the code examples, I'll be using NodeJS, and NestJS, a backend framework
+                which wraps Express. When sitting down to implement this saga, my first thought was to implement a representation of a 
                 saga in a class. It would implement a <span class='inline-code'>ISagaOrchestrator</span> interface and have a list of steps, 
                 which implemented an <span class='inline-code'>ISagaStep</span> interface. Below are the example classes
 
@@ -253,7 +253,7 @@
             </p>
 
             <p>
-                To explain the issue, I'll give an example. Lets say that we receive two incoming HTTP requests to the <span class='inline-service'>Orders</span>
+                To explain the issue, I'll give an example. Let's say that we receive two incoming HTTP requests to the <span class='inline-service'>Orders</span>
                 service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to the 
                 to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenForReserveInventoryResponse()</span> method, 
                 meaning that they both are waiting for a message to come back on the same queue. This is known as the competing consumer pattern, 
