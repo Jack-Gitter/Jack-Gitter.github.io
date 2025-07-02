@@ -214,7 +214,7 @@ export class InventoryService {
             abstraction by encapsulating the database connection, hiding it away from the application service. It can also be implemented 
             in a slightly different manner, returning the connection to the user and having them manually begin, commit, and roll back connections. This does
             leak the abstraction, but it was the implementation that I went with as I was inspired by 
-    <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>Typeorm.</a>
+    <a href='https://orkhan.gitbook.io/typeorm/docs/transactions#using-queryrunner-to-create-and-control-state-of-single-database-connection'>TypeORM.</a>
             The Unit of Work class is implemented below as the <span class='inline-code'>TransactionManager</span>
             </p>
 
