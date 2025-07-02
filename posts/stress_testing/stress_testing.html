@@ -292,9 +292,82 @@ export default function () {
             how long each iteration took, etc. 
 
             <p>
-            Next, we'll examine a slightly more complex example of a stress test
+            Next, we'll examine a slightly more complex example of a stress test: 
+
+
+<pre class="prettyprint lang-typescript">
+import http from 'k6/http';
+import { sleep, check } from 'k6';
+
+export const options = {
+  iterations: 100,
+  vus: 10,
+  thresholds: {
+    http_req_duration: ['p(95)&lt50'],
+  },
+};
+
+export default function () {
+  const response = http.get('http://localhost:3000/boats');
+  sleep(1);
+  const boats = JSON.parse(response.body as string);
+  const availableBoat = boats.find((boat) =&gt {
+    return !boat.currentlyRented;
+  });
+  if (availableBoat) {
+    const res = http.patch(
+      `http://localhost:3000/boats/rent/${availableBoat.id}`,
+    );
+    check(res, {
+      'status was 200 or 409': (r) =&gt r.status === 200 || r.status === 409,
+    });
+    sleep(1);
+    if (res.status === 200) {
+      const res2 = http.patch(
+        `http://localhost:3000/boats/return/${availableBoat.id}`,
+      );
+      check(res2, {
+        'status was 200': (r) =&gt r.status === 200,
+      });
+    }
+  }
+  sleep(1);
+}
+</pre>
+
+            <p>
+            There are quite a couple of new concepts here, so lets go through them one at a time. Firstly, there is an options object at the top of the file. 
+            This options object is described in detail in K6 documentation, but it is automatically analyzed and can be used to set specific parameters
+            and tweak test execution. In this case, I've set the iterations to 100, meaning that the test will run 100 times. 
+            I've also set the vus (virtual users) setting to 10 as well, meaning it will simulate 10 users requesting my API at once. This means that 
+            the 100 total requests will be dispursed between 10 users simulatenously. Finally, I've added a threshold that 95% of test iterations must
+            run within 50 milliseconds, otherwise our test will fail. This ensures that the API is responding in a timely manner.
             </p>
 
+            <p>
+            Now on to the test itself. The patch request to /boats/rent has the possibility of returning a 409 conflict, as if one of the virtual users 
+            attempts to rent a boat that another virtual user has already rented, it will return this error. This is a prime example of where a data race
+            can be easily detected in stress tests. A 409 is not an error in this specific case, but the default checks that K6 does analyzes 
+            responses and flags any response code other than 200 as an error. We can fix this by writing a custom check, to see if our respose is either
+            200 or 409, then we will consider that a passing test. We are also getting the response from the API by stringifying the ArrayBuffer that
+            we recieve. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
+            in K6 tests.
+            </p>
+
+            <p>
+            The test itself is quite simple. It fetches all boats, and has the user attempt to rent the first available boat. If they can, then 
+            they wait a second and attempt to return that boat. If both of those return 200, it is a success. If the user cannot rent the boat and a 409
+            is returned, that is also considered a pass. Here is the output
+            </p>
+
+            <div class='img_contaier'>
+                <img src="./k6-stress-test2.png"/>
+            </div>
+
+            <p>
+            Here, some differences can be seen. Rigth away there is a new "thresholds" area, showing the results for the threshold we defined for API response
+            time. Additionally, we show our custom check of response status being 200 or 409 in green text below the total results section
+            </p>
             <p>
             Your content goes here. This is the first paragraph of your blog post.
             </p>
