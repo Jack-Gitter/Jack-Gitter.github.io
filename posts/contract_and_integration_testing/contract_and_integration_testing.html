@@ -110,7 +110,7 @@ export class HomesService {
 
             <h1>Databases and Running Migrations on TestContainers</h1>
             <p>
-            Typeorm is used to manage database connections, entities, and migrations. In this application, there is 
+            TypeORM is used to manage database connections, entities, and migrations. In this application, there is 
              a singular home entity 
 
 
@@ -157,7 +157,7 @@ export class Home {
 
 
 <p>
-In order to generate database tables, Typeorm was used to create migrations automatically based on the entity
+In order to generate database tables, TypeORM was used to create migrations automatically based on the entity
 </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -182,7 +182,7 @@ export class Init1748110788902 implements MigrationInterface {
 </pre>
 <p>
 These migrations are run against the database upon startup, to ensure the database is in a consistent state and allows our application to interact with it properly. When running tests, the goal is to have the database schema identical to the schema that exists in the primary database. As such,
-the same Typeorm migrations are ran on the TestContainers database to ensure consistency 
+the same TypeORM migrations are ran on the TestContainers database to ensure consistency 
 </p>
 
 <pre class='prettyprint lang-typescript'>
@@ -236,7 +236,7 @@ describe(HomesService.name, () =&gt {
 })</pre>
     <p>
     The TestContainer setup begins in the <span class='inline-code'>beforeAll()</span> method, creating the postgres database. In the <span class='inline-code'>beforeEach()</span> method, 
-        the database connection is initialized via Typeorm. Because we have specified the path to the migrations file, 
+        the database connection is initialized via TypeORM. Because we have specified the path to the migrations file, 
         and we have the migrationsrun field set to true, the migrations that are run on the primary database are also run on the test database. 
         To connect to the test database, the container connection is used programmatically</p>
             <h1>Seeding TestContainers</h1>
