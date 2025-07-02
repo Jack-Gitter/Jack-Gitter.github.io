@@ -96,7 +96,7 @@
 
                 <div class='sidenote'>
                     As a side note, messages between services should be "thin", meaning they should not contain a lot of data. One
-                    of the huge benefits of microserices is that the <span class='inline-service'>Orders</span> service should know a lot about order details, 
+                    of the huge benefits of microservices is that the <span class='inline-service'>Orders</span> service should know a lot about order details, 
                     but the <span class='inline-service'>Inventory</span> service might only need to know the product ID associated with the order. 
                     This results in a nice separation of concerns, leading to messages which only need to hold foreign references to entities 
                     owned by other services. 
@@ -132,7 +132,7 @@
 
             <h2>Inbox Pattern</h2>
             <p>
-                The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the the outbox pattern, just in reverse.
+                The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the outbox pattern, just in reverse.
                 When using this pattern, incoming messages are written into a database table within a transaction which handles the work associated to the 
                 message itself. If the work (for example, creating an Entity and inserting into the database) succeeds, 
                 then the message is written to the inbox table. If the work fails, then we can reprocess the message at a later point.
@@ -165,7 +165,7 @@
                     It might at first seem advantageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
                     Lets say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
                     at the same time. The shipping validation message comes back first, and is unsuccessful. What's to do? The inventory reservation message
-                    cannot yet be compensated, because we don't know if it was succcessful or not! 
+                    cannot yet be compensated, because we don't know if it was successful or not! 
                 </div>
 
             </p>
@@ -238,7 +238,7 @@
   }
   
   compensate(): Promise<void> {
-    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+    await this.rabbitMQService.compensateReserveInventoryMessage(productId, quantity)
   }
 }
 ... other steps</pre>
@@ -255,12 +255,12 @@
             <p>
                 To explain the issue, I'll give an example. Lets say that we receive two incoming HTTP requests to the <span class='inline-service'>Orders</span>
                 service, which kicks off two sagas: Saga1 and Saga2. Saga1 and Saga2 both send out messages to the 
-                to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenFoReserveInventoryResponse()</span> method, 
+                to reserve inventory, and call the <span class='inline-code'>this.rabbitMQService.listenForReserveInventoryResponse()</span> method, 
                 meaning that they both are waiting for a message to come back on the same queue. This is known as the competing consumer pattern, 
                 and can be great in some cases. A response will come to the queue, and either Saga1 or Saga2 can get the message, but only one of them. 
                 In some cases, this allows for essentially multithreading functionality. But in our scenario, 
-                it creates the possibility for a Saga to recieve the responses meant for another Saga. If Saga1's inventory request was denied but Saga2's wans't,
-                Saga1 could recieve a successful message while Saga2 received the rejected message. 
+                it creates the possibility for a Saga to receive the responses meant for another Saga. If Saga1's inventory request was denied but Saga2's wasn't,
+                Saga1 could receive a successful message while Saga2 received the rejected message. 
             </p>
 
             <p>
@@ -329,7 +329,7 @@
   }
   
   compensate(): Promise&lt;void&gt; {
-    await this.rabbitMQService.compensateReserveInventoryMesssage(productId, quantity)
+    await this.rabbitMQService.compensateReserveInventoryMessage(productId, quantity)
   }
 }</pre>
   
@@ -376,7 +376,7 @@
             <h2>Code</h2>
 
             <p>
-            Below is a link to a Github repository with the code implementation for the final solution. It utilizes NestJS, and dockerized
+            Below is a link to a GitHub repository with the code implementation for the final solution. It utilizes NestJS, and dockerized
             Postgres and RabbitMQ instances.  did not configure a .env file for convenience, so please ensure the 
             following ports are free: 3000, 3001, 3002, 1000, 1001, and 5672 
             to run it. I have also provided a .http file for ease of use.
