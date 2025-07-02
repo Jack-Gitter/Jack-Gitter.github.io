@@ -237,8 +237,8 @@ describe(HomesService.name, () =&gt {
     <p>
     The TestContainer setup begins in the <span class='inline-code'>beforeAll()</span> method, creating the postgres database. In the <span class='inline-code'>beforeEach()</span> method, 
         the database connection is initialized via Typeorm. Because we have specified the path to the migrations file, 
-        and we have the migrationsrun field set to true, the migrations that are run on the primary database are also ran on the test database. 
-        To connect to the test database, the container connection is used programatically</p>
+        and we have the migrationsrun field set to true, the migrations that are run on the primary database are also run on the test database. 
+        To connect to the test database, the container connection is used programmatically</p>
             <h1>Seeding TestContainers</h1>
             <p>
                 With the database set up, the next thing to do would be to seed it. There are a number of different ways to do so.
@@ -254,7 +254,7 @@ it('Fetches homes properly', async () =&gt {
 
                 <p>
                 Another way would be to have a seed script initialize the database with random data. In order to develop locally, I have developed 
-                a seed script that can run on a local database to populate some example homes. We can use this also on our test container, so that
+                a seed script that can run on a local database to populate some example homes. We can also use this on our test container, so that
                 the seeding script works both for testing and local development
                 </p>
 
@@ -407,9 +407,9 @@ if (require.main === module) {
             Contract testing is an easy way to screen any basic initial problems that would occur when communicating with another application over 
             a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that we would
             want to be able to test the interaction between the two. Integration tests that require another whole instance of the application running
-            are complex, especially if the dependent application has many dependencies itslef. This is where contract testing comes in.
+            are complex, especially if the dependent application has many dependencies itself. This is where contract testing comes in.
             Contract testing is a way to ensure that our service implements the contract of the service we are calling properly: making HTTP requests 
-            with the proper path parameters, the propery types in the JSON body, etc. This can all occur without needing a full instance of an application 
+            with the proper path parameters, the proper types in the JSON body, etc. This can all occur without needing a full instance of an application 
             running. A service can simply generate its contract, a definition of what it expects to receive, distribute it to other services, and then
             those services can run tests using the contract
             </p>
@@ -608,7 +608,7 @@ bootstrap();
 </pre>
             <h1>HTTP Server with Prism and OpenAPI</h1>
             <p>
-            In order to utilize the OpenAPI specification to it's full extent, there are services such as Prism, which can spin up HTTP servers based on 
+            In order to utilize the OpenAPI specification to its full extent, there are services such as Prism, which can spin up HTTP servers based on 
             existing OpenAPI specifications. These servers can be as simple as serving static content that you define in your spec for each 
             response, or even generating dynamic content based on the specification provided. Prism provides a docker container which allows for 
             easily spinning up an instance of an HTTP server 
@@ -717,7 +717,7 @@ export class ProfilesService {
 }
 </pre>
             <p>
-            basic HTTP calls to the homes service fetch data, and return it along side some static data. 
+            basic HTTP calls to the homes service fetch data, and return it alongside some static data. 
             </p>
 
             <h1>
@@ -787,7 +787,7 @@ describe(ProfilesService.name, () =&gt {
             mock server with that newly fetched file. 
             <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
             No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring the compatibility 
-            with the homes service contract. Most important of all, it occurs without having to worry about having a real 
+            with the homes service contract. Most importantly, it occurs without having to worry about having a real 
             instance spun up, with its dependencies running</p>
 
             <p>
