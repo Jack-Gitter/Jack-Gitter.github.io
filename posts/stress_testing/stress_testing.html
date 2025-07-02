@@ -234,9 +234,10 @@ export class Boat {
 
             <h1>Environment Replication</h1>
 
-            Before we get into stress testing itself, we have to discuss some important things that ensure stress testing is actually effective. The 
-            most important assurance that must be made before developing stress tests it that an enviroment which closely replicates the production 
-            environment is used to run the tests. This includes factors from network latency to databases all the way to processing power, RAM, and 
+            Before jumping right into stress testing, it is important to recognize the prerequisites that actually make stress testing effective. The 
+            most important assurance is that an enviroment which closely replicates the production 
+            environment is used to host the application while the tests are running. This includes all factors,
+            from network latency to a databases all the way to processing power, RAM, and 
             other physical resources on the machine. If stress tests are ran on a machine that is more powerful than the production environment,
             false positives may be recorded. Contrarily, false negatives can be recorded if running on a much less powerful machine than production. 
 
