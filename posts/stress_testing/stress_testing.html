@@ -421,9 +421,9 @@ test looks like so
 </pre>
 
 
-We first spin up our docker container in the background, and run our application in the background as well. We wait for the port 3000 to be occupied by our API, 
-but we additionally sleep for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, we utilize the k6 run command to run both 
-of our tests, and clean up the application by killing port 3000. 
+First the docker container in spun up in the background. Next, the application is ran in the background. wait-on waits for the port 3000 to be occupied by our API, 
+but also sleeps for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, K6 is used to run both of the tests. Finally,
+the application is cleaned up by killing port 3000. 
             <p>
             <a href="https://github.com/Jack-Gitter/stress-testing">Link to the GitHub repository</a>
             </p>
