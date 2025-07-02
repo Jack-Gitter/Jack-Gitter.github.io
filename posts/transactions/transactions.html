@@ -14,14 +14,14 @@
     </header>
     <main>
         <article>
-            <h1>How to Propegate Transactions Across Repositories</h1>
+            <h1>How to Propagate Transactions Across Repositories</h1>
             <p class="date">May 7, 2025</p>
             <p>
-                Often times when handling requests within a backend application, multiple database queries need to occur in order to 
-                acomplish some business functionality. Dealing with multiple queries to the database often means that a transaction is 
+                Often when handling requests within a backend application, multiple database queries need to occur in order to 
+                accomplish some business functionality. Dealing with multiple queries to the database often means that a transaction is 
                 required in order to ensure data consistency. Assuming a basic three layer architecture, an application typically has
-                some form of repositories or DAO living in the infrastructure layer which is used to interface with databases. 
-                When utilizing multiple repositories within a single request, one database connection which starts a
+                some form of repositories or DAO living in the infrastructure layer that are used to interface with databases. 
+                When utilizing multiple repositories within a single request, one database connection that starts a
                 transaction must be shared between multiple separate repositories. There are multiple methods to achieve this, but depending on how 
                 the underlying data is structured, it might not be necessary at all. 
             </p>
@@ -29,16 +29,16 @@
             <h2>DDD</h2>
             <p>
                 With a smart domain model emphasized by <a href="https://Jack-Gitter.github.io/posts/ddd/ddd.html">DDD</a>
-                transactions which span repositories is actually a code smell. Repositories fetch aggregate roots, which contains enough
+                transactions that span repositories are actually a code smell. Repositories fetch aggregate roots, which contain enough
                 information to make decisions about business functionality which must be transactionally consistent. With this approach, 
-                if transactions must span mutliple repositories the domain model must be reconsidered.
+                if transactions must span multiple repositories the domain model must be reconsidered.
             </p>
 
             <h2>Repository Functions Accepting DB Connections</h2>
             <p>
-                The most naive approach to managing consistency across repositories is have each repository method accept an optional 
+                The most naive approach to managing consistency across repositories is to have each repository method accept an optional 
                 database connection. If one is provided, the method will utilize it to query to the database, and otherwise it can grab a connection
-                from a database pool to make an isolated request. The following example comes from a golang distributed backend system 
+                from the database pool to make an isolated request. The following example comes from a golang distributed backend system 
                 for a website that mimics the functionality of letterboxd, but for music.
 
   <pre class="prettyprint lang-go">func(p *PostsDAO) LikePost(executor db.QueryExecutor, 
@@ -84,7 +84,7 @@
                 
                 The first argument to the function is a <span class='inline-code'>db.QueryExectutor</span>, an interface that wraps
                 a database connection so that the underlying database connection can be replaced with minimal changes.
-                This implementation works, although it creates unnecssary complexity within the application layer. Services 
+                This implementation works, although it creates unnecessary complexity within the application layer. Services 
                 must manage the database connection which causes an abstraction leak between the application layer and infrastructure layer.
             </p>
 
@@ -92,9 +92,9 @@
             <h2>Context/Async/Thread Local Storage and Interceptors</h2>
             <p>
                 A more sophisticated solution of sharing a database connection amongst repositories involves utilizing thread local storage. 
-                Also known as Async and Context local storage, thread local storage helps to store information isolated to a single execution thread.
-                This makes it possible to initilize a transaction and expose the database connection via thread local storage, and for each 
-                repository check if there is an avaialble connection in the thread local storage. If one exists, it will be used to execute 
+                Also known as async and context local storage, thread local storage helps to store information isolated to a single execution thread.
+                This makes it possible to initialize a transaction and expose the database connection via thread local storage, and for each 
+                repository check if there is an available connection in the thread local storage. If one exists, it will be used to execute 
                 any given query. If not, the repository can grab a connection from the pool. In order to create the initial database connection 
                 and start the transaction, it must be known whether or not a service method requires a transaction. 
             </p>
@@ -103,7 +103,7 @@
                 Interceptors allow for code execution before service methods. Most backend frameworks have some form of interceptors, 
                 although for this example I'll be using NestJS. Interceptors are implemented as decorators, and can help to grab a database connection
                 from a pool, begin a transaction, and store the connection into context local storage. The connection can then be accessed by the 
-                repositories used in the method itself. The Interceptor manages the entire lifecyle of the transaction, starting the transaction and 
+                repositories used in the method itself. The Interceptor manages the entire lifecycle of the transaction, starting the transaction and 
                 observing the http response. If an error is detected, it will rollback the transaction.
                 </p>
 
@@ -224,7 +224,7 @@ import { Injectable } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { DAO } from '../types';
 
-Injectable();
+@Injectable();
 export class TransactionManager {
   constructor(private pool: Pool) {}
 
