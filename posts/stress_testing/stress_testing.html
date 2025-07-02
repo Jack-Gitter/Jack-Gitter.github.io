@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stress Testing with NestJS and K6</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./stress_testing.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+</head>
+<body>
+    <header>
+        <h1>Stress Testing with NestJS and K6</h1>
+    </header>
+    <main>
+        <article>
+            <h1>How To Know if an Application Can Handle Production Traffic</h1>
+            Many efforts are typically focused around unit, integration, and e2e tests to ensure that applications
+            and APIs function as expected. These tests are extremely vital as, for the most part, they ensure that there are no logical bugs. 
+            One aspect that might be overlooked is stress testing. With an upsurge of traffic coming to an API, 
+            how can developers be certain of the performance capabilities of an application?
+            What test can be used to ensure that an application scales properly, and a system won't crash under heavy load? 
+            Along with these questions, bugs such as data races often do not make themselves aparent in simple tests. 
+            Only when a high number of concurrent users are utilizing the system do these aches
+            reveal themselves, and come with the potential to cause catostrophic issues. 
+            To answer all of the aformentioned questions, stress testing can be utilized to simulate how an application repsonds under varying 
+            types of usage.
+            <p class="date">July 2, 2025</p>
+
+
+            <h1>Basic Application Setup</h1>
+            
+            In order to demonstrate stress testing an application, I've developed an extremely simple NestJS API which acts as a 
+            backend to a boating rental service. I've created the necessary controllers, services, entities, and database conections as shown below
+
+
+<pre class="prettyprint lang-typescript">@Controller('boats')
+export class BoatsController {
+  constructor(private boatsService: BoatsService) {}
+
+  @Patch('rent/:id')
+  public async rentBoat(@Param('id') id: UUID): Promise&ltvoid&gt {
+    await this.boatsService.rentBoat(id);
+  }
+
+  @Get('available')
+  public async findAvailableBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsService.findAvailableBoats();
+  }
+
+  @Get()
+  public async findBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsService.findBoats();
+  }
+
+  @Patch('return/:id')
+  public async returnBoat(@Param('id') id: UUID): Promise&ltvoid&gt {
+    await this.boatsService.returnBoat(id);
+  }
+
+  @Patch('all/rent')
+  public async rentAllBoats() {
+    return await this.boatsService.rentAllBoats();
+  }
+
+  @Patch('all/return')
+  public async returnAllBoats() {
+    return await this.boatsService.returnAllBoats();
+  }
+
+  @Post()
+  public async createBoat(@Body() body: CreateBoatDTO): Promise&ltBoat&gt {
+    return await this.boatsService.createBoat(
+      body.price,
+      body.topSpeedInKnots,
+      body.capacity,
+      body.name,
+    );
+  }
+}
+</pre>
+
+
+
+
+<pre class="prettyprint lang-typescript">@Injectable()
+export class BoatsService {
+  constructor(
+    @InjectRepository(Boat) private boatsRepository: Repository&ltBoat&gt,
+    private dataSource: DataSource,
+  ) {}
+
+  public async rentAllBoats(): Promise&ltBoat[]&gt {
+    return await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const allBoats = await boatRepo.find({
+        where: {
+          currentlyRented: false,
+        },
+      });
+      const rentedBoats = allBoats.map((boat) =&gt {
+        boat.rentBoat();
+        return boat;
+      });
+      await boatRepo.save(rentedBoats);
+      return allBoats;
+    });
+  }
+
+  public async returnAllBoats() {
+    await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const allBoats = await boatRepo.find({
+        where: {
+          currentlyRented: true,
+        },
+      });
+      const rentedBoats = allBoats.map((boat) =&gt {
+        boat.returnBoat();
+        return boat;
+      });
+      await boatRepo.save(rentedBoats);
+    });
+  }
+  public async rentBoat(id: UUID): Promise&ltvoid&gt {
+    await this.dataSource.transaction(async (manager) =&gt {
+      const boatRepo = manager.getRepository(Boat);
+      const boat = await boatRepo.findOneByOrFail({ id });
+      boat.rentBoat();
+      await boatRepo.save(boat);
+    });
+  }
+
+  public async findAvailableBoats(): Promise&ltBoat[]&gt {
+    const boats = await this.boatsRepository.find({
+      where: {
+        currentlyRented: false,
+      },
+    });
+    return boats;
+  }
+
+  public async findBoats(): Promise&ltBoat[]&gt {
+    return await this.boatsRepository.find();
+  }
+
+  public async returnBoat(id: UUID): Promise&ltvoid&gt {
+    await this.dataSource.transaction(async (manager) => {
+      const boatRepo = manager.getRepository(Boat);
+      const boat = await boatRepo.findOneByOrFail({ id });
+      boat.returnBoat();
+      boatRepo.save(boat);
+    });
+  }
+
+  public async createBoat(
+    price: number,
+    topSpeedInKnots: number,
+    capacity: number,
+    name: string,
+  ): Promise&ltBoat&gt {
+    const boat = new Boat(
+      price,
+      topSpeedInKnots,
+      capacity,
+      name,
+      BOAT_CONDITION.NEW,
+      false,
+    );
+    await this.boatsRepository.save(boat);
+    return boat;
+  }
+}
+</pre>
+            
+
+<pre class="prettyprint lang-typescript">@Entity('boat')
+export class Boat {
+  @Column({ name: 'price', type: 'int' })
+  public price: number;
+
+  @Column({ name: 'top_speed_in_knots', type: 'int' })
+  public topSpeedInKnots: number;
+
+  @Column({ name: 'capacity', type: 'int' })
+  public capacity: number;
+
+  @Column({ name: 'name', type: 'varchar' })
+  public name: string;
+
+  @Column({ name: 'condition', type: 'enum', enum: BOAT_CONDITION })
+  public condition: BOAT_CONDITION;
+
+  @Column({ name: 'currentlyRented', type: 'boolean' })
+  public currentlyRented: boolean;
+
+  @PrimaryGeneratedColumn('uuid')
+  id: UUID;
+
+  constructor(
+    price: number,
+    topSpeedInKnots: number,
+    capacity: number,
+    name: string,
+    condition: BOAT_CONDITION,
+    currentlyRented: boolean,
+  ) {
+    this.price = price;
+    this.topSpeedInKnots = topSpeedInKnots;
+    this.capacity = capacity;
+    this.name = name;
+    this.condition = condition;
+    this.currentlyRented = currentlyRented;
+  }
+
+  public updateCondition(newCondition: BOAT_CONDITION) {
+    this.condition = newCondition;
+  }
+
+  public rentBoat() {
+    if (this.currentlyRented) {
+      throw new ConflictException('Boat is currently rented already!');
+    }
+    this.currentlyRented = true;
+  }
+
+  public returnBoat() {
+    this.currentlyRented = false;
+  }
+}
+</pre>
+
+            The application is not meant to be logically bulletproof. It only serves as an example which we can utilize to run stress tests against.
+
+            <h1>Environment Replication</h1>
+
+            Before jumping right into stress testing, it is important to recognize the prerequisites that actually make stress testing effective. The 
+            most important assurance is that an enviroment which closely replicates the production 
+            environment is used to host the application while the tests are running. This includes all factors,
+            from network latency to a databases all the way to processing power, RAM, and 
+            other physical resources on the machine. If stress tests are ran on a machine that is more powerful than the production environment,
+            false positives may be recorded. Contrarily, false negatives can be recorded if running on a much less powerful machine than production. 
+
+            <h1>K6</h1>
+
+            In order to write the tests themsevles, K6 is used, which performs much of the heavy lifting for the 
+            developer. Once aquanited with the syntax, it is very easy to run tests, set thresholds, and analyze results. 
+            K6 is actually not built upon the NodeJS runtime but rather a propriatary runtime. 
+            As such, K6 files are self contained and are not meant to be encoroportated into existing tests such as 
+            Jest tests. In order to install any package manager should do. I am running on mac, so I used brew.
+
+<pre class="prettyprint lang-typescript">
+brew install k6
+</pre>
+
+            K6 is Typescript compatible. In order to install types, you can run
+
+<pre class="prettyprint lang-typescript">
+npm install --save @types/k6
+</pre>
+
+            After installing the program and type definitions, the first tests can be created.
+
+
+            <h1>Writing tests</h1>
+
+            In order to write tests in K6, each test is defined in its own file. The most basic requirements for a test file is that is exports a 
+            default function. This function is what is ran when the test itself is ran. Here is a simple test created for the boats API that 
+            attempts to rent all available boats, and then returns them. Sleep is utilized in order to simulate real world delay from an end user.
+
+
+<pre class="prettyprint lang-typescript">
+import http from 'k6/http';
+import { sleep } from 'k6';
+
+export default function () {
+  http.get('http://localhost:3000/boats');
+  sleep(1);
+  http.patch('http://localhost:3000/boats/all/rent');
+  sleep(1);
+  http.patch('http://localhost:3000/boats/all/return');
+  sleep(1);
+}
+</pre>
+
+            Here the user first queries for all of the boats, similar to what a frontend application would request from the backend. 
+            The test then sleeps for one second to simulate the time it takes for a user to click the button to rent all boats, and the request to reach the API.
+            After the request comes back, we then simulate another second of end user and network time, before returning 
+            all of the boats. This example is quite contrived, but it is a valuable introductary example to gain insight into 
+            the framework syntax and use cases. The output of this test is shown below.
+
+            <div class='img_contaier'>
+                <img src="./k6-stress-test1.png"/>
+            </div>
+
+            Some simple attributes can be seen here, such as how many times our test ran, how many users were simulated, 
+            how long each iteration took, etc. 
+
+            <p>
+            Next, we'll examine a slightly more complex example of a stress test: 
+
+
+<pre class="prettyprint lang-typescript">
+import http from 'k6/http';
+import { sleep, check } from 'k6';
+
+export const options = {
+  iterations: 100,
+  vus: 10,
+  thresholds: {
+    http_req_duration: ['p(95)&lt50'],
+  },
+};
+
+export default function () {
+  const response = http.get('http://localhost:3000/boats');
+  sleep(1);
+  const boats = JSON.parse(response.body as string);
+  const availableBoat = boats.find((boat) =&gt {
+    return !boat.currentlyRented;
+  });
+  if (availableBoat) {
+    const res = http.patch(
+      `http://localhost:3000/boats/rent/${availableBoat.id}`,
+    );
+    check(res, {
+      'status was 200 or 409': (r) =&gt r.status === 200 || r.status === 409,
+    });
+    sleep(1);
+    if (res.status === 200) {
+      const res2 = http.patch(
+        `http://localhost:3000/boats/return/${availableBoat.id}`,
+      );
+      check(res2, {
+        'status was 200': (r) =&gt r.status === 200,
+      });
+    }
+  }
+  sleep(1);
+}
+</pre>
+
+            <p>
+            There are quite a couple of new concepts here. Firstly, there is an options object at the top of the file. 
+            This options object is described in detail in K6 documentation, but it is automatically analyzed and can be used to set specific parameters
+            and tweak test execution. In this case, the iterations have been set to 100, meaning that the test will run 100 times. 
+            Additionally, the vus (virtual users) setting is at 10, meaning 10 virtual users will be running the tests in parallel. The 100 total requests 
+            are be dispursed between the 10 users. Finally, a threshold has been defined to ensure that 95% of test iterations must
+            run within 50 milliseconds, otherwise test will fail. This ensures that the API is responding in a timely manner.
+            </p>
+
+            <p>
+            On to the test itself. The patch request to /boats/rent has the possibility of returning a 409 conflict, as if one of the virtual users 
+            attempts to rent a boat that another virtual user has already rented, it will return this error. This is a prime example of where a data race
+            can be easily detected in stress tests. A 409 is not an error in this specific case, but the default checks that K6 does analyzes 
+            responses and flags any response code other than 200 as an error. This can be fixed by writing a custom check to see if our respose is either
+            200 or 409. Additionally, the API response is parsed by stringifying the ArrayBuffer that
+            is recieve. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
+            in K6 tests.
+            </p>
+
+            <p>
+            The test itself is quite simple. It fetches all boats, and has the user attempt to rent the first available boat. If successful 
+            they wait a second and attempt to return that boat. If both of those return 200, it is a success. If the user cannot rent the boat and a 409
+            is returned, that is also considered a pass. Here is the output.
+            </p>
+
+            <div class='img_contaier'>
+                <img src="./k6-stress-test2.png"/>
+            </div>
+
+            <p>
+            Here some differences can be seen as well. Rigth away there is a new "Thresholds" header, 
+            showing the results for the threshold defined for API response time. Additionally, the results of the custom check for 200 or 409 status codes are 
+            in green text below the total results section. Vus information is also available under the execution header. 
+            Since some requests responded with 409 status code, the HTTP section displays some errors. This is 
+            simply a metric meant to show how many requests did not return a 200 response. In this case, there were 37 conflict exceptions thrown 
+            due to concurrent attempts to rent boats.
+            </p>
+
+
+            <h1>Running tests</h1>
+
+
+            In order to run these tests, a database connection is required with some data pre-populated. For this, I'm using docker to spin up 
+            a simple postgres database
+
+<pre class="prettyprint lang-typescript">
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: stress_testing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+</pre>
+
+    Additionally, another command is used, wait-on, which can be installed as so
+        
+<pre class="prettyprint lang-typescript">
+npm i -g wait-on
+</pre>
+
+this command allows for delayed test execution, ensuring that the application is spun up prior to running tests. 
+
+Finally, in order to actually run the tests, the K6 binary which comes installed with the package from homebrew is used. The entire command used to run the 
+test looks like so
+
+
+<pre class="prettyprint lang-typescript">
+"test:stress": "docker compose up -d && npm run start & wait-on --delay 5000 --reverse http://localhost:3000 && k6 run test/stress-test1.ts && k6 run test/stress-test2.ts && kill $(lsof -ti:3000)"
+</pre>
+
+
+First the docker container in spun up in the background. Next, the application is ran in the background. wait-on waits for the port 3000 to be occupied by our API, 
+but also sleeps for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, K6 is used to run both of the tests. Finally,
+the application is cleaned up by killing port 3000. 
+            <p>
+            <a href="https://github.com/Jack-Gitter/stress-testing">Link to the GitHub repository</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">JSWE at Sentinel Group</span>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.img_contaier {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.img_contaier img {
+    margin-top: 30px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
