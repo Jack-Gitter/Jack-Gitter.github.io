@@ -355,7 +355,7 @@ export default function () {
             can be easily detected in stress tests. A 409 is not an error in this specific case, but the default checks that K6 implements analyzes 
             responses and flags any response code other than 200 as an error. This can be fixed by writing a custom check to see if our respose is either
             200 or 409. Additionally, the API response is parsed by stringifying the ArrayBuffer that
-            is recieve. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
+            is recieved. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
             in K6 tests.
             </p>
 
