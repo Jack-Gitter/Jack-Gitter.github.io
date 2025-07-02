@@ -287,7 +287,7 @@ export default function () {
             The test then sleeps for one second to simulate the time it takes for a user to click the button to rent all boats, and the request to reach the API.
             After the request comes back, we then simulate another second of end user and network time, before returning 
             all of the boats. This example is quite contrived, but it is a valuable introductary example to gain insight into 
-            the framework syntax and use cases. The output of this test is shown below
+            the framework syntax and use cases. The output of this test is shown below.
 
             <div class='img_contaier'>
                 <img src="./k6-stress-test1.png"/>
@@ -341,21 +341,21 @@ export default function () {
 </pre>
 
             <p>
-            There are quite a couple of new concepts here, so lets go through them one at a time. Firstly, there is an options object at the top of the file. 
+            There are quite a couple of new concepts here. Firstly, there is an options object at the top of the file. 
             This options object is described in detail in K6 documentation, but it is automatically analyzed and can be used to set specific parameters
-            and tweak test execution. In this case, I've set the iterations to 100, meaning that the test will run 100 times. 
-            I've also set the vus (virtual users) setting to 10 as well, meaning it will simulate 10 users requesting my API at once. This means that 
-            the 100 total requests will be dispursed between 10 users simulatenously. Finally, I've added a threshold that 95% of test iterations must
-            run within 50 milliseconds, otherwise our test will fail. This ensures that the API is responding in a timely manner.
+            and tweak test execution. In this case, the iterations have been set to 100, meaning that the test will run 100 times. 
+            Additionally, the vus (virtual users) setting is at 10, meaning 10 virtual users will be running the tests in parallel. The 100 total requests 
+            are be dispursed between the 10 users. Finally, a threshold has been defined to ensure that 95% of test iterations must
+            run within 50 milliseconds, otherwise test will fail. This ensures that the API is responding in a timely manner.
             </p>
 
             <p>
-            Now on to the test itself. The patch request to /boats/rent has the possibility of returning a 409 conflict, as if one of the virtual users 
+            On to the test itself. The patch request to /boats/rent has the possibility of returning a 409 conflict, as if one of the virtual users 
             attempts to rent a boat that another virtual user has already rented, it will return this error. This is a prime example of where a data race
             can be easily detected in stress tests. A 409 is not an error in this specific case, but the default checks that K6 does analyzes 
-            responses and flags any response code other than 200 as an error. We can fix this by writing a custom check, to see if our respose is either
-            200 or 409, then we will consider that a passing test. We are also getting the response from the API by stringifying the ArrayBuffer that
-            we recieve. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
+            responses and flags any response code other than 200 as an error. This can be fixed by writing a custom check to see if our respose is either
+            200 or 409. Additionally, the API response is parsed by stringifying the ArrayBuffer that
+            is recieve. In the application there exists an avaialable boats endpoint, but it is important to recognize that responses can be utilized
             in K6 tests.
             </p>
 
