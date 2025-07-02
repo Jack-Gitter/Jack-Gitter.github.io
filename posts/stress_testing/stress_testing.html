@@ -371,25 +371,55 @@ export default function () {
             simply a metric meant to show how many requests did not return a successful response, In this case, there were 37 conflict exceptions thrown 
             due to concurrent attempts to rent boats.
             </p>
-            <p>
-            Your content goes here. This is the first paragraph of your blog post.
-            </p>
 
 
             <h1>Running tests</h1>
 
+
+            In order to run these tests, we need to have a database connection to a database with some data inside. For this, I'm using docker to spin up 
+            a simple postgres database
+
             Docker container for postgres
 
 <pre class="prettyprint lang-typescript">
-Docker file definition
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: stress_testing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
 </pre>
 
-            Wait on command
+    Additionally, I'm using another command, wait-on, which can be installed as so
         
 <pre class="prettyprint lang-typescript">
 npm i -g wait-on
 </pre>
 
+this command allows us to wait until our application is spun up to run our stress tests
+
+Finally, in order to actually run the tests, we can use the K6 binary that comes installed with the package from homebrew. The entire command used to run the 
+test looks like so
+
+
+<pre class="prettyprint lang-typescript">
+"test:stress": "docker compose up -d && npm run start & wait-on --delay 5000 --reverse http://localhost:3000 && k6 run test/stress-test1.ts && k6 run test/stress-test2.ts && kill $(lsof -ti:3000)"
+</pre>
+
+
+We first spin up our docker container in the background, and run our application in the background as well. We wait for the port 3000 to be occupied by our API, 
+but we additionally sleep for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, we utilize the k6 run command to run both 
+of our tests, and clean up the application by killing port 3000. 
             <p>
             <a href="https://github.com/Jack-Gitter/stress-testing">Link to the GitHub repository</a>
             </p>
