@@ -415,8 +415,7 @@ npm i -g wait-on
 this command allows for delayed test execution, ensuring that the application is spun up prior to running tests. 
 
 Finally, in order to actually run the tests, the K6 binary which comes installed with the package from homebrew is used. The entire command used to run the 
-test looks like so
-
+test is as follows: 
 
 <pre class="prettyprint lang-typescript">
 "test:stress": "docker compose up -d && npm run start & wait-on --delay 5000 --reverse http://localhost:3000 && k6 run test/stress-test1.ts && k6 run test/stress-test2.ts && kill $(lsof -ti:3000)"
