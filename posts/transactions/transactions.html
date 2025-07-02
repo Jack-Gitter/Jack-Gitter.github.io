@@ -289,7 +289,7 @@ export class OrdersService {
 
             </pre>
 
-            The <span class='inline-code'>OrdersService</span>injects the <span class='inline-code'>TransactionManager</span>, fetches repositories 
+            The <span class='inline-code'>OrdersService</span> injects the <span class='inline-code'>TransactionManager</span>, fetches repositories 
             from it, and then starts a transaction. It executes multiple repository functions all which utilize the same transaction, 
             and then performs a commit or rollback accordingly. It also releases the connection back to the pool.
             
