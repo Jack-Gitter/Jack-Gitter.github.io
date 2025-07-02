@@ -133,12 +133,12 @@
             <h2>Inbox Pattern</h2>
             <p>
                 The inbox pattern, better known as the idempotent consumer pattern, utilizes a nearly identical approach to the outbox pattern, just in reverse.
-                When using this pattern, incoming messages are written into a database table within a transaction which handles the work associated to the 
+                When using this pattern, incoming messages are written into a database table within a transaction which handles the work associated with the 
                 message itself. If the work (for example, creating an Entity and inserting into the database) succeeds, 
                 then the message is written to the inbox table. If the work fails, then we can reprocess the message at a later point.
                 When a new message comes in, the inbox table is first checked to determine if an identical message
-                has already been processed to avoid duplicated work. To detect duplicate messages, a unique key must be assigned to each new message. 
-                To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto incrementing 
+                has already been processed to avoid duplicate work. To detect duplicate messages, a unique key must be assigned to each new message. 
+                To give a concrete example, the <span class='inline-service'>Orders</span> service includes the specific, auto-incrementing 
                 primary key for each specific <span class='inline-code'>Order</span> Entity to the message it sends to the 
                 <span class='inline-service'>Inventory</span> service. With this identifier, the <span class='inline-service'>Inventory</span> service 
                 is able to detect duplicated messages. It receives the message, begins a transaction, 
@@ -147,7 +147,7 @@
 
                 <div class='sidenote'>
                     It is important to know that without this unique ID associated with each <span class='inline-code'>Order</span> Entity attached to the message,
-                    its impossible to differentiate two messages with the same contents. For example, if two customers place orders for the same product and quantity,
+                    it's impossible to differentiate two messages with the same contents. For example, if two customers place orders for the same product and quantity,
                     the <span class='inline-service'>Inventory</span> service would have no way to know that this message is not a duplicate.
                 </div>
             </p>
