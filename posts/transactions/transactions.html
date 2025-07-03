@@ -94,7 +94,7 @@
                 A more sophisticated solution of sharing a database connection amongst repositories involves utilizing thread local storage. 
                 Also known as async and context local storage, thread local storage helps to store information isolated to a single execution thread.
                 This makes it possible to initialize a transaction and expose the database connection via thread local storage, and for each 
-                repository check if there is an available connection in the thread local storage. If one exists, it will be used to execute 
+                repository to check if there is an available connection in the thread local storage. If one exists, it will be used to execute 
                 any given query. If not, the repository can grab a connection from the pool. In order to create the initial database connection 
                 and start the transaction, it must be known whether or not a service method requires a transaction. 
             </p>
