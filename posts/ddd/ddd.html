@@ -475,7 +475,7 @@
                 Information in one Bounded Context's data model should be only relevant to the context of that bounded context. 
                 In the Bounded Context which handles flight reservations, a flight is composed of seats, reservations, segments, etc. 
                 The reservation context needs all of this information to reason about the availability of flights and validity of attempted reservations. 
-                In the user acounts Bounded Context, a flight is simply a UUID, pointing to an Entity in the reservation context.
+                In the user accounts Bounded Context, a flight is simply a UUID, pointing to an Entity in the reservation context.
                 The user context might only care about how many flights a user has taken so it can set the user's status to "Premium" if they have flown over 
                 1000 times. 
 
