@@ -783,7 +783,7 @@ describe(ProfilesService.name, () =&gt {
 "mock:up": "curl  https://raw.githubusercontent.com/Jack-Gitter/contract-testing/refs/heads/main/homes/openapi.json -o homesapi.json && docker compose --profile prism up",
 "mock:down": "docker compose --profile prism down"
 </pre>
-<span class='inline-code'>mock:up</span> fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
+<span class='inline-code'>mock:up</span> fetches the OpenAPI spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
             No mocking of the http service within NestJS is required. The tests can contain real HTTP requests, ensuring compatibility 
