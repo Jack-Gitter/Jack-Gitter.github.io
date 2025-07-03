@@ -123,7 +123,7 @@
                 triggered, all messages are queried from the outbox table, converted into JSON, and sent into the queue for the 
                 <span class='inline-service'>Inventory</span> service to process at a later point. Once the message is in the queue, it is safe to 
                 be deleted from the <span class='inline-code'>InventoryReservationOutbox</span> table. Most queues have configurable 
-                durability, meaning if they crash with messages inside them they are able to enqueue them after coming back up again. 
+                durability, meaning if they crash with messages inside them they are able to requeue them after coming back up again. 
 
                 Next, we have to take a look at something known as "at least once" delivery. This is typical of message brokers, meaning messages might be 
                 sent to consumers more than once. 
