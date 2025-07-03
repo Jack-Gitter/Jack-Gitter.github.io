@@ -238,7 +238,7 @@ describe(HomesService.name, () =&gt {
     The TestContainer setup begins in the <span class='inline-code'>beforeAll()</span> method, creating the postgres database. In the <span class='inline-code'>beforeEach()</span> method, 
         the database connection is initialized via TypeORM. Because we have specified the path to the migrations file, 
         and we have the migrationsrun field set to true, the migrations that are run on the primary database are also run on the test database. 
-        To connect to the test database, the container connection is used programmatically</p>
+        To connect to the test database, the container connection information is used in the datasource</p>
             <h1>Seeding TestContainers</h1>
             <p>
                 With the database set up, the next thing to do would be to seed it. There are a number of different ways to do so.
