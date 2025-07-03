@@ -244,7 +244,7 @@
             <p>
             Taking a closer look at the <span class='inline-code'>Flight</span> Aggregate, we can see that there is not only encapsulation, 
             but also another form of a relationship: a reference. The <span class='inline-code'>Flight</span> Aggregate Root has a reference to the 
-            schedule that is associated with the current flight. For our business, there are no totalities enforced on the 
+            schedule that is associated with the current flight. For our business, there are no constraints enforced on the 
             relationship between a schedule and a flight. Due to this, the flight schedule does not need to be encapsulated in the 
             <span class='inline-code'>Flight</span> Aggregate but rather can be its own Entity. 
             Communication between the two can occur via domain events, reaching an eventually consistent state. 
