@@ -25,7 +25,7 @@
             Along with these questions, bugs such as data races often do not make themselves apparent in simple tests. 
             Only when a high number of concurrent users are utilizing the system do these issues
             reveal themselves and come with the potential to cause catastrophic issues. 
-            Stress testing can aid in answering the aformentioned questions by simulating how an application responds under varying 
+            Stress testing can aid in answering the aforementioned questions by simulating how an application responds under varying 
             types of usage before it is deployed.
 
 
@@ -238,7 +238,7 @@ export class Boat {
             Before jumping right into stress testing, it is important to recognize the prerequisites that actually make stress testing effective. The 
             most important assurance is that an environment which closely replicates the production 
             environment is used to host the application while the tests are running. This includes all factors,
-            from network latency to a databases all the way to processing power, RAM, and 
+            from network latency to the databases all the way to processing power, RAM, and 
             other physical resources on the machine. If stress tests are run on a machine that is more powerful than the production environment,
             false positives may be recorded. Contrarily, false negatives can be recorded if running on a much less powerful machine than production. 
 
@@ -358,7 +358,7 @@ export default function () {
             responses from each request and flags any response code 
             other than 200 as an error. This can be fixed by writing a custom check to see if our response is either
             200 or 409. Additionally, the API response is parsed by stringifying the ArrayBuffer that
-            is received. In the application there exists an endpoint to fetch only avaialble boats, but it is important to recognize that responses can be utilized
+            is received. In the application there exists an endpoint to fetch only available boats, but it is important to recognize that responses can be utilized
             in K6 tests.
             </p>
 
@@ -423,7 +423,7 @@ test is as follows:
 </pre>
 
 
-First, the docker container in spun up in the background. Next, the application is run in the background. Wait-on waits for the port 3000 to be occupied by our API, 
+First, the docker container is spun up in the background. Next, the application is run in the background. Wait-on waits for the port 3000 to be occupied by our API, 
 but also sleeps for 5 seconds afterwards to allow nest to bootstrap all necessary modules. Afterwards, K6 is used to run both of the tests. Finally,
 the application is cleaned up by killing port 3000. 
             <p>
