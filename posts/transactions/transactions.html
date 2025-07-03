@@ -82,7 +82,7 @@
 }
 </pre>
                 
-                The first argument to the function is a <span class='inline-code'>db.QueryExectutor</span>, an interface that wraps
+                The first argument to the function is a <span class='inline-code'>db.QueryExecutor</span>, an interface that wraps
                 a database connection so that the underlying database connection can be replaced with minimal changes.
                 This implementation works, although it creates unnecessary complexity within the application layer. Services 
                 must manage the database connection, which causes an abstraction leak between the application layer and infrastructure layer.
