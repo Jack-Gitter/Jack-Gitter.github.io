@@ -236,13 +236,13 @@ describe(HomesService.name, () =&gt {
 })</pre>
     <p>
     The TestContainer setup begins in the <span class='inline-code'>beforeAll()</span> method, creating the postgres database. In the <span class='inline-code'>beforeEach()</span> method, 
-        the database connection is initialized via TypeORM. Because we have specified the path to the migrations file, 
-        and we have the migrationsrun field set to true, the migrations that are run on the primary database are also run on the test database. 
+        the database connection is initialized via TypeORM. Because  the path to the migrations file is specified, 
+        and the migrationsrun field set to true, the migrations that are run on the primary database are also run on the test database. 
         To connect to the test database, the container connection information is used in the datasource</p>
             <h1>Seeding TestContainers</h1>
             <p>
                 With the database set up, the next step is to seed it. There are a number of different ways to do so.
-                One would be to seed on a per-test basis, making it extremely clear what we would want the outcome of our tests to return
+                One would be to seed on a per-test basis, making it extremely clear what the tests should return 
 
 <pre class='prettyprint lang-typescript'>
 it('Fetches homes properly', async () =&gt {
@@ -254,7 +254,7 @@ it('Fetches homes properly', async () =&gt {
 
                 <p>
                 Another way would be to have a seed script initialize the database with random data. In order to develop locally, I have developed 
-                a seed script that can run on a local database to populate some example homes. We can also use this on our test container, so that
+                a seed script that can run on a local database to populate some example homes. This can also be used the test container, so that
                 the seeding script works both for testing and local development
                 </p>
 
@@ -400,7 +400,7 @@ if (require.main === module) {
 }
 </pre>
         <p>
-        With these approaches, we can effectively test the communication between our application and a real database in a repeatable, maintainable manner
+        With these approaches, the communication between our application and a real database can be tested in a repeatable, maintainable manner
         </p>
             <h1>Contract Testing</h1>
             <p>
@@ -417,7 +417,7 @@ if (require.main === module) {
             <p>
             One common API contract format is the OpenAPI standard format. This is either a YAML or JSON file which describes in varying levels of detail
             what the API expects, potential response codes, and potential responses. These can be used by applications for contract testing. There 
-            are many tools to generate OpenAPI specifications for existing APIs, but here is an example of the way that we are doing it in NestJS
+            are many tools to generate OpenAPI specifications for existing APIs, but here is an example of the way that it can be done in NestJS
             </p>
 
 
