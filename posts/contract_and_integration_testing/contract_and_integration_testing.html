@@ -405,10 +405,10 @@ if (require.main === module) {
             <h1>Contract Testing</h1>
             <p>
             Contract testing is an easy way to screen any basic initial problems that would occur when communicating with another application over 
-            a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that we would
+            a standard such as HTTP. If another web service offers an HTTP API that your application integrates with, it makes sense that developers would
             want to be able to test the interaction between the two. Integration tests that require another whole instance of the application running
             are complex, especially if the dependent application has many dependencies itself. This is where contract testing comes in.
-            Contract testing is a way to ensure that our service implements the contract of the service we are calling properly: making HTTP requests 
+            Contract testing is a way to ensure that one service implements the contract of the service it is are calling properly: making HTTP requests 
             with the proper path parameters, the proper types in the JSON body, etc. This can all occur without needing a full instance of an application 
             running. A service can simply generate its contract, a definition of what it expects to receive, distribute it to other services, and then
             those services can run tests using the contract
