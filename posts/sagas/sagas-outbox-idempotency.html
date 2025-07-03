@@ -164,7 +164,7 @@
                 <div class='sidenote'>
                     It might at first seem advantageous to send out all Saga steps in parallel, to speed up the execution, although there is a problem with doing so.
                     Let's say that the <span class='inline-service'>Orders</span> service sends out a message to reserve inventory and validate shipping. 
-                    At the same time. The shipping validation message comes back first, and is unsuccessful. What is there to do? The inventory reservation messagej
+                    At the same time. The shipping validation message comes back first, and is unsuccessful. What is there to do? The inventory reservation message
                     cannot yet be compensated, because we don't know if it was successful or not! 
                 </div>
 
