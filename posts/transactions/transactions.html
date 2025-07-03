@@ -142,7 +142,6 @@
 <pre class="prettyprint lang-typescript">@Injectable({ scope: Scope.REQUEST })
 export class InventoryDAO {
   private queryRunner: EntityManager;
-  constructor(cls: ClsService, dataSource: DataSource) {
   constructor(
     private cls: ClsService,
     private dataSource: DataSource,
