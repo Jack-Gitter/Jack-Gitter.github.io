@@ -786,7 +786,7 @@ describe(ProfilesService.name, () =&gt {
 <span class='inline-code'>mock:up</span> fetches the Openapi spec from the homes service first, making sure that the spec is as up to date as possible. It then starts the prism
             mock server with that newly fetched file. 
             <span class='inline-code'>mock:down</span> simply tears down the mock server. With this approach,
-            No mocking of the http service within NestJS is required. The tests can contain real http requests, ensuring compatibility 
+            No mocking of the http service within NestJS is required. The tests can contain real HTTP requests, ensuring compatibility 
             with the homes service contract. Most importantly, it occurs without having to worry about having a real 
             instance spun up, with its dependencies running</p>
 
