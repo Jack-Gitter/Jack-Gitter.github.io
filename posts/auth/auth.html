@@ -23,41 +23,51 @@
             </p>
             
             <h2>Oauth</h2>
-            <p>
-                Oauth is simply a open protocl which deals strictly with authroization. With Oauth, user are able to securly give applications access to their data on 
-                third party services. For example, if a user logs into my music sharing website, I can ask them to log into spotify. While doing so, they will get a popup
-                window describing the claims, or access that my application is requesting. If the user trusts my application, they will proceed with the login. After which 
-                my application will recieve an access token, which must be appended to following requests to the spotify API to prove that I have access to the requested resources.
-                The access token contains no information about who I am, it only is concerned with whether or not the user has granted me the proper scopes in 
-                order to access the requested resources. In this scenario, spotify is what is known as the resource server, and the website I have made is the client app.
-            </p>
-            
-            <pre><code>
-// Code example can go here
-function example() {
-    return "This is where you can share code snippets";
-}
-            </code></pre>
-            
-            <h2>Another Section</h2>
-            <p>
-            More content here. You might want to talk about challenges you faced or interesting solutions you found.
-            </p>
-            
-            <ul>
-                <li>Bullet point one</li>
-                <li>Bullet point two</li>
-                <li>Bullet point three</li>
-            </ul>
-            
-            <h2>Conclusion</h2>
-            <p>
-            Wrap up your thoughts here. Maybe mention what you learned or what you're planning to work on next.
-            </p>
-            
-            <p>
+
+                <h3>What is it for</h3>
+                Only authorization
+
+                <h3>General Oauth Flow and terms</h3>
+                    claims
+                    access token
+                    refresh token
+                    redirect url
+                    auth server
+                    nothing about who I am, only access/authorization concerned
+                    opaque vs non-opaque tokens
+                <h3>Specific Oauth Flow example no code. Code to come later</h3>
+
+            <h2>Local vs Provided Access Tokens</h2>
+                <h3>provided from auth server directly are provided access tokens </h3>
+                <h3>Google access token login example</h3>
+                
+            <h2>Idps</h2>
+                <h3>what are they, why are they useful</h3>
+                <h3>different ways to integrate</h3>
+                    headless frontend
+                    frontend
+                    backend 
+                <h3>Sytch code example</h3>
+            <h2>Authentication</h2>
+                used to prove a user is who they say they are
+                <h3>Authencation vs authorization</h3>
+                used for SSO. The main difference is that an access token is typically used by an app to request resources. authentication is mainly for users, so that
+                they can be signed in to third party apps and interact with them from the browser
+            <h2>OIDC</h2>
+                <h3>what is it</h3>
+                    extension of oauth
+                    used for authentication
+                    id token returned
+                    not meant to be sent to an auth server
+                    proves that a user is who they say they are
+                    useful for SSO, Idps can talk directly to auth servers to verify ID tokens to authenticate users
+                <h3>Google OIDC login code example</h3>
+                    can sometimes be sent to local server to generate JWT [SHOW CODE EXAMPLE]
+                <h3>SAML</h3>
+                same as oauth, more mature protocl but same principals. 
+                <h3>IDP initiated SSO vs SP initiated SSO</h3>
+                    example with keycloak and grafana
             <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
-            </p>
         </article>
     </main>
     <footer>
