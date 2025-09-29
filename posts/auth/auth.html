@@ -132,10 +132,11 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user status in the top left has now changed to indicate they are logged in. The check simply verifies the existance of the access token and refresh tokens in the cookies
+After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user status in the top left has now changed to indicate they are logged in. The check simply verifies the existance of the access token and refresh tokens in the cookies. 
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
 
+This flow demonstrated is known as the "Authorization Code Flow", and is the most common amongst web applications. In reality, this code is a slight modification of what is actually in the repository, as that follows a local access token pattern.
 
 
 You can see that we are processing the code from the query parameters, and initializing another version of the google oauth client. We are required to exchange this authorization code for an access token, which is also handled through another call of the client library. This Oauth flow is called the "authorization code flow", meaning that google does not directly provide us with an access token. Rather, we have to request one after recieveing the authorziation code. Finally, after getting both access and refresh tokens in exchange for our authorization code, The user is redirected to our frontend, and the backend sets the access token as a cookie. 
