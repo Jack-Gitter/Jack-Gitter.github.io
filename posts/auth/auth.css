@@ -28,9 +28,11 @@ dd {
     font-style: italic;
 }
 
-.google-token-button {
+.auth-images {
   display: block;
   margin: 0 auto;
   width: 800px; /* adjust this value to your preferred size */
   height: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }

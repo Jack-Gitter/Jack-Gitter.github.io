@@ -52,7 +52,7 @@
                   <dt>JWT</dt>
                   <dd>A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. A JWT is also signed, and not encrypted in any way. The signature helps the server know that the token has not been tampered with in or before transit.</dd>
 
-                  <dt>Claims</dt>
+                  <dt>Scopes</dt>
                   <dd>A description of what resources the access token gives the client access to.</dd>
                 </dl>
 
@@ -68,7 +68,7 @@
                 First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
                 which executes the following code. 
 
-                <img class="google-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenButton.png">
+                <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenButton.png">
 
 <pre class='prettyprint lang-typescript'>
 export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
@@ -91,7 +91,18 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
     res.redirect(url)
 }</pre>
 
-This does a couple of things. Firstly, it initializes the google oauth client library for nodejs, which we provide a clientId and secret to. These values are generated when you create a project with google, and can be found in the dashboard. We also a redirectUri. This is how google knows to reidrect to our backend to finish the authorization process. We also define the claims that our application is requesting access to. These will be asked to be accepted during the auth process for the user. Finally, we use the google auth library to generate the url to the auth server login form, and redirect the user there. Once the user is redirected, they are asked to sign in with google normally. (screenshot here). After this, they are asked to accept the claism that we have defined, to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. Here is the code that handles the request from google
+Firstly, the code initializes the google OAuth2 client library for nodejs. We provide the client a clientID and secret, which can be found in the google dashboard after creating a project there. Additionally supplied to the OAuth2 client is a redirect URI. This is where Google will reidrect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal google login screen. 
+
+<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
+
+After entering their credentials, they are asked to accept the claims
+
+<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
+
+Clicking on the "5 Services" button reveals the claims that we defined earlier in the code when generating the redirect url
+<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
+
+to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. Here is the code that handles the request from google
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
