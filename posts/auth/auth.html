@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IDPs, Stytch, Oauth, OIDC, SAML, SSO</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./auth.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -25,16 +26,36 @@
             <h2>Oauth</h2>
 
                 <h3>What is it for</h3>
-                Only authorization
+                Oauth is an authorization framework built to allow one application to view a users information from another application. It is not concerned with who 
+                is making a request for information, but only if that request is allowed or not. Here are some important terms that oauth
+                defines
 
+                <ul>
+                    <li>
+                        access token: A string which is sent with requests to a resource server. The resource server uses the access token to determine whether or not the 
+                        request is valid. 
+                    </li>
+                    <li>
+                        refresh token: A string which is used to obtain a new access token when the current one expires
+                    </li>
+                    <li>
+                        opaque tokens: Access tokens which are not decipherable by the client application. They only "mean" something to the server
+                    </li>
+                    <li>
+                        JWT: A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. 
+                        A JWT is also signed, and not encrypted in any way. The signature helps the server know that the token has not been tampered with in or before transit
+                    </li>
+                    <li>
+                        Authorization server: The server which issues access tokens, refresh tokens, etc
+                    </li>
+                    <li>
+                        Resource Server: The server which contains protected resources
+                    </li>
+                    <li>
+                        Client: The server requesting protected resources
+                    </li>
+                </ul>
                 <h3>General Oauth Flow and terms</h3>
-                    claims
-                    access token
-                    refresh token
-                    redirect url
-                    auth server
-                    nothing about who I am, only access/authorization concerned
-                    opaque vs non-opaque tokens
                 <h3>Specific Oauth Flow example no code. Code to come later</h3>
 
             <h2>Local vs Provided Access Tokens</h2>
