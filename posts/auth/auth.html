@@ -63,7 +63,7 @@
             <h2>Local vs Provided Access Tokens</h2>
                 A provided access token is an access token which is provided to an application from a third party authorization server, think google, okta, etc. A local access token is one issued by a server that in-house developers control. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend HTTP server which serves content from a database that you own.
 
-                <h3>Provided Access Token Example</h3>
+                <h3>Provided Access Tokens</h3>
                 The following is a concrete example of an OAuth flow implemented with a simple local express server and Google's auth server.
                 First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
                 which executes the following code. 
@@ -138,7 +138,18 @@ After we recieve our access (and refresh) token(s), we then can set them as cook
 
 This flow demonstrated is known as the "Authorization Code Flow", and is the most common amongst web applications. In reality, this code is a slight modification of what is actually in the repository, as it follows a local access token pattern. 
 
-                <h3>Show wrapping of google access token</h3>
+                <h3>Local Access Tokens</h3>
+                    Often times, the resource server will be controlled in house. These applications will have user information stored in a database, such 
+                    as roles, permissions, and other useful metadata about a user. Often times
+                    however, it is not convinient to come up with a password management system, password reset, etc all by yourself. It is much easier to rely on a third party provider
+                    for these things, which is where local accesss tokens come into play. Typically, when generating a local access token, the full flow for generating a 
+                    provided access token will be followed. After the access token is retrieved from a third party such as google, data about the sepcific user is looked up 
+                    in an internal database. That data, along with any other data fetched via the access token usage, is wrapped up in a JWT and signed with an internal private key, 
+                    and returned to the frontend. On subsequent requests, this JWT is provided to our owned resource server, and verified with our own private key. The JWT is what is 
+                    known as a local access token, meaning it is issued by ourselves
+
+
+                    way to encapsulate all of this information is within a JWT
                     why local access tokens
                     implementation
                     here, show second half of google example where we use it as an Idp kind of
