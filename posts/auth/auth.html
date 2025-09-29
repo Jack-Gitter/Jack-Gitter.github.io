@@ -26,38 +26,35 @@
             <h2>Oauth</h2>
 
                 <h3>What is it for</h3>
-                Oauth is an authorization framework built to allow one application to view a users information from another application. It is not concerned with who 
+                OAuth is an authorization framework built to grant access to resources from one application to another It is not concerned with who 
                 is making a request for information, but only if that request is allowed or not. Here are some important terms that oauth
                 defines
 
-                <ul>
-                    <li>
-                        <b>Access Token</b>: A string which is sent with requests to a resource server. The resource server uses the access token to determine whether or not the 
-                        request is valid. 
-                    </li>
-                    <li>
-                        <b>Refresh Token</b>: A string which is used to obtain a new access token when the current one expires
-                    </li>
-                    <li>
-                        <b>Opaque Tokens</b>: Access tokens which are not decipherable by the client application. They only "mean" something to the server
-                    </li>
-                    <li>
-                        <b>JWT</b>: A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. 
-                        A JWT is also signed, and not encrypted in any way. The signature helps the server know that the token has not been tampered with in or before transit
-                    </li>
-                    <li>
-                        <b>Authorization Server</b>: The server which issues access tokens, refresh tokens, etc
-                    </li>
-                    <li>
-                        <b>Resource Server</b>: The server which contains protected resources
-                    </li>
-                    <li>
-                        <b>Client</b>: The server requesting protected resources
-                    </li>
-                    <li>
-                        <b>Claims</b>: A description of what resources the access token gives the client access to
-                    </li>
-                </ul>
+                <dl>
+                  <dt>Access Token</dt>
+                  <dd>A string which is sent with requests to a resource server. The resource server uses the access token to determine whether or not the request is valid.</dd>
+
+                  <dt>Refresh Token</dt>
+                  <dd>A string which is used to obtain a new access token when the current one expires.</dd>
+
+                  <dt>Opaque Tokens</dt>
+                  <dd>Access tokens which are not decipherable by the client application. They only "mean" something to the server.</dd>
+
+                  <dt>JWT</dt>
+                  <dd>A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. A JWT is also signed, and not encrypted in any way. The signature helps the server know that the token has not been tampered with in or before transit.</dd>
+
+                  <dt>Authorization Server</dt>
+                  <dd>The server which issues access tokens, refresh tokens, etc.</dd>
+
+                  <dt>Resource Server</dt>
+                  <dd>The server which contains protected resources.</dd>
+
+                  <dt>Client</dt>
+                  <dd>The server requesting protected resources.</dd>
+
+                  <dt>Claims</dt>
+                  <dd>A description of what resources the access token gives the client access to.</dd>
+                </dl>
                 <h3>General Oauth Flow and terms</h3>
 
                 In general, the oauth flow is initiated when an application needs access to a users resources. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of claims that the client application is requesting access to, on the users behalf. After the user successfully logs in and accepts these claims, they are redirected back to the client application, and the client application stores the access token for any necessary requests to the resource server
