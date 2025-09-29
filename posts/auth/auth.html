@@ -63,8 +63,9 @@
                 A provided access token is an access token which is provided to an application from a third party authorization server, think google, okta, etc. A local access token is one issued by a server that in-house developers control. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend HTTP server which serves content from a database that you own.
 
                 <h3>Provided Access Token Example</h3>
-                Here, I am going to show a concrete example of an Oauth flow implemented with a simple express server and google's auth server.
-                First, we have the user click the "Get Access Token" button, executes the following code. 
+                The following is a concrete example of an OAuth flow implemented with a simple local express server and Google's auth server.
+                First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
+                which executes the following code. 
 
                 <pre class='prettyprint lang-typescript'>
                 export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
