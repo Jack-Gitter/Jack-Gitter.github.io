@@ -146,13 +146,16 @@ This flow demonstrated is known as the "Authorization Code Flow", and is the mos
                     provided access token will be followed. After the access token is retrieved from a third party such as google, data about the sepcific user is looked up 
                     in an internal database. That data, along with any other data fetched via the access token usage, is wrapped up in a JWT and signed with an internal private key, 
                     and returned to the frontend. On subsequent requests, this JWT is provided to our owned resource server, and verified with our own private key. The JWT is what is 
-                    known as a local access token, meaning it is issued by ourselves
+                    known as a local access token, meaning it is issued by ourselves. 
 
 
-                    way to encapsulate all of this information is within a JWT
-                    why local access tokens
-                    implementation
-                    here, show second half of google example where we use it as an Idp kind of
+                    show the code for the second half of the auth flow, 
+                    show the typeorm entity
+                    show postgres database schema
+                    show the user that I have in the db with admin permissions
+                    show settign the cookie, 
+                    show the actual JWT 
+
             <h2>Idps</h2>
                 <h3>what are they, why are they useful</h3>
                 <h3>different ways to integrate</h3>
