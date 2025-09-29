@@ -58,7 +58,7 @@
 
                 <br>
 
-                In general, the OAuth flow is initiated when an application needs access to a users resources. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of claims that the client application is requesting. After the user successfully logs in and accepts these claims, they are redirected back to the client application. 
+                In general, the OAuth flow is initiated when an application needs access to a users resources. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of scopes that the client application is requesting. After the user successfully logs in and accepts these scopes, they are redirected back to the client application. 
 
             <h2>Local vs Provided Access Tokens</h2>
                 A provided access token is an access token which is provided to an application from a third party authorization server, think google, okta, etc. A local access token is one issued by a server that in-house developers control. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend HTTP server which serves content from a database that you own.
@@ -95,14 +95,14 @@ Firstly, the code initializes the google OAuth2 client library for nodejs. We pr
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
 
-After entering their credentials, they are asked to accept the claims
+After entering their credentials, they are asked to accept the scopes
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
 
-Clicking on the "5 Services" button reveals the claims that we defined earlier in the code when generating the redirect url
+Clicking on the "5 Services" button reveals the scopes that we defined earlier in the code when generating the redirect url
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
 
-to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. Here is the code that handles the request from google
+After the user accepts the scopes, google redirects to the provided redirect URI, which hosts an HTTP endpoing via express. Google will send us an authorization code, which our backend will have to parse from the query parameters and exchange for an access token. 
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -131,6 +131,12 @@ export async function auth_access_token(req: Request, res: Response) {
     }
 }
 </pre>
+
+After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user is now logged in, as the check verifies the existance of the access token and refresh tokens in the cookies
+
+<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png.png">
+
+
 
 You can see that we are processing the code from the query parameters, and initializing another version of the google oauth client. We are required to exchange this authorization code for an access token, which is also handled through another call of the client library. This Oauth flow is called the "authorization code flow", meaning that google does not directly provide us with an access token. Rather, we have to request one after recieveing the authorziation code. Finally, after getting both access and refresh tokens in exchange for our authorization code, The user is redirected to our frontend, and the backend sets the access token as a cookie. 
 
