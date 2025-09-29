@@ -90,15 +90,7 @@
                 </pre>
 
 
-                which redirects them to the google auth server. 
-                They sign in (image here) and are also asked to 
-                accept the claims that our application has defined. (image here). After this process, the browser redirects to our backend to complete the auth flow, and finally
-                the user ends up back at our application, logged in (image here of logged in button, and JWT in cookie). The code which is executed after the button is clicked is below
-
-
-
-This does a couple of things. Firstly, it initializes the google oauth client library for nodejs, which we provide a clientId and secret to. These values are generated when you create a project with google, and can be found in the dashboard. We also a redirectUri. This is how google knows to reidrect to our backend to finish the authorization process. We also define the claims that our application is requesting access to. These will be asked to be accepted during the auth process for the user. Finally, we use the google auth library to generate the url to the auth server login form, and redirect the user there. Once the user is redirected, they are asked to sign in with google normally. (screenshot here). After this, they are asked to accept the claism that we have defined, to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. We are required to exchange this authorization code for an 
-access token, which we do in the backend. This Oauth flow is called the "authorization code flow", meaning that google does not directly provide us with an access token. Rather, we have to request one after recieveing the authorziation code. Finally, The user is redirected to our frontend, and the backend sets the access token as a cookie. Here is the backend code which handles the google request after the user has signed in and accepted the claims.
+This does a couple of things. Firstly, it initializes the google oauth client library for nodejs, which we provide a clientId and secret to. These values are generated when you create a project with google, and can be found in the dashboard. We also a redirectUri. This is how google knows to reidrect to our backend to finish the authorization process. We also define the claims that our application is requesting access to. These will be asked to be accepted during the auth process for the user. Finally, we use the google auth library to generate the url to the auth server login form, and redirect the user there. Once the user is redirected, they are asked to sign in with google normally. (screenshot here). After this, they are asked to accept the claism that we have defined, to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. Here is the code that handles the request from google
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -127,6 +119,9 @@ export async function auth_access_token(req: Request, res: Response) {
     }
 }
 </pre>
+
+You can see that we are processing the code from the query parameters, and initializing another version of the google oauth client. We are required to exchange this authorization code for an access token, which is also handled through another call of the client library. This Oauth flow is called the "authorization code flow", meaning that google does not directly provide us with an access token. Rather, we have to request one after recieveing the authorziation code. Finally, after getting both access and refresh tokens in exchange for our authorization code, The user is redirected to our frontend, and the backend sets the access token as a cookie. 
+
 
 This code is a slight oversimplification of what is actually in the repository. In order to understand that, we must take a look at local access tokens.
                 <h3>Show wrapping of google access token</h3>
