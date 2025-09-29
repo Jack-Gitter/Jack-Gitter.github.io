@@ -27,3 +27,10 @@ dd {
     color: #888;
     font-style: italic;
 }
+
+.google-token-button {
+  display: block;
+  margin: 0 auto;
+  width: 800px; /* adjust this value to your preferred size */
+  height: auto;
+}

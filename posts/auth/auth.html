@@ -20,7 +20,8 @@
             <p>
             Authentication and authorization are two critical parts of any software which has the notion of a "user". Authentication allows a user or system to prove 
             that they are who they say they are, and authorization gives an entity access to protected resources. 
-            The combination of these two principals allows for complex and robust user management, and a plethora of protocols, frameworks, and jargon to go along with it. 
+            The combination of these two principals allows for complex and robust user management, and a plethora of protocols, frameworks, and jargon to go along with it. I have 
+            created a small application which demonstrates multiple auth flows, and will be referencing it throughout the article.
             </p>
             
             <h2>OAuth</h2>
@@ -67,28 +68,28 @@
                 First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
                 which executes the following code. 
 
-                <pre class='prettyprint lang-typescript'>
-                export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
-                    const oauth2Client = new google.auth.OAuth2({
-                        clientId: process.env.CLIENT_ID ?? '',
-                        clientSecret: process.env.CLIENT_SECRET ?? '',
-                        redirectUri: 'http://localhost:3000/login/access/google'
-                    }
-                    );
-                    const scopes = [
-                      'https://www.googleapis.com/auth/blogger',
-                      'https://www.googleapis.com/auth/calendar',
-                      'https://www.googleapis.com/auth/userinfo.email',
-                      'https://www.googleapis.com/auth/userinfo.profile'
-                    ];
-                    const url = oauth2Client.generateAuthUrl({
-                      access_type: 'offline',
-                      scope: scopes
-                    });
-                    res.redirect(url)
-                }
-                </pre>
+                <img class="google-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenButton.png">
 
+<pre class='prettyprint lang-typescript'>
+export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
+    const oauth2Client = new google.auth.OAuth2({
+        clientId: process.env.CLIENT_ID ?? '',
+        clientSecret: process.env.CLIENT_SECRET ?? '',
+        redirectUri: 'http://localhost:3000/login/access/google'
+    }
+    );
+    const scopes = [
+      'https://www.googleapis.com/auth/blogger',
+      'https://www.googleapis.com/auth/calendar',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ];
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes
+    });
+    res.redirect(url)
+}</pre>
 
 This does a couple of things. Firstly, it initializes the google oauth client library for nodejs, which we provide a clientId and secret to. These values are generated when you create a project with google, and can be found in the dashboard. We also a redirectUri. This is how google knows to reidrect to our backend to finish the authorization process. We also define the claims that our application is requesting access to. These will be asked to be accepted during the auth process for the user. Finally, we use the google auth library to generate the url to the auth server login form, and redirect the user there. Once the user is redirected, they are asked to sign in with google normally. (screenshot here). After this, they are asked to accept the claism that we have defined, to give access to our application to those resources (screenshot here). After the user completes the auth process, our backend is hit and accepts an authorization code as a query parameter. Here is the code that handles the request from google
 
