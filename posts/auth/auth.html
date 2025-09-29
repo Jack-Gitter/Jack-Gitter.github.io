@@ -132,9 +132,9 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user is now logged in, as the check verifies the existance of the access token and refresh tokens in the cookies
+After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user status in the top left has now changed to indicate they are logged in. The check simply verifies the existance of the access token and refresh tokens in the cookies
 
-<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png.png">
+<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
 
 
 
