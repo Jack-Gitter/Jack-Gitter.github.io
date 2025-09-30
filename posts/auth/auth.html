@@ -154,12 +154,127 @@ This flow demonstrated is known as the "Authorization Code Flow", and is the mos
                     to keep password management, verification, and other complexities to a proven system
                 </div>
 
-                    show the typeorm entity
-                    show postgres database schema
-                    show the user that I have in the db with admin permissions
-                    show the code for the second half of the auth flow, 
-                    show setting the cookie, 
-                    show the actual JWT format on JWT.io
+                Within the same application, I have implemented the creation of a local access token via wrapping the provided google access token with my own JWT, along with user 
+                role information. Before we look at the JWT creation, it is important to understand what extra information is added to the JWT.
+
+                In order to keep track of user roles, there are two entities, the User entity and the Role entity
+
+
+<pre class='prettyprint lang-typescript'>@Entity()
+export class User {
+    @Column({primary: true})
+    email: string
+
+    @ManyToMany(() => Role, {cascade: true})
+    @JoinTable()
+    roles: Role[] 
+}</pre>
+
+<pre class='prettyprint lang-typescript'>@Entity()
+export class Role {
+    constructor(type: ROLE_TYPE) {
+        this.type = type
+    }
+
+    @PrimaryGeneratedColumn()
+    id: number
+
+    @Column({type: 'enum', enum: ROLE_TYPE, default: ROLE_TYPE.viewer, unique: true})
+    type: ROLE_TYPE
+}</pre>
+
+The user only has a simple email field. The roles have a primary key, along with a type. Typeorm generates a join table automatically when using the ManyToMany decorator.
+In the database, there exists both an admin and a manager role, with a singular user who contains both roles
+
+                <img class="auth-images" src="./images/db/dbuser.png">
+                Here, we simply have one user in the database. This user is created whenever someone signs in with google via the following code
+
+<pre class='prettyprint lang-typescript'>
+export async function auth_access_token(req: Request, res: Response) {
+    const code = req.query.code as string
+
+    const oauth2Client = new google.auth.OAuth2({
+            clientId: process.env.CLIENT_ID ?? '',
+            clientSecret: process.env.CLIENT_SECRET ?? '',
+            redirectUri: 'http://localhost:3000/login/access/google'
+        }
+    );
+    try {
+        const { tokens } = await oauth2Client.getToken(code)
+        const accessToken = tokens.access_token
+        const refreshToken = tokens.refresh_token
+        const expiresIn = tokens.expiry_date ?? Date.now() + 60 * 60
+        const response = await fetch( `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`)
+        const json = await response.json() as UserInfo
+        const email = json.email
+        const userRepository = dataSource.getRepository(User)
+        let user = await userRepository.findOne({ where: {email}, relations: ['roles']})
+        if (!user) {
+             user = await userRepository.save({email})
+        }
+        ... more code to come ...
+}
+</pre>
+
+Here, you can see that we use the access token to fetch the user's info from google, which we extract the email from. Then, we attempt to look that user up in our local database
+If the user does exist, we continue on like normal. If they do not, then we must create a notion of this user locally, and store them with the email that they signed up with. This
+is all done via typeorm repositories.
+
+                <img class="auth-images" src="./images/db/dbrole.png">
+
+                Here, you can see that there are two roles created, which are assignable to users
+
+
+                <img class="auth-images" src="./images/db/dbuserroles.png">
+
+                finally, here is the join table which represents the assignment of roles to users
+
+
+                Now, we can get to the code which extracts role information from the database.
+
+
+  
+<pre class='prettyprint lang-typescript'>
+        ... more code to come ...
+        user.roles = user.roles ?? []
+        const roles = user.roles.map(role =&gt role.type)
+        const jwtPayload: JWTPayload = {
+            ...json,
+            sub: '',
+            iss: 'Test App',
+            aud: 'Test App',
+            roles: roles, 
+            accessToken: accessToken ?? undefined,
+            refreshToken: refreshToken ?? undefined,
+            authProvider: AUTH_PROVIDER.google,
+        }
+        const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
+        res.cookie('jwt', token, {maxAge: expiresIn}).redirect('http://localhost:3001')
+    } catch (e) {
+        if (e instanceof Error) {
+            res.status(400).send(e.message)
+        } else {
+            res.status(500).send('Something went wrong')
+        }
+    }
+}
+</pre>
+
+Here, you can see that we fetch the user roles after retriving the user from the database, or creating them. In the case where we create the user, the roles would be an empty array. 
+In our case, the user does have two roles assigned, the admin and manager role. We fetch these from the database, and then are able to insert them into the "roles" field of our JWT. 
+Additionally we add a cuople of other things to our JWT payload, specifically all of the information we got back from the query to google's userinfo endpoint, the access and 
+refresh tokens for our google access token, and some metadata of the token issuer. The JWT is then created and signed with our private key, and we then are able to set the cookie, 
+and redirect the user back to the frontend. On subsequent reqeusts, the browser automatically sends the JWT to our backend. We then can verify the signature with our secret key, 
+and check the user roles to see if they have proper access to the resource.
+
+                <img class="auth-images" src="./images/jwt/JWTCookie.png">
+
+                This is what the cookie looks like after it is set in the browser
+
+                <img class="auth-images" src="./images/jwt/JWTPayload.png">
+
+                and this is what the actual payload contained in the JWT looks like
+
 
             <h2>Idps</h2>
                     headless frontend
