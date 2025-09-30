@@ -139,15 +139,20 @@ After we recieve our access (and refresh) token(s), we then can set them as cook
 This flow demonstrated is known as the "Authorization Code Flow", and is the most common amongst web applications. In reality, this code is a slight modification of what is actually in the repository, as it follows a local access token pattern. 
 
                 <h3>Local Access Tokens</h3>
-                    Often times, the resource server will be controlled in house. These applications will have user information stored in a database, such 
-                    as roles, permissions, and other useful metadata about a user. Often times
-                    however, it is not convinient to come up with a password management system, password reset, etc all by yourself. It is much easier to rely on a third party provider
-                    for these things, which is where local accesss tokens come into play. Typically, when generating a local access token, the full flow for generating a 
-                    provided access token will be followed. After the access token is retrieved from a third party such as google, data about the sepcific user is looked up 
-                    in an internal database. That data, along with any other data fetched via the access token usage, is wrapped up in a JWT and signed with an internal private key, 
-                    and returned to the frontend. On subsequent requests, this JWT is provided to our owned resource server, and verified with our own private key. The JWT is what is 
-                    known as a local access token, meaning it is issued by ourselves. 
+                    Often times, the resource server which the frontend application will be requesting data from is actually in-house. 
+                    Additionally, it is extremely common for applications to have a local notion of a user, with specific roles and permissions which do not make sense 
+                    outside of that application's context. The implementation of this often manifests in the form of permissions and roles stored in a database, associated with 
+                    some sort of user object. When this is the case, this information is required to figure out if the client requesting data from the resource server is allowed 
+                    to access it. During the auth flow, this information must be encapsulated in the access token and be readable by the in-house resource server. The token that 
+                    is a result of the encapsulation of all of this data is known as a local access token. Generally speaking, after an access token is retrieved from 
+                    a third party such as google, data about the sepcific user is looked up in an internal database. That data, along with any other data fetched via the access 
+                    token and third-party apis, is wrapped up in a JWT and signed with an internal private key, and returned to the frontend. 
+                    On requests to an internal resource server, this JWT is provided and verified with our own private key. The JWT acts as the local access token in this example, 
 
+                <div class='sidenote'>
+                    It is still useful to have users log in via a third party auth server initially such as google,
+                    to keep password management, verification, and other complexities to a proven system
+                </div>
 
                     show the code for the second half of the auth flow, 
                     show the typeorm entity
