@@ -222,16 +222,14 @@ Here, it can be seen that the Google access token is used to fetch the user's in
 
                 <img class="auth-images" src="./images/db/dbrole.png">
 
-                Here, you can see that there are two roles created, which are assignable to users
+                Here are two roles which have been created created, and are assignable to users
 
 
                 <img class="auth-images" src="./images/db/dbuserroles.png">
 
-                finally, here is the join table which represents the assignment of roles to users
-
-
-                Now, we can get to the code which extracts role information from the database.
-
+                Finally, this is the join table created by typeorm automatically after defining the many to many relationship, 
+                which contains the assignment of roles to users. Now that the schema and data has been explained, 
+                we can take a look at the code which extracts role information from the database.
 
   
 <pre class='prettyprint lang-typescript'>
@@ -260,12 +258,13 @@ Here, it can be seen that the Google access token is used to fetch the user's in
 }
 </pre>
 
-Here, you can see that we fetch the user roles after retriving the user from the database, or creating them. In the case where we create the user, the roles would be an empty array. 
-In our case, the user does have two roles assigned, the admin and manager role. We fetch these from the database, and then are able to insert them into the "roles" field of our JWT. 
-Additionally we add a cuople of other things to our JWT payload, specifically all of the information we got back from the query to google's userinfo endpoint, the access and 
-refresh tokens for our google access token, and some metadata of the token issuer. The JWT is then created and signed with our private key, and we then are able to set the cookie, 
-and redirect the user back to the frontend. On subsequent reqeusts, the browser automatically sends the JWT to our backend. We then can verify the signature with our secret key, 
-and check the user roles to see if they have proper access to the resource.
+in this code, the user roles after retriving the user from the database, or creating the user. In the case where the user is newly created, the roles would be empty array. 
+In this example's case, the user does has both the admin and manager roles assigned. These are fetched these from the database, 
+and then inserted into the "roles" field of our JWT. Additionally, a couple of other things are added to the JWT payload. All of the information retrieved
+from the userinfo query to Google's, the access and refresh tokens for our google access token, and some metadata of the token issuer. 
+The JWT is then created and signed with an internal private key, and afterwards is set into the set-cookie response header. The user is then redirected back to the frontend. 
+On subsequent reqeusts, the browser automatically sends the JWT to our backend. It's signature can be verified with the application's secret key to ensure it has not been tampered
+with, and the user roles can be analyzed to see if the requestor has access to the resource.
 
                 <img class="auth-images" src="./images/jwt/JWTCookie.png">
 
