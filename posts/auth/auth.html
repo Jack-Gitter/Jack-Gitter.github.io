@@ -147,15 +147,16 @@ This flow demonstrated is known as the "Authorization Code Flow", and is the mos
                     is a result of the encapsulation of all of this data is known as a local access token. Generally speaking, after an access token is retrieved from 
                     a third party such as google, data about the sepcific user is looked up in an internal database. That data, along with any other data fetched via the access 
                     token and third-party apis, is wrapped up in a JWT and signed with an internal private key, and returned to the frontend. 
-                    On requests to an internal resource server, this JWT is provided and verified with our own private key. The JWT acts as the local access token in this example, 
+                    On requests to an internal resource server, this JWT is provided and verified with our own private key. The JWT acts as the local access token in this example.
 
                 <div class='sidenote'>
                     It is still useful to have users log in via a third party auth server initially such as google,
                     to keep password management, verification, and other complexities to a proven system
                 </div>
 
-                Within the same application, I have implemented the creation of a local access token via wrapping the provided google access token with my own JWT, along with user 
-                role information. Before we look at the JWT creation, it is important to understand what extra information is added to the JWT.
+                Within the same application, the implementation has been extended to include the creation of a local access token by wrapping the provided google access token 
+                with a customized JWT, containing application specific information such user roles. Before looking at the JWT creation, 
+                it is important to understand the specifics about what application-specific information is, and how it might be stored.
 
                 In order to keep track of user roles, there are two entities, the User entity and the Role entity
 
@@ -216,9 +217,8 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-Here, you can see that we use the access token to fetch the user's info from google, which we extract the email from. Then, we attempt to look that user up in our local database
-If the user does exist, we continue on like normal. If they do not, then we must create a notion of this user locally, and store them with the email that they signed up with. This
-is all done via typeorm repositories.
+Here, it can be seen that the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
+    This is all done via typeorm's repository API.
 
                 <img class="auth-images" src="./images/db/dbrole.png">
 
