@@ -194,7 +194,7 @@ The user only has a simple email field. The roles have a primary key, along with
 In the database, there exists both an admin and a manager role, with a singular user who contains both roles
 
                 <img class="small-images" src="./images/db/dbuser.png">
-                Here, we simply have one user in the database. This user is created whenever someone signs in with google via the following code
+                For simplicity, there is only one user in the database. Users are created whenever someone signs in with google via the following code
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -223,15 +223,15 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-Here, it can be seen that the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
+Here, the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
     This is all done via typeorm's repository API.
 
                 <img class="small-images" src="./images/db/dbuserroles.png">
                 <img class="small-images" src="./images/db/dbrole.png">
 
-                Here are two roles which have been created created, and are assignable to users, along with
-                the join table created by typeorm automatically after defining the many to many relationship, 
-                which contains the assignment of roles to users. Now that the schema and data has been explained, 
+                Here are two roles which have been created and are assignable to users, along with
+                the join table created by typeorm automatically after defining the many to many relationship.
+                The join table contains the assignment of roles to users. Now that the schema and data has been explained, 
                 we can take a look at the code which extracts role information from the database.
 
   
@@ -261,12 +261,14 @@ Here, it can be seen that the Google access token is used to fetch the user's in
 }
 </pre>
 
-in this code, the user roles after retriving the user from the database, or creating the user. In the case where the user is newly created, the roles would be empty array. 
-In this example's case, the user does has both the admin and manager roles assigned. These are fetched these from the database, 
+in this code, the user roles are fetched after retriving the user from the database, or creating the user. In the case where the user is newly created or has no roles assigned, 
+the roles would be empty array. 
+In this example, the user has both the admin and manager roles assigned. These are fetched these from the database, 
 and then inserted into the "roles" field of our JWT. Additionally, a couple of other things are added to the JWT payload. All of the information retrieved
-from the userinfo query to Google's, the access and refresh tokens for our google access token, and some metadata of the token issuer. 
-The JWT is then created and signed with an internal private key, and afterwards is set into the set-cookie response header. The user is then redirected back to the frontend. 
-On subsequent reqeusts, the browser automatically sends the JWT to our backend. It's signature can be verified with the application's secret key to ensure it has not been tampered
+from the userinfo query to Google, the access and refresh tokens for Google, and some metadata of the token issuer. 
+The JWT is then created and signed with an internal private key, and afterwards is added to the set-cookie response header. The user is then redirected back to the frontend. 
+On subsequent reqeusts to the resource server, 
+the browser automatically sends the JWT. The signature can be verified with the application's secret key to ensure it has not been tampered
 with, and the user roles can be analyzed to see if the requestor has access to the resource.
 
                 <img class="auth-images" src="./images/jwt/JWTCookie.png">
@@ -278,7 +280,7 @@ with, and the user roles can be analyzed to see if the requestor has access to t
                 This is what the actual payload contained in the JWT looks like. Here, the "roles" field is visible, and accurately portrays the user roles stored in the database
 
 
-            <h2>Idps</h2>
+            <h2>IDPs</h2>
                 And IDP, also known as an Identity provider, is a service that helps to create and store users and associated information, along with providing management tools and 
                 authentication processes. By utilizing an IDP, applications do not have to worry about a lot of the overhead that comes with managing all aspects of users, and 
                 can instead only focus on small aspects specific to the application itself.
