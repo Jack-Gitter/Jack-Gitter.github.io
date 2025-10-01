@@ -412,10 +412,12 @@ and wrapping the roles and other user metadata in the JWT. It is signed the same
                 OIDC is an authentication layer that is built ontop of the OAuth 2.0 Authorization framework. Rather than recieving an access token, after completing the OIDC flow
                 applications recieve an ID Token, which often times is in the form of a JWT. This JWT has user information, and indicates that the user has successfully logged in 
                 and proven their identity. There are a couple of different way to obtain an ID Token from an auth server, but in in this application I have integrated with 
-                Google's auth server in order to retrieve an ID Token directly after the user authenticates with the google auth server. In order to start, first the google
+                Google's auth server in order to retrieve an ID Token directly after the user authenticates. In order to start, first the google
                 UI component is registered for users to log in with. The component looks like so. You can see that after the user authenticates, they will be redirected to
                 our login endpoint in the backend
 
+                <div class="sidenote">Typically, an ID token is not meant to be sent to a resource server. They are only meant to be used by the client to verify the 
+                authentication status of the user</div>
 
 <pre class='prettyprint lang-typescript'>
 &lt;div class="auth-container"&gt;
@@ -443,7 +445,7 @@ And the UI component itself looks like so
 
 <img class="small-images" src="./images/googleidtoken/uicomponent.png">
 
-After clicking on the button to sign in with google, the user is asked to select an account
+After clicking on the button to sign in with Google, the user is asked to select an account
 
 <img class="small-images" src="./images/googleidtoken/chooseaccount.png">
 
@@ -498,11 +500,8 @@ export async function auth_id_token(req: Request, res: Response) {
 }
 </pre>
 
-The code in the beginning again is a bit different, as this time we must first verify the csrf token sent to us in the body of the request matches the cookie set by google.
-If these two match, we know that we have truely recieved a request from google. After this, we must verify the Id token using google's library. After this is verified, we 
-can extract the user email from the payload, and then proceed as normal to insert or find our user, and create a JWT from the information. Typically an ID token is not meant
-to be sent to a resource server, as it contains no information about what the user hitting the endpoint has access to. In this case, we are still apart of the login flow, and it is
-technically being sent to our local auth server, despite the auth server and resource server being the same for simplicity sake. 
+The code in the beginning is a bit different, as this time we must first verify the csrf token sent to us in the body of the request matches the cookie set by Google.
+If these two match, the process can continue. After this, the Id token is verified using the Google library. Upon successful verification, the user email is extracted from the payload, and then it is business as usual. Inserting or finding our user, and creating a JWT from the information.  
 
 <h2>SSO</h2>
 
