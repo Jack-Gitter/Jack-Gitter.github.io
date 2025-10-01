@@ -602,11 +602,11 @@ the urls which Keycloak serves oauth endpoints at are defined, so that Grafana c
 
 <img class="auth-images" src="./images/sso/graphanalogin.png">
 
-Next, they are redirected to the IDP. After entering their credentials, the IDP is going to send a token back to Graphana.
+Next, they are redirected to the IDP. After entering their credentials, the IDP is going to send a token back to Graphana, which Graphana uses to gather user information.
 
 <img class="auth-images" src="./images/sso/keycloaklogin.png">
 
-Finally, they are redirected back to grafana, which can validate the OIDC token and fetch user info via the api_url described in the graphana.ini, and start a session 
+Finally, the user is redirected back to Grafana, which can validate the OIDC token and fetch user info via the api_url described in the graphana.ini, and start a session 
 if the process succeeds
 
 <img class="auth-images" src="./images/sso/grafana.png">
