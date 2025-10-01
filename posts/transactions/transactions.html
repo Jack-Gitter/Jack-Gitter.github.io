@@ -116,7 +116,7 @@
   async intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Promise<Observable<any>> {
+  ): Promise&ltObservable&ltany&gt&gt {
     const queryRunner = this.dataSource.createQueryRunner();
     queryRunner.connect();
     queryRunner.startTransaction();
