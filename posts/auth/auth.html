@@ -103,7 +103,7 @@ After entering their credentials, they are asked to accept the scopes
 Clicking on the "5 Services" button reveals the specific scopes that are defined when generating the redirect url
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
 
-After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoing. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
+After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoint. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -133,8 +133,8 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-After recieving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
-It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existance of the access token and refresh tokens in the cookies. 
+After receiving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
+It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. 
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
 
@@ -149,7 +149,7 @@ is actually in the repository, as the real code implements a local access token 
                     to access the resource. During the auth flow, this information must be encapsulated in the access token so that the in-house resource server can determine
                     access rights. The token that 
                     results from the encapsulation this data is known as a local access token. Generally speaking, after an access token is retrieved from 
-                    a third party such as Google, it is used to find metadata about the user such as their email, name, etc. Additionally, data about the sepcific user is looked up 
+                    a third party such as Google, it is used to find metadata about the user such as their email, name, etc. Additionally, data about the specific user is looked up 
                     in an internal database. Both the third party and local data about the user is wrapped up in a JWT and signed with an internal private key, 
                     and returned to the frontend. 
                     On requests to an internal resource server, this JWT is provided and verified with the same key used for signing. The JWT is the local access token. 
@@ -261,7 +261,7 @@ Here, the Google access token is used to fetch the user's info from Google's res
 }
 </pre>
 
-in this code, the user roles are fetched after retriving the user from the database, or creating the user. In the case where the user is newly created or has no roles assigned, 
+in this code, the user roles are fetched after retrieving the user from the database, or creating the user. In the case where the user is newly created or has no roles assigned, 
 the roles would be empty array. 
 In this example, the user has both the admin and manager roles assigned. These are fetched these from the database, 
 and then inserted into the "roles" field of our JWT. Additionally, a couple of other things are added to the JWT payload. All of the information retrieved
@@ -269,7 +269,7 @@ from the userinfo query to Google, the access and refresh tokens for Google, and
 The JWT is then created and signed with an internal private key, and afterwards is added to the set-cookie response header. The user is then redirected back to the frontend. 
 On subsequent reqeusts to the resource server, 
 the browser automatically sends the JWT. The signature can be verified with the application's secret key to ensure it has not been tampered
-with, and the user roles can be analyzed to see if the requestor has access to the resource.
+with, and the user roles can be analyzed to see if the requester has access to the resource.
 
                 <img class="auth-images" src="./images/jwt/JWTCookie.png">
 
@@ -405,12 +405,12 @@ and can be used to retrieve all sorts of user information. After authenticating 
 and wrapping the roles and other user metadata in the JWT. It is signed the same, and set in the same cookie as seen previously. After this, the user is once again redirected to the frontend application
 
             <h2>Authentication</h2>
-                Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requestor has access to the resource,
+                Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requester has access to the resource,
                 authentication involves a user entering credentials to verify themselves.
             <h2>OIDC</h2>
 
-                OIDC is an authentication layer that is built ontop of the OAuth 2.0 Authorization framework. Rather than recieving an access token, after completing the OIDC flow
-                applications recieve an ID Token, which often times is in the form of a JWT. This JWT has user information, and indicates that the user has successfully logged in 
+                OIDC is an authentication layer that is built on top of the OAuth 2.0 Authorization framework. Rather than receiving an access token, after completing the OIDC flow
+                applications receive an ID Token, which often times is in the form of a JWT. This JWT has user information, and indicates that the user has successfully logged in 
                 and proven their identity. There are a couple of different way to obtain an ID Token from an auth server, but in in this application I have integrated with 
                 Google's auth server in order to retrieve an ID Token directly after the user authenticates. In order to start, first the google
                 UI component is registered for users to log in with. The component looks like so. You can see that after the user authenticates, they will be redirected to
@@ -516,10 +516,10 @@ to understand
                 <br>
 
 
-SSO can be implemented in many ways, although two of the most popular flows are IDP initiated SSO and service provider inititated SSO. 
+SSO can be implemented in many ways, although two of the most popular flows are IDP initiated SSO and service provider initiated SSO. 
 With IDP initiated SSO, the IDP reaches out to the service provider, and supplies proof of identity for a user. The service provider then attempts to verify the proof, and can either allow or deny access to the service. If accepted, the user can either be redirected to the service the service provider offers directly, or a link
 can be generated that sends client credentials to the service provider when clicked, allowing access at a later point. Service provider initiated SSO is similar, although 
-is kicked off when a user attempts to navigate to a service without yet being authenticated. The service provider redirects the user to the IDP, where they then can sign in. After this,the IDP once again communicates directly with the service provider. The IDP sends proof of authentication, and if the service provider accepts, the user is redirected to the service, and a session is initiated. There are two major ways that IDPs can provide the proof of authentication. One of these, which is an enterprise standard, is called SAML. After authentication, a SAML assertion is created and sent to the service provider in a SAML response, along with some other data. The service provider can parse the SAML response, and validate a user to begin a session. SAML assertions and other parts of the protocl are written in XML, making it a bit difficult to read. Another, newer format, is one that has already been mentioned: OIDC. With OIDC, the flow is extremely similar, although rather than XML, information written with JSON.
+is kicked off when a user attempts to navigate to a service without yet being authenticated. The service provider redirects the user to the IDP, where they then can sign in. After this,the IDP once again communicates directly with the service provider. The IDP sends proof of authentication, and if the service provider accepts, the user is redirected to the service, and a session is initiated. There are two major ways that IDPs can provide the proof of authentication. One of these, which is an enterprise standard, is called SAML. After authentication, a SAML assertion is created and sent to the service provider in a SAML response, along with some other data. The service provider can parse the SAML response, and validate a user to begin a session. SAML assertions and other parts of the protocol are written in XML, making it a bit difficult to read. Another, newer format, is one that has already been mentioned: OIDC. With OIDC, the flow is extremely similar, although rather than XML, information written with JSON.
 
     <h3>Service Provider Initiated SSO Example</h3>
     Within the same github repository, I have set up an example of a service provider initiated SSO flow between a service provider called Grafana, and an IDP called Keycloak. 
@@ -570,7 +570,7 @@ volumes:
 </pre>
 
 In order to setup the integration, there are a couple of things that have to be done. Firstly, a client application has to be created in Keycloak so that the IDP knows to accept 
-incomming requests from Grafana. Witin the keycloak UI, a client is created and information about where our application is running, what type of authentication flow we are using, and where we should redirect to after authentication is specified.
+incomming requests from Grafana. Within the keycloak UI, a client is created and information about where our application is running, what type of authentication flow we are using, and where we should redirect to after authentication is specified.
 
 
 <img class="auth-images" src="./images/sso/keycloaksettings.png">
@@ -596,9 +596,9 @@ name_attribute_path = full_name
 role_attribute_path = contains(roles[*], &#x27;admin&#x27;) &amp;&amp; &#x27;Admin&#x27; || contains(roles[*], &#x27;editor&#x27;) &amp;&amp; &#x27;Editor&#x27; || &#x27;Viewer&#x27;
 </pre>
 
-Important OAuth settings are specified, such as the scopes Grafana has acess to, some of which are required to fetch user info. Additionally 
-the urls which Keycloak serves oauth endpoints at are defined, so that Grafana can complete the auth flow and request user info after recieving an access token from Keycloak
-. With this all in place, the setup is complete. The user first nagivates to Grafana and clicks on the "Sign in with Keycloak"
+Important OAuth settings are specified, such as the scopes Grafana has access to, some of which are required to fetch user info. Additionally 
+the urls which Keycloak serves oauth endpoints at are defined, so that Grafana can complete the auth flow and request user info after receiving an access token from Keycloak
+. With this all in place, the setup is complete. The user first navigates to Grafana and clicks on the "Sign in with Keycloak"
 
 <img class="auth-images" src="./images/sso/graphanalogin.png">
 
