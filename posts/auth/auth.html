@@ -65,7 +65,7 @@
                 A provided access token is an access token which is provided to an application from a third party authorization server such as Google, Okta, etc. A local access token is one issued by a server controlled by the first party developers. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend server which serves content from a database that the first-party developers own.
 
                 <h3>Provided Access Tokens</h3>
-                The following is a concrete example of an OAuth flow implemented with a simple local express server and Google's auth server.
+                The following is a concrete example of an OAuth flow implemented with a simple express server and Google's auth server.
                 First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
                 which executes the following code. 
 
@@ -92,7 +92,7 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
     res.redirect(url)
 }</pre>
 
-Firstly, the code initializes the google OAuth2 client library for nodejs. We provide the client a clientID and secret, which can be found in the google dashboard after creating a project there. Additionally supplied to the OAuth2 client is a redirect URI. This is where Google will reidrect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal google login screen. 
+Firstly, the code initializes the google OAuth2 client library for node. We provide the client a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This the endpoint that Google will redirect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
 
@@ -100,10 +100,10 @@ After entering their credentials, they are asked to accept the scopes
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
 
-Clicking on the "5 Services" button reveals the scopes that we defined earlier in the code when generating the redirect url
+Clicking on the "5 Services" button reveals the specific scopes that are defined when generating the redirect url
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
 
-After the user accepts the scopes, google redirects to the provided redirect URI, which hosts an HTTP endpoing via express. Google will send us an authorization code, which our backend will have to parse from the query parameters and exchange for an access token. 
+After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoing. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -133,7 +133,8 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-After we recieve our access (and refresh) token(s), we then can set them as cookies for the frontend to store, and redirect the user back to our application. It can be seen that the user status in the top left has now changed to indicate they are logged in. The check simply verifies the existance of the access token and refresh tokens in the cookies. 
+After recieving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
+It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existance of the access token and refresh tokens in the cookies. 
 
 <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
 
