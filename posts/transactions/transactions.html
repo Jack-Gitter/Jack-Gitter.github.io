@@ -103,7 +103,7 @@
                 Interceptors allow for code execution before service methods. Most backend frameworks have some form of interceptors, 
                 although for this example I'll be using NestJS. Interceptors are implemented as decorators, and can help to grab a database connection
                 from a pool, begin a transaction, and store the connection into context local storage. The connection can then be accessed by the 
-                repositories used in the method itself. The Interceptor manages the entire lifecycle of the transaction, starting the transaction and 
+                repositories used in the method itself. The Interceptor manages the entire life cycle of the transaction, starting the transaction and 
                 observing the HTTP response. If an error is detected, it will rollback the transaction.
                 </p>
 
