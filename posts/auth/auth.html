@@ -287,9 +287,10 @@ with, and the user roles can be analyzed to see if the requestor has access to t
 
                 <h3></h3>
                 Stytch is one of many available IDPs, and I will be using it as an example to demonstrate the capabilities that come OOTB with many providers. In the same project, 
-                I have created a stytch authentication flow which allows users to log in or sign up with their email, and will receive a one time link to their email to access
-                the application. In order to achieve this, the first step is to utilize the OOTB stytch UI components that come included with the javascript library. To register
-                the UI component, the code looks like so: 
+                I have created a Stytch authentication flow which allows users to log in or sign up with their email. After doing so, Stytch will send a one time 
+                link to their email to access
+                the application. In order to achieve this, the first step is to utilize the OOTB Stytch UI components that come included with the javascript library. To register
+                the UI component, the code looks like so 
 
 <pre class='prettyprint lang-typescript'>
 import { StytchUIClient } from "https://www.unpkg.com/@stytch/vanilla-js@2.0/dist/index.esm.js";
@@ -332,7 +333,8 @@ stytch.mountLogin({
   callbacks,
 });
 </pre>
- To use this component, all that is required is importing the script into the index.html file, and including a component with an "id"=stytch-sdk. Important to note is the redirect_url, which is where the user is redirected to after clicking the link they receive in the email. After the component is rendered, it looks like so
+ To use this component, all that is required is importing the script into the index.html file, and including a component with an "id"=stytch-sdk. Important to note is the REDIRECT_URL, which is where the user is redirected to after clicking the link they receive in the email. In reality, there should be to auth endpoints in the auth server, one specifically for
+ logging in, and another for signing up. After the component is rendered, it looks like so
 
 
 
