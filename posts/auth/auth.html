@@ -42,7 +42,7 @@
                   <dd>The server which clients interact with to authenticate users. The server issues access tokens, refresh tokens, etc.</dd>
 
                   <dt>Access Token</dt>
-                  <dd>A string which is sent with requests to a resource server. The resource server uses the access token to determine whether or not the request is valid.</dd>
+                  <dd>A string which is sent with requests to a resource server. The resource server uses the access token to determine whether or not the request is permitted.</dd>
 
                   <dt>Refresh Token</dt>
                   <dd>A string which is used to obtain a new access token when the current one expires.</dd>
@@ -51,7 +51,7 @@
                   <dd>Access tokens which are not decipherable by the client application. They only "mean" something to the server.</dd>
 
                   <dt>JWT</dt>
-                  <dd>A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. A JWT is also signed, and not encrypted in any way. The signature helps the server know that the token has not been tampered with in or before transit.</dd>
+                  <dd>A token format which is decipherable by the client application. The client application is able to view what access is defined for the provided token. A JWT is also signed, and not encrypted in any way. The signature helps the resource server verify that the token has not been tampered with in or before transit.</dd>
 
                   <dt>Scopes</dt>
                   <dd>A description of what resources the access token gives the client access to.</dd>
