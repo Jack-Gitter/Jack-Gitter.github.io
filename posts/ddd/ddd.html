@@ -338,7 +338,7 @@
 <pre class='prettyprint lang-typescript'>export class AddSegmentService {
 
     constructor(
-        @InjectRepository(FlightSchedule) private flightScheduleRepository: Repository<FlightSchedule>
+        @InjectRepository(FlightSchedule) private flightScheduleRepository: Repository&ltFlightSchedule&gt
     ) {}
 
     public async addSegment(
@@ -352,7 +352,7 @@
         start: Date, 
         end: Date
     ) {
-        await this.flightScheduleRepository.manager.transaction(async (EntityManager) => {
+        await this.flightScheduleRepository.manager.transaction(async (EntityManager) =&gt {
             const to = new Location(toName, toLongitude, toLatitude)
             const from = new Location(fromName, fromLongitude, fromLatitude)
             const segment = new Segment(to, from, start, end)
@@ -427,7 +427,7 @@
         seatCol: SEAT_COLUMN
     ) {
 
-        await this.dataSource.transaction(async (EntityManager) => {
+        await this.dataSource.transaction(async (EntityManager) =&gt {
 
             const flightRepository = EntityManager.getRepository(Flight)
 
