@@ -589,11 +589,12 @@ The user first nagivates to grafana and clicks on the "sign-in with keycloak but
 
 <img class="auth-images" src="./images/sso/graphanalogin.png">
 
-Next, they are redirected to sign in with the IDP
+Next, they are redirected to sign in with the IDP. After they enter their credentials, the IDP is going to send an OIDC token to grafana
 
 <img class="auth-images" src="./images/sso/keycloaklogin.png">
 
-Finally, they are redirected back to grafana, and allowed in 
+Finally, they are redirected back to grafana, which can validate the OIDC token and fetch user info via the api_url described in the graphana.ini, and start a session 
+if the process succeeds
 
 <img class="auth-images" src="./images/sso/grafana.png">
         
