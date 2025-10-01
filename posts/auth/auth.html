@@ -395,24 +395,116 @@ and can be used to retrieve all sorts of user information. After then authentica
 other user metadata in the JWT. It is signed the same, and set in the same cookie as we have seen previously. After this, the user is once again redirected to the frontend application
 
             <h2>Authentication</h2>
-                used to prove a user is who they say they are
-                <h3>Authencation vs authorization</h3>
-                used for SSO. The main difference is that an access token is typically used by an app to request resources. authentication is mainly for users, so that
-                they can be signed in to third party apps and interact with them from the browser
+                Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requestor has access to the resource,
+                authentication is the process of a user entering credentials to verify themselves.
             <h2>OIDC</h2>
-                <h3>what is it</h3>
-                    extension of oauth
-                    used for authentication
-                    id token returned
-                    not meant to be sent to an auth server
-                    proves that a user is who they say they are
-                    useful for SSO, Idps can talk directly to auth servers to verify ID tokens to authenticate users
-                <h3>Google OIDC login code example with code</h3>
-                    can sometimes be sent to local server to generate JWT 
-                <h3>SAML</h3>
-                same as oauth, more mature protocl but same principals. 
-                <h3>IDP initiated SSO vs SP initiated SSO</h3>
-                <h3>Grafana and keycloak example with code</h3>
+
+                OIDC is an authentication layer that is built ontop of the OAuth 2.0 Authorization framework. Rather than recieving an access token, after completing the OIDC flow
+                applications recieve an ID Token, which often times is in the form of a JWT. This JWT has user information, and indicates that the user has successfully logged in 
+                and proven their identity. There are a couple of different way to obtain an ID Token from an auth server, but in in this application I have integrated with 
+                Google's auth server in order to retrieve an ID Token directly after the user authenticates with the google auth server. In order to start, first the google
+                UI component is registered for users to log in with. The component looks like so. You can see that after the user authenticates, they will be redirected to
+                our login endpoint in the backend
+
+
+<pre class='prettyprint lang-typescript'>
+&lt;div class="auth-container"&gt;
+    &lt;h1 class="auth-title"&gt;Google ID Token Auth&lt;/h1&gt;
+    
+    &lt;div class="signin-wrapper"&gt;
+        &lt;div id="g_id_onload"
+            data-client_id="redacted :)"
+            data-login_uri="http://localhost:3000/login/id/google"
+            data-auto_prompt="false"&gt;
+        &lt;/div&gt;
+        &lt;div class="g_id_signin"
+            data-type="standard"
+            data-size="large"
+            data-theme="outline"
+            data-text="sign_in_with"
+            data-shape="rectangular"
+            data-logo_alignment="left"&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+</pre>
+
+And the UI component itself looks like so
+
+<img class="small-images" src="./images/googleidtoken/uicomponent.png">
+
+After clicking on the button to sign in with google, the user is asked to select an account
+
+<img class="small-images" src="./images/googleidtoken/chooseaccount.png">
+
+Notice with this flow, there is no mention of scopes. This is because the token that is provided to our backend endpoint upon redirection is not an access token. Therefore, no scopes
+are required as the token only contains data about who the user is, and does not grant the application with access to any other information. This user information can be used to create, yet again, a local access token
+
+
+
+<pre class='prettyprint lang-typescript'>
+export async function auth_id_token(req: Request, res: Response) {
+    const IdToken = req.body.credential as string
+    const csrfToken = req.body.g_csrf_token as string
+    const csrfCookie = req.cookies.g_csrf_token as string
+    if (csrfToken !== csrfCookie) {
+        res.status(401).send('Nice try')
+    }
+
+    const client = new OAuth2Client();
+     const ticket = await client.verifyIdToken({
+      idToken: IdToken,
+      audience: process.env.CLIENT_ID as string,  
+    });
+    const payload = ticket.getPayload();
+    try {
+        const email = payload?.email as string
+        const userRepository = dataSource.getRepository(User)
+        let user = await userRepository.findOne({ where: {email}, relations: ['roles']})
+        if (!user) {
+             user = await userRepository.save({email})
+        }
+        user.roles = user.roles ?? []
+        const roles = user.roles.map(role =&gt role.type)
+        const jwtPayload: JWTPayload = {
+            ...payload,
+            sub: email,
+            iss: 'Test App',
+            aud: 'Test App',
+            roles: roles, 
+            accessToken: undefined,
+            refreshToken: undefined,
+            authProvider: AUTH_PROVIDER.google,
+        }
+        const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
+        res.cookie('jwt', token, {maxAge: Date.now() + 60 * 60}).redirect('http://localhost:3001')
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(400).send(error.message)
+        } else {
+            res.status(500).send('Something went wrong')
+        }
+    }
+}
+</pre>
+
+The code in the beginning again is a bit different, as this time we must first verify the csrf token sent to us in the body of the request matches the cookie set by google.
+If these two match, we know that we have truely recieved a request from google. After this, we must verify the Id token using google's library. After this is verified, we 
+can extract the user email from the payload, and then proceed as normal to insert or find our user, and create a JWT from the information. Typically an ID token is not meant
+to be sent to a resource server, as it contains no information about what the user hitting the endpoint has access to. In this case, we are still apart of the login flow, and it is
+technically being sent to our local auth server, despite the auth server and resource server being the same for simplicity sake. 
+
+<h2>SSO</h2>
+
+
+    <h3>what is it</h3>
+        useful for SSO, Idps can talk directly to auth servers to verify ID tokens to authenticate users
+    <h3>Google OIDC login code example with code</h3>
+        can sometimes be sent to local server to generate JWT 
+    <h3>SAML</h3>
+    same as oauth, more mature protocl but same principals. 
+    <h3>IDP initiated SSO vs SP initiated SSO</h3>
+    <h3>Grafana and keycloak example with code</h3>
             <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
         </article>
     </main>
