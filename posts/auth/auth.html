@@ -503,10 +503,8 @@ After this, the service provider can either accept or reject this proof. If it i
 can be generated that sends client credentials to the service provider when clicked, effectively achieving the same thing. Service provider initiated sso is when a user attempts
 to navigate to a service, but they are not yet logged in. The service provider will redirect them to the IDP, where they will sign in. After this, the IDP communicates directly
 with the service provider. They send the proof of authentication, and once again if the service provider accepts this, then the user is redirected to the service, and a session is
-initiated.
+initiated. There are two major ways that IDPs can provide "proof" of authentication. One of these, which is an enterprise standard, is called SAML. After authentication, a SAML assertion is created and sent to the SP in a SAML response, along with other things. The SP will support this format, and be able to parse the SAML response and validate a user and begin a session. SAML assertions and other parts of the protocl are written in XML. Another, newer format is one that we have already discussed: OIDC. With OIDC, it works the same way. Although instead of XML, user and metadata is written with JSON.
 
-    <h3>what is it</h3>
-        useful for SSO, Idps can talk directly to auth servers to verify ID tokens to authenticate users
     <h3>Google OIDC login code example with code</h3>
         can sometimes be sent to local server to generate JWT 
     <h3>SAML</h3>
