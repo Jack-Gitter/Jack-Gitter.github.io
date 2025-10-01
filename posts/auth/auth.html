@@ -396,7 +396,7 @@ export async function stytchAuth(req: Request, res: Response) {
 To start, the endpoint expects a token which can be authenticated via the stytch library authenticate method. This is exchanged for an object which contains a lot of metadata about the 
 user, along with session tokens that can be used to interact with stytch. These tokens act as access tokens to the stytch API, 
 and can be used to retrieve all sorts of user information. After then authenticating the JWT, we proceed as normal, either creating or looking up the user, and wrapping the roles and 
-other user metadata in the JWT. It is signed the same, and set in the same cookie as we have seen previously
+other user metadata in the JWT. It is signed the same, and set in the same cookie as we have seen previously. After this, the user is once again redirected to the frontend application
             <h2>Authentication</h2>
                 used to prove a user is who they say they are
                 <h3>Authencation vs authorization</h3>
