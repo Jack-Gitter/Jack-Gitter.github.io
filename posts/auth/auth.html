@@ -278,7 +278,7 @@ with, and the user roles can be analyzed to see if the requestor has access to t
                 can instead only focus on small aspects specific to the application itself.
 
                 <h3></h3>
-                Stytch is an example of an IDP, and I will be using it as an example to demonstrate the capabilities that come OOTB with many providers. In the same project, 
+                Stytch is one of many available IDPs, and I will be using it as an example to demonstrate the capabilities that come OOTB with many providers. In the same project, 
                 I have created a stytch authentication flow which allows users to log in or sign up with their email, and will receive a one time link to their email to access
                 the application. In order to achieve this, the first step is to utilize the OOTB stytch UI components that come included with the javascript library. To register
                 the UI component, the code looks like so: 
@@ -397,6 +397,7 @@ To start, the endpoint expects a token which can be authenticated via the stytch
 user, along with session tokens that can be used to interact with stytch. These tokens act as access tokens to the stytch API, 
 and can be used to retrieve all sorts of user information. After then authenticating the JWT, we proceed as normal, either creating or looking up the user, and wrapping the roles and 
 other user metadata in the JWT. It is signed the same, and set in the same cookie as we have seen previously. After this, the user is once again redirected to the frontend application
+
             <h2>Authentication</h2>
                 used to prove a user is who they say they are
                 <h3>Authencation vs authorization</h3>
