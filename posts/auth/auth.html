@@ -496,6 +496,14 @@ technically being sent to our local auth server, despite the auth server and res
 
 <h2>SSO</h2>
 
+SSO is a method to allow a user to sign in only once, and be able to access an entire suite of applications. SSO can be implemented in many ways, although two of the most popular
+are IDP-initiated SSO and service provider inititated SSO. With IDP initiated SSO, the IDP is the one that reaches 
+out to the service provider, and supplies some proof of identity for a user.
+After this, the service provider can either accept or reject this proof. If it is accepted, then the user can be redirected to the service the service provider offers, or a link
+can be generated that sends client credentials to the service provider when clicked, effectively achieving the same thing. Service provider initiated sso is when a user attempts
+to navigate to a service, but they are not yet logged in. The service provider will redirect them to the IDP, where they will sign in. After this, the IDP communicates directly
+with the service provider. They send the proof of authentication, and once again if the service provider accepts this, then the user is redirected to the service, and a session is
+initiated.
 
     <h3>what is it</h3>
         useful for SSO, Idps can talk directly to auth servers to verify ID tokens to authenticate users
