@@ -596,7 +596,7 @@ name_attribute_path = full_name
 role_attribute_path = contains(roles[*], &#x27;admin&#x27;) &amp;&amp; &#x27;Admin&#x27; || contains(roles[*], &#x27;editor&#x27;) &amp;&amp; &#x27;Editor&#x27; || &#x27;Viewer&#x27;
 </pre>
 
-Here, we specify some oauth settings such as the scopes we want grafana to be able to have acess to, some of which are required to fetch user info. Additionally 
+Here, we specify some OAuth settings such as the scopes we want grafana to be able to have acess to, some of which are required to fetch user info. Additionally 
 we haev to specify the urls which keycloak serves oauth endpoints at, so that grafana and keycloak can communicate seamlessly. With this all in place, the setup is complete.
 The user first nagivates to grafana and clicks on the "sign-in with keycloak button"
 
