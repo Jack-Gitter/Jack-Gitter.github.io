@@ -145,12 +145,14 @@ is actually in the repository, as the real code implements a local access token 
                     Often times, the resource server which the frontend application will be requesting data from is actually in-house. 
                     Additionally, it is extremely common for applications to have a local notion of a user, with specific roles and permissions which do not make sense 
                     outside of that application's context. The implementation of this often manifests in the form of permissions and roles stored in a database, associated with 
-                    some sort of user object. When this is the case, this information is required to figure out if the client requesting data from the resource server is allowed 
-                    to access it. During the auth flow, this information must be encapsulated in the access token and be readable by the in-house resource server. The token that 
-                    is a result of the encapsulation of all of this data is known as a local access token. Generally speaking, after an access token is retrieved from 
-                    a third party such as google, data about the sepcific user is looked up in an internal database. That data, along with any other data fetched via the access 
-                    token and third-party apis, is wrapped up in a JWT and signed with an internal private key, and returned to the frontend. 
-                    On requests to an internal resource server, this JWT is provided and verified with our own private key. The JWT acts as the local access token in this example.
+                    some sort of user object. When this is the case, this information is required to figure out if the client requesting data from the resource server is permitted 
+                    to access the resource. During the auth flow, this information must be encapsulated in the access token so that the in-house resource server can determine
+                    access rights. The token that 
+                    results from the encapsulation this data is known as a local access token. Generally speaking, after an access token is retrieved from 
+                    a third party such as Google, it is used to find metadata about the user such as their email, name, etc. Additionally, data about the sepcific user is looked up 
+                    in an internal database. Both the third party and local data about the user is wrapped up in a JWT and signed with an internal private key, 
+                    and returned to the frontend. 
+                    On requests to an internal resource server, this JWT is provided and verified with the same key used for signing. The JWT is the local access token. 
 
                 <div class='sidenote'>
                     It is still useful to have users log in via a third party auth server initially such as google,
