@@ -187,7 +187,7 @@ export class Role {
 The user only has a simple email field. The roles have a primary key, along with a type. Typeorm generates a join table automatically when using the ManyToMany decorator.
 In the database, there exists both an admin and a manager role, with a singular user who contains both roles
 
-                <img class="auth-images" src="./images/db/dbuser.png">
+                <img class="small-images" src="./images/db/dbuser.png">
                 Here, we simply have one user in the database. This user is created whenever someone signs in with google via the following code
 
 <pre class='prettyprint lang-typescript'>
@@ -220,14 +220,11 @@ export async function auth_access_token(req: Request, res: Response) {
 Here, it can be seen that the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
     This is all done via typeorm's repository API.
 
-                <img class="auth-images" src="./images/db/dbrole.png">
+                <img class="small-images" src="./images/db/dbuserroles.png">
+                <img class="small-images" src="./images/db/dbrole.png">
 
-                Here are two roles which have been created created, and are assignable to users
-
-
-                <img class="auth-images" src="./images/db/dbuserroles.png">
-
-                Finally, this is the join table created by typeorm automatically after defining the many to many relationship, 
+                Here are two roles which have been created created, and are assignable to users, along with
+                the join table created by typeorm automatically after defining the many to many relationship, 
                 which contains the assignment of roles to users. Now that the schema and data has been explained, 
                 we can take a look at the code which extracts role information from the database.
 

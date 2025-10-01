@@ -36,3 +36,11 @@ dd {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+.small-images {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
