@@ -273,10 +273,130 @@ with, and the user roles can be analyzed to see if the requestor has access to t
 
 
             <h2>Idps</h2>
-                    headless frontend
-                    frontend
-                    backend 
-                <h3>Sytch code example with code</h3>
+                And IDP, also known as an Identity provider, is a service that helps to create and store users and associated information, along with providing management tools and 
+                authentication processes. By utilizing an IDP, applications do not have to worry about a lot of the overhead that comes with managing all aspects of users, and 
+                can instead only focus on small aspects specific to the application itself.
+
+                <h3></h3>
+                Stytch is an example of an IDP, and I will be using it as an example to demonstrate the capabilities that come OOTB with many providers. In the same project, 
+                I have created a stytch authentication flow which allows users to log in or sign up with their email, and will receive a one time link to their email to access
+                the application. In order to achieve this, the first step is to utilize the OOTB stytch UI components that come included with the javascript library. To register
+                the UI component, the code looks like so: 
+
+<pre class='prettyprint lang-typescript'>
+import { StytchUIClient } from "https://www.unpkg.com/@stytch/vanilla-js@2.0/dist/index.esm.js";
+import { Products } from 'https://www.unpkg.com/@stytch/vanilla-js@0.9.5/dist/index.esm.js';
+
+export const stytch = new StytchUIClient('public-token-test-3d5ee7dd-f46e-4831-9b87-ad30dd8d39b0');
+
+const REDIRECT_URL = 'http://localhost:3000/login/stytch';
+const config = {
+  products: [Products.emailMagicLinks],
+  emailMagicLinksOptions: {
+    loginRedirectURL: REDIRECT_URL,
+    loginExpirationMinutes: 60,
+    signupRedirectURL: REDIRECT_URL,
+    signupExpirationMinutes: 60,
+  },
+};
+
+const styles = {
+  container: {
+    width: '100%',
+  },
+  buttons: {
+    primary: {
+      backgroundColor: '#4A37BE',
+      borderColor: '#4A37BE',
+    },
+  },
+};
+
+const callbacks = {
+  onEvent: (message) => console.log(message),
+  onError: (error) => console.log(error),
+};
+
+stytch.mountLogin({
+  elementId: '#stytch-sdk',
+  styles,
+  config,
+  callbacks,
+});
+</pre>
+ To use this component, all that is required is importing the script into the index.html file, and including a component with an "id"=stytch-sdk. Important to note is the redirect_url, which is where the user is redirected to after clicking the link they receive in the email. After the component is rendered, it looks like so
+
+
+
+ <img class="auth-images" src="./images/stytch/stytchuicomponent.png">
+
+ After entering an email, stytch offers to automatically bring the user to their email provider, so that they can easily access the log in link
+
+ <img class="small-images" src="./images/stytch/stytchemailredirect.png">
+
+ Finally, the user receives the email, which redirects the browser to our specified redirect URL
+
+ <img class="small-images" src="./images/stytch/stytchemail.png">
+
+ The code which handles the redirect is locacted in our backend application, and looks like so
+
+
+
+
+
+<pre class='prettyprint lang-typescript'>
+export async function stytchAuth(req: Request, res: Response) {
+
+    const token = req.query.token as string
+
+    const client = new stytch.Client({
+        project_id: process.env.STYTCH_ID ?? '',
+        secret: process.env.STYTCH_SECRET ?? ''
+    });
+
+    const params = {
+      token,
+      session_duration_minutes: 60,
+    };
+
+    try {
+        const response = await client.magicLinks.authenticate(params)
+        const jwt = response.session_jwt
+        const content = await client.sessions.authenticateJwtLocal({session_jwt: jwt})
+        const userResponse = await client.users.get({user_id: content.user_id})
+        const email = userResponse.emails[0]?.email as string
+        const userRepository = dataSource.getRepository(User)
+        let user = await userRepository.findOne({ where: {email}, relations: ['roles']})
+        if (!user) {
+             user = await userRepository.save({email})
+        }
+        userResponse.roles = userResponse.roles ?? []
+        const roles = user.roles.map(role =&gt role.type)
+        const ourjwt: JWTPayload = {
+            ...content,
+            aud: 'Test Auth',
+            iss: 'Test Auth',
+            sub: content.user_id,
+            roles,
+            authProvider: AUTH_PROVIDER.stytch,
+            accessToken: undefined,
+            refreshToken: undefined
+        }
+        res.cookie('jwt', ourjwt, {maxAge: Date.now() + 60 * 60}).redirect('http://localhost:3001')
+    } catch (error) {
+            if (error instanceof Error) {
+                res.status(400).send(error.message)
+            } else {
+                res.status(500).send('Something went wrong')
+            }
+        }
+}
+</pre>
+
+To start, the endpoint expects a token which can be authenticated via the stytch library authenticate method. This is exchanged for an object which contains a lot of metadata about the 
+user, along with session tokens that can be used to interact with stytch. These tokens act as access tokens to the stytch API, 
+and can be used to retrieve all sorts of user information. After then authenticating the JWT, we proceed as normal, either creating or looking up the user, and wrapping the roles and 
+other user metadata in the JWT. It is signed the same, and set in the same cookie as we have seen previously
             <h2>Authentication</h2>
                 used to prove a user is who they say they are
                 <h3>Authencation vs authorization</h3>
