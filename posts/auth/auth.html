@@ -505,17 +505,103 @@ to navigate to a service, but they are not yet logged in. The service provider w
 with the service provider. They send the proof of authentication, and once again if the service provider accepts this, then the user is redirected to the service, and a session is
 initiated. There are two major ways that IDPs can provide "proof" of authentication. One of these, which is an enterprise standard, is called SAML. After authentication, a SAML assertion is created and sent to the SP in a SAML response, along with other things. The SP will support this format, and be able to parse the SAML response and validate a user and begin a session. SAML assertions and other parts of the protocl are written in XML. Another, newer format is one that we have already discussed: OIDC. With OIDC, it works the same way. Although instead of XML, user and metadata is written with JSON.
 
-    <h3>Google OIDC login code example with code</h3>
-        can sometimes be sent to local server to generate JWT 
-    <h3>SAML</h3>
-    same as oauth, more mature protocl but same principals. 
-    <h3>IDP initiated SSO vs SP initiated SSO</h3>
     <h3>Grafana and keycloak example with code</h3>
+    I have implemented a service-provider initialted SSO flow between a service-provider called grafana and an IDP called keycloak. 
+    Both of these services are running in docker, and most of the 
+    setup is simple configuration. Here is the docker container that spins up the IDP and service
+
+
+<pre class='prettyprint lang-typescript'>
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-myapp_db}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.4
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3002:3002"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    restart: unless-stopped
+
+
+
+volumes:
+  postgres_data:
+    driver: local
+  grafana-data:
+</pre>
+
+In order to setup the integration, there are a couple of things that first have to be done. Firstly, a client application has to be set up so that keycloak knows to accept incomming
+requests from grafana. Here, we specify where our application is running, what type of authentication flow we are using, and where we should redirect to after the auth in keycloak
+is complete
+
+
+<img class="auth-images" src="./images/sso/keycloaksettings.png">
+
+
+Then, we need to write to the grafana.ini configuration file to specify where we have keycloak running, so that graphana can redirect users to log into the app via keycloak
+
+
+
+<pre class='prettyprint lang-typescript'>
+[auth.generic_oauth]
+enabled = true
+name = Keycloak
+allow_sign_up = true
+client_id = grafana
+client_secret = redacted :)
+scopes = openid email profile offline_access roles
+auth_url = http://localhost:8080/realms/master/protocol/openid-connect/auth
+token_url = http://host.docker.internal:8080/realms/master/protocol/openid-connect/token
+api_url = http://host.docker.internal:8080/realms/master/protocol/openid-connect/userinfo
+email_attribute_path = email
+login_attribute_path = username
+name_attribute_path = full_name
+role_attribute_path = contains(roles[*], &#x27;admin&#x27;) &amp;&amp; &#x27;Admin&#x27; || contains(roles[*], &#x27;editor&#x27;) &amp;&amp; &#x27;Editor&#x27; || &#x27;Viewer&#x27;
+</pre>
+
+Here, we specify some oauth settings such as the scopes we want grafana to be able to have acess to, some of which are required to fetch user info. Additionally 
+we haev to specify the urls which keycloak serves oauth endpoints at, so that grafana and keycloak can communicate seamlessly. With this all in place, the setup is complete.
+The user first nagivates to grafana and clicks on the "sign-in with keycloak button"
+
+<img class="auth-images" src="./images/sso/graphanalogin.png">
+
+Next, they are redirected to sign in with the IDP
+
+<img class="auth-images" src="./images/sso/keycloaklogin.png">
+
+Finally, they are redirected back to grafana, and allowed in 
+
+<img class="auth-images" src="./images/sso/grafana.png">
+        
             <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
         </article>
     </main>
     <footer>
-        <span class="date">JSWE at Sentinel Group</span>
+        <span class="date">SWE at Sentinel Group</span>
     </footer>
 </body>
 </html>
