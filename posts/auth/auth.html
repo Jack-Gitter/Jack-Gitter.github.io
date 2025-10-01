@@ -155,8 +155,9 @@ is actually in the repository, as the real code implements a local access token 
                     On requests to an internal resource server, this JWT is provided and verified with the same key used for signing. The JWT is the local access token. 
 
                 <div class='sidenote'>
-                    It is still useful to have users log in via a third party auth server initially such as google,
-                    to keep password management, verification, and other complexities to a proven system
+                    It is still useful to have users log in via a third party auth server initially such as Google,
+                    to keep password management, verification, and other complexities to a proven system. Also, users will typically have metadata already with these providers, 
+                    so there is no need to have them duplicate information inside of whatever application is being developed.
                 </div>
 
                 Within the same application, the implementation has been extended to include the creation of a local access token by wrapping the provided google access token 
