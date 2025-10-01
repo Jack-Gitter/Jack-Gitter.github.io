@@ -521,7 +521,7 @@ With IDP initiated SSO, the IDP reaches out to the service provider, and supplie
 can be generated that sends client credentials to the service provider when clicked, allowing access at a later point. Service provider initiated SSO is similar, although 
 is kicked off when a user attempts to navigate to a service without yet being authenticated. The service provider redirects the user to the IDP, where they then can sign in. After this,the IDP once again communicates directly with the service provider. The IDP sends proof of authentication, and if the service provider accepts, the user is redirected to the service, and a session is initiated. There are two major ways that IDPs can provide the proof of authentication. One of these, which is an enterprise standard, is called SAML. After authentication, a SAML assertion is created and sent to the service provider in a SAML response, along with some other data. The service provider can parse the SAML response, and validate a user to begin a session. SAML assertions and other parts of the protocl are written in XML, making it a bit difficult to read. Another, newer format, is one that has already been mentioned: OIDC. With OIDC, the flow is extremely similar, although rather than XML, information written with JSON.
 
-    <h3>Grafana and keycloak example with code</h3>
+    <h3>Service Provider Initiated SSO Example</h3>
     I have implemented a service-provider initialted SSO flow between a service-provider called grafana and an IDP called keycloak. 
     Both of these services are running in docker, and most of the 
     setup is simple configuration. Here is the docker container that spins up the IDP and service
