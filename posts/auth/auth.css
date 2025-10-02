@@ -44,3 +44,142 @@ dd {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
+.google-access-token-button {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.google-login-screen {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 300px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.google-scopes {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.google-scopes-detailed {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 450px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.db-user-roles {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+}
+
+.db-join-table {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.jwt-cookie {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 300px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.jwt-io {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.stytch-component {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.stytch-email-redirect-ui {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 300px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+
+.stytch-email-redirect {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 300px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+
+
+.google-oidc-component {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 450px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.google-oidc-login {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.keycloak-settings {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.grafana-login {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}

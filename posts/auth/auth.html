@@ -66,10 +66,13 @@
 
                 <h3>Provided Access Tokens</h3>
                 The following is a concrete example of an OAuth flow implemented with a simple express server and Google's auth server.
-                First, the action is kicked off when the user clicks on the "Get Access Token" button. It sends a request to an endpoint hosted via express, 
+                First, the action is kicked off when the user clicks on the "Get Access Token" button. 
+
+                <img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenButton.png">
+
+                It sends a request to an endpoint hosted via express, 
                 which executes the following code. 
 
-                <img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenButton.png">
 
 <pre class='prettyprint lang-typescript'>
 export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
@@ -94,14 +97,14 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
 
 Firstly, the code initializes the google OAuth2 client library for node. We provide the client a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This the endpoint that Google will redirect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
 
-<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
+<img class="google-login-screen" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
 
 After entering their credentials, they are asked to accept the scopes
 
-<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
+<img class="google-scopes" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
 
 Clicking on the "5 Services" button reveals the specific scopes that are defined when generating the redirect url
-<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
+<img class="google-scopes-detailed" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
 
 After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoint. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
 
@@ -136,7 +139,7 @@ export async function auth_access_token(req: Request, res: Response) {
 After receiving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
 It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. 
 
-<img class="auth-images" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
+<img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
 
 The flow demonstrated is defined as the "Authorization Code Flow", and is the most common amongst web applications. In reality, the code is a slight modification of what 
 is actually in the repository, as the real code implements a local access token pattern. 
@@ -226,8 +229,10 @@ export async function auth_access_token(req: Request, res: Response) {
 Here, the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
     This is all done via typeorm's repository API.
 
-                <img class="small-images" src="./images/db/dbuserroles.png">
-                <img class="small-images" src="./images/db/dbrole.png">
+<div style="display: flex; gap: 10px; align-items: flex-start;">
+    <img class="small-images" src="./images/db/dbrole.png">
+    <img class="small-images" src="./images/db/dbuserroles.png">
+</div>
 
                 Here are two roles which have been created and are assignable to users, along with
                 the join table created by typeorm automatically after defining the many to many relationship.
@@ -271,11 +276,11 @@ On subsequent reqeusts to the resource server,
 the browser automatically sends the JWT. The signature can be verified with the application's secret key to ensure it has not been tampered
 with, and the user roles can be analyzed to see if the requester has access to the resource.
 
-                <img class="auth-images" src="./images/jwt/JWTCookie.png">
+                <img class="jwt-cookie" src="./images/jwt/JWTCookie.png">
 
                 This is what the cookie looks like after it is set in the browser
 
-                <img class="auth-images" src="./images/jwt/JWTPayload.png">
+                <img class="jwt-io" src="./images/jwt/JWTPayload.png">
 
                 This is what the actual payload contained in the JWT looks like. Here, the "roles" field is visible, and accurately portrays the user roles stored in the database
 
@@ -338,15 +343,15 @@ stytch.mountLogin({
 
 
 
- <img class="auth-images" src="./images/stytch/stytchuicomponent.png">
+ <img class="stytch-component" src="./images/stytch/stytchuicomponent.png">
 
  After entering an email, Stytch offers to automatically bring the user to their email provider, so that they can easily access the log in link
 
- <img class="small-images" src="./images/stytch/stytchemailredirect.png">
+ <img class="stytch-email-redirect-ui" src="./images/stytch/stytchemailredirect.png">
 
  Finally, the user receives the email, which redirects the browser to our specified redirect URL
 
- <img class="small-images" src="./images/stytch/stytchemail.png">
+ <img class="stytch-email-redirect" src="./images/stytch/stytchemail.png">
 
  The code which handles the redirect is locacted in our backend application, and looks like so
 
@@ -443,11 +448,11 @@ and wrapping the roles and other user metadata in the JWT. It is signed the same
 
 And the UI component itself looks like so
 
-<img class="small-images" src="./images/googleidtoken/uicomponent.png">
+<img class="google-oidc-component" src="./images/googleidtoken/uicomponent.png">
 
 After clicking on the button to sign in with Google, the user is asked to select an account
 
-<img class="small-images" src="./images/googleidtoken/chooseaccount.png">
+<img class="google-oidc-login" src="./images/googleidtoken/chooseaccount.png">
 
 Notice with this flow, there is no mention of scopes. This is because the token that is provided to our backend endpoint upon redirection is not an access token. Therefore, no scopes
 are required as the token only contains data about who the user is, and does not grant the application with access to any other information. This user information can be used to create, yet again, a local access token
@@ -573,10 +578,10 @@ In order to setup the integration, there are a couple of things that have to be 
 incomming requests from Grafana. Within the keycloak UI, a client is created and information about where our application is running, what type of authentication flow we are using, and where we should redirect to after authentication is specified.
 
 
-<img class="auth-images" src="./images/sso/keycloaksettings.png">
+<img class="keycloak-settings" src="./images/sso/keycloaksettings.png">
 
 
-Then, the grafana.ini configuration file is modified to specify Keycloak configuration details, so that Graphana can redirect users to log in via the IDP properly
+Then, the grafana.ini configuration file is modified to specify Keycloak configuration details, so that Grafana can redirect users to log in via the IDP properly
 
 
 <pre class='prettyprint lang-typescript'>
@@ -600,12 +605,12 @@ Important OAuth settings are specified, such as the scopes Grafana has access to
 the urls which Keycloak serves oauth endpoints at are defined, so that Grafana can complete the auth flow and request user info after receiving an access token from Keycloak
 . With this all in place, the setup is complete. The user first navigates to Grafana and clicks on the "Sign in with Keycloak"
 
-<img class="auth-images" src="./images/sso/graphanalogin.png">
+<img class="grafana-login" src="./images/sso/graphanalogin.png">
 
-Next, they are redirected to the IDP. After entering their credentials, Keycloak will redirect to Graphana's backend login/generic_oauth endpoint. 
+Next, they are redirected to the IDP. After entering their credentials, Keycloak will redirect to Grafana's backend login/generic_oauth endpoint. 
 
 <img class="auth-images" src="./images/sso/keycloaklogin.png">
-Once Graphana gathers user info and validates the authentication, a session is created and the user is redirected to the Graphana UI
+Once Grafana gathers user info and validates the authentication, a session is created and the user is redirected to the Grafana UI
 
 <img class="auth-images" src="./images/sso/grafana.png">
         
