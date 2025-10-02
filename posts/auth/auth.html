@@ -17,15 +17,17 @@
             <h1>All About Auth</h1>
             <p class="date">October 2, 2025</p>
 
-            <p>
-            Authentication and authorization are two critical parts of any software which has the notion of a "user". Authentication allows a user to prove 
-            that they are who they say they are, and authorization gives an entity access to protected resources. 
-            The combination of these two principals allows for complex and robust user management, and has resulted in a 
-            plethora of protocols, frameworks, and jargon to go along with it. I have 
-            created a small application which demonstrates core auth principles, and will be referencing it throughout the article.
-            </p>
             
-            <h2>OAuth</h2>
+            <h2>Authorization</h2>
+                <p>
+                Authentication and authorization are two critical parts of any software which has the notion of a "user". Authentication allows a user to prove 
+                that they are who they say they are, and authorization gives an entity access to protected resources. 
+                The combination of these two principals allows for complex and robust user management, and has resulted in a 
+                plethora of protocols, frameworks, and jargon to go along with it. I have 
+                created a small application which demonstrates core auth principles, and will be referencing it throughout the article.
+                </p>
+
+            <h3>OAuth</h3>
 
                 OAuth is an authorization framework used to grant access to resources on behalf of a user. It is not concerned with who 
                 is making the request for information, but only if that request should be allowed or not. Here are some important terms that OAuth
@@ -61,7 +63,7 @@
 
                 In general, the OAuth flow is initiated when an application needs access to a user's resources stored by a third party. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of scopes that the client application has defined. After the user successfully logs in and accepts these scopes, they are redirected back to the client application. 
 
-            <h2>Provided Access Tokens</h2>
+            <h3>Provided Access Tokens</h3>
                 A provided access token is an access token which is allocated to an application from a third party authorization server such as Google or Okta. Provided access tokens are useful for reaching out to third party resource servers to fetch user data from an application, on the users behalf. The following is a concrete example of an OAuth flow implemented with a simple express server and Google's auth server.
 
             <div class="image-description-block">
@@ -161,7 +163,7 @@ After receiving the access and refresh tokens, they can be set as cookies for th
 The flow demonstrated is defined as the "Authorization Code Flow", and is the most common amongst web applications. In reality, the code is a slight modification of what 
 is actually in the repository, as the real code implements a local access token pattern. 
 
-                <h3>Local Access Tokens</h3>
+                <h2>Local Access Tokens</h2>
                     Often times, the resource server which the frontend application will be requesting data from is actually in-house. 
                     Additionally, it is extremely common for applications to have a local notion of a user, with specific roles and permissions which do not make sense 
                     outside of that application's context. The implementation of this often manifests in the form of permissions and roles stored in a database, associated with 
@@ -447,7 +449,7 @@ and wrapping the roles and other user metadata in the JWT. It is signed the same
             <h2>Authentication</h2>
                 Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requester has access to the resource,
                 authentication involves a user entering credentials to verify themselves.
-            <h2>OIDC</h2>
+            <h3>OIDC</h3>
 
                 OIDC is an authentication layer that is built on top of the OAuth 2.0 Authorization framework. Rather than receiving an access token, after completing the OIDC flow
                 applications receive an ID Token, which often times is in the form of a JWT. This JWT has user information, and indicates that the user has successfully logged in 
@@ -551,7 +553,7 @@ export async function auth_id_token(req: Request, res: Response) {
 The code in the beginning is a bit different, as this time we must first verify the csrf token sent to us in the body of the request matches the cookie set by Google.
 If these two match, the process can continue. After this, the Id token is verified using the Google library. Upon successful verification, the user email is extracted from the payload, and then it is business as usual. Inserting or finding our user, and creating a JWT from the information.  
 
-<h2>SSO</h2>
+<h3>SSO</h3>
 
 SSO is a way to allow a user to sign in once, and afterwards access an entire suite of applications without signing in again. With SSO, there is one more key term that is useful
 to understand
