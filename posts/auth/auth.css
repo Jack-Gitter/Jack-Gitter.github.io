@@ -183,3 +183,21 @@ dd {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
+.keycloak-login {
+  display: block;
+  margin: 0 auto;
+  width: auto; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.grafana-ui {
+  display: block;
+  margin: 0 auto;
+  width: 700px; /* adjust this value to your preferred size */
+  height: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
