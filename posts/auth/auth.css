@@ -201,3 +201,32 @@ dd {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
+.db-user {
+  display: block;
+  margin: 0 auto;
+  width: 250px; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+}
+
+.db-role {
+  display: block;
+  margin: 0 auto;
+  width: 250px; /* adjust this value to your preferred size */
+  height: 400px; 
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+}
+
+.db-user-roles {
+  display: block;
+  margin: 0 auto;
+  width: 250px; /* adjust this value to your preferred size */
+  height: 400px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}

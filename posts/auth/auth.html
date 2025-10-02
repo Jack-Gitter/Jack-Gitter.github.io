@@ -196,8 +196,13 @@ export class Role {
 The user only has a simple email field. The roles have a primary key, along with a type. Typeorm generates a join table automatically when using the ManyToMany decorator.
 In the database, there exists both an admin and a manager role, with a singular user who contains both roles
 
-                <img class="small-images" src="./images/db/dbuser.png">
+<div style="display: flex; gap: 10px; align-items: flex-start;">
+    <img class="db-user" src="./images/db/dbuser.png">
+    <img class="db-role" src="./images/db/dbrole.png">
+    <img class="db-user-roles" src="./images/db/dbuserroles.png">
+</div>
                 For simplicity, there is only one user in the database. Users are created whenever someone signs in with google via the following code
+
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
@@ -228,11 +233,6 @@ export async function auth_access_token(req: Request, res: Response) {
 
 Here, the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is looked-up in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
     This is all done via typeorm's repository API.
-
-<div style="display: flex; gap: 10px; align-items: flex-start;">
-    <img class="small-images" src="./images/db/dbrole.png">
-    <img class="small-images" src="./images/db/dbuserroles.png">
-</div>
 
                 Here are two roles which have been created and are assignable to users, along with
                 the join table created by typeorm automatically after defining the many to many relationship.
