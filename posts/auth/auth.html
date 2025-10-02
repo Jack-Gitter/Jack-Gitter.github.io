@@ -102,14 +102,22 @@ Firstly, the code initializes the Google OAuth2 client library for node. The cli
                 <p>
                     Firstly, the user is greeted with a normal google login screen
                 </p>
-                </div>
+            </div>
 
-After entering their credentials, they are asked to accept the scopes that were defined and provided to the OAuth library when generating the redirect URL
 
-<img class="google-scopes" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
+            <div class="image-description-block">
+                <img class="google-scopes" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
+                <p>
+                After entering their credentials, they are asked to accept the scopes that were defined and provided to the OAuth library when generating the redirect URL
+                </p>
+            </div>
 
-Clicking on the "5 Services" link reveals the specific scopes that the application is requesting access to
-<img class="google-scopes-detailed" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
+            <div>
+                <img class="google-scopes-detailed" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
+                <p>
+                    Clicking on the "5 Services" link reveals the specific scopes that the application is requesting access to
+                </p>
+            </div>
 
 After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoint. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
 
