@@ -95,9 +95,14 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
     res.redirect(url)
 }</pre>
 
-Firstly, the code initializes the Google OAuth2 client library for node. The client library is provided a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This is the endpoint that Google will redirect to after the end user finishes the authentication process. Also defined are scopes that our application is requesting access to. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
+Firstly, the code initializes the Google OAuth2 client library for node. The client library is provided a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This is the endpoint that Google will redirect to after the end user finishes the authentication process. Also defined are scopes that our application is requesting access to. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. 
 
-<img class="google-login-screen" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
+            <div class="image-description-block">
+                <img class="google-login-screen" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
+                <p>
+                    Firstly, the user is greeted with a normal google login screen
+                </p>
+                </div>
 
 After entering their credentials, they are asked to accept the scopes that were defined and provided to the OAuth library when generating the redirect URL
 
@@ -271,9 +276,13 @@ On subsequent reqeusts to the resource server,
 the browser automatically sends the JWT. The signature can be verified with the application's secret key to ensure it has not been tampered
 with, and the user roles can be analyzed to see if the requester has access to the resource.
 
+            <div class="image-description-block">
                 <img class="jwt-cookie" src="./images/jwt/JWTCookie.png">
-
+                <p>
                 This is what the cookie looks like after it is set in the browser
+                </p>
+            </div>
+
 
             <div class="image-description-block">
                 <img src="./images/jwt/JWTPayload.png" alt="JWT Payload">
