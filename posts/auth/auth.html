@@ -112,7 +112,7 @@ Firstly, the code initializes the Google OAuth2 client library for node. The cli
                 </p>
             </div>
 
-            <div>
+            <div class="image-description-block">
                 <img class="google-scopes-detailed" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
                 <p>
                     Clicking on the "5 Services" link reveals the specific scopes that the application is requesting access to
@@ -150,9 +150,12 @@ export async function auth_access_token(req: Request, res: Response) {
 </pre>
 
 After receiving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
-It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. 
-
-<img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
+<div class="image-description-block">
+    <img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
+    <p>
+        It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. 
+    </p>
+</div>
 
 The flow demonstrated is defined as the "Authorization Code Flow", and is the most common amongst web applications. In reality, the code is a slight modification of what 
 is actually in the repository, as the real code implements a local access token pattern. 
@@ -207,15 +210,16 @@ export class Role {
 }</pre>
 
 The user only has a simple email field. The roles have a primary key, along with a type. Typeorm generates a join table automatically when using the ManyToMany decorator.
-In the database, there exists both an admin and a manager role, with a singular user who contains both roles
+In the database, there exists both an admin and a manager role, with a singular user who contains both roles.
+For simplicity, there is only one user in the database. 
 
 <div style="display: flex; gap: 10px; align-items: flex-start;">
     <img class="db-user" src="./images/db/dbuser.png">
     <img class="db-role" src="./images/db/dbrole.png">
     <img class="db-user-roles" src="./images/db/dbuserroles.png">
 </div>
-                For simplicity, there is only one user in the database. Users are created whenever someone signs in with google via the following code
 
+Users are created whenever someone signs in with Google via the following code
 
 <pre class='prettyprint lang-typescript'>
 export async function auth_access_token(req: Request, res: Response) {
