@@ -232,10 +232,10 @@ export async function auth_access_token(req: Request, res: Response) {
 </pre>
 
 Here, the Google access token is used to fetch the user's info from Google's resource server, which contains the user email. Then, the user is queried for in the local database via said email. If the user does exist, the auth flow continues as normal. If not, then a user is inserted into the database with the given email. 
-    This is all done via typeorm's repository API.
+    This is all done via Typeorm's repository API.
 
                 Here are two roles which have been created and are assignable to users, along with
-                the join table created by typeorm automatically after defining the many to many relationship.
+                the join table created by Typeorm automatically after defining the many to many relationship.
                 The join table contains the assignment of roles to users. Now that the schema and data has been explained, 
                 we can take a look at the code which extracts role information from the database.
 
