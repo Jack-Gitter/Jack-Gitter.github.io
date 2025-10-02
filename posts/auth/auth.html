@@ -359,19 +359,28 @@ stytch.mountLogin({
 });
 </pre>
  To use this component, all that is required is importing the script into the index.html file, and including a component with an "id"=stytch-sdk. Important to note is the REDIRECT_URL, which is where the user is redirected to after clicking the link they receive in the email. In reality, there should be to auth endpoints in the auth server, one specifically for
- logging in, and another for signing up. After the component is rendered, it looks like so
+ logging in, and another for signing up. 
+
+<div class="image-description-block">
+     <img class="stytch-component" src="./images/stytch/stytchuicomponent.png">
+     <p>
+     This is what the OOTB rendered Stytch component looks like
+     </p>
+ </div>
 
 
-
- <img class="stytch-component" src="./images/stytch/stytchuicomponent.png">
-
- After entering an email, Stytch offers to automatically bring the user to their email provider, so that they can easily access the log in link
-
+<div class="image-description-block">
  <img class="stytch-email-redirect-ui" src="./images/stytch/stytchemailredirect.png">
+    After entering an email, Stytch offers to automatically bring the user to their email provider, so that they can easily access the log in link
+</div>
 
- Finally, the user receives the email, which redirects the browser to our specified redirect URL
 
+<div class="image-description-block">
  <img class="stytch-email-redirect" src="./images/stytch/stytchemail.png">
+ <p>
+ Finally, the user receives the email, which redirects the browser to our specified redirect URL
+ </p>
+</div>
 
  The code which handles the redirect is locacted in our backend application, and looks like so
 
