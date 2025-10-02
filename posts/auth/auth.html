@@ -62,7 +62,7 @@
                 In general, the OAuth flow is initiated when an application needs access to a user's resources stored by a third party. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of scopes that the client application has defined. After the user successfully logs in and accepts these scopes, they are redirected back to the client application. 
 
             <h2>Local vs Provided Access Tokens</h2>
-                A provided access token is an access token which is given to an application from a third party authorization server such as Google, Okta, etc. A local access token is one issued by a server controlled by the first party developers. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend server which serves content from a database that the first-party developers own.
+                A provided access token is an access token which is allocated to an application from a third party authorization server such as Google, Okta, etc. A local access token is one issued by a server controlled by the first party developers. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend server which serves content from a database that the first-party developers own.
 
                 <h3>Provided Access Tokens</h3>
                 The following is a concrete example of an OAuth flow implemented with a simple express server and Google's auth server.
