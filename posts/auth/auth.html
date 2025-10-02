@@ -165,7 +165,7 @@ is actually in the repository, as the real code implements a local access token 
 
                 Within the same application, the implementation has been extended to include the creation of a local access token by wrapping the provided Google access token 
                 with a customized JWT, containing application specific information such as user roles. Before looking at the JWT creation, 
-                it is important to understand the specifics about what application-specific information is, and how it might be stored.
+                it is important to understand the specifics about what information is going to be encapsulated within it, and how it might be stored in a database
 
                 In order to keep track of user roles, this application has a very simple model. There are two entities, the User entity and the Role entity
 
