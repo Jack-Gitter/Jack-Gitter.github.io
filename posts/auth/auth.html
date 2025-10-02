@@ -61,8 +61,8 @@
 
                 In general, the OAuth flow is initiated when an application needs access to a user's resources stored by a third party. The client application redirects the user to the authorization server's sign-in page, where the user enters their credentials. During the sign-in process, the user is asked to accept a list of scopes that the client application has defined. After the user successfully logs in and accepts these scopes, they are redirected back to the client application. 
 
-            <h2>Local vs Provided Access Tokens</h2>
-                A provided access token is an access token which is allocated to an application from a third party authorization server such as Google or Okta. A local access token is one issued by a server controlled by the first party developers. Provided access tokens are useful for reaching out to third party resource servers to fetch user data, while local access tokens can be used to protect a backend server which serves content from a database that the first-party developers own.
+            <h2>Provided Access Tokens</h2>
+                A provided access token is an access token which is allocated to an application from a third party authorization server such as Google or Okta. Provided access tokens are useful for reaching out to third party resource servers to fetch user data from an application, on the users behalf.
 
                 <h3>Provided Access Tokens</h3>
                 The following is a concrete example of an OAuth flow implemented with a simple express server and Google's auth server.
@@ -95,15 +95,15 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
     res.redirect(url)
 }</pre>
 
-Firstly, the code initializes the Google OAuth2 client library for node. We provide the client a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This the endpoint that Google will redirect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
+Firstly, the code initializes the Google OAuth2 client library for node. The client library is provided a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This is the endpoint that Google will redirect to after the end user finishes the authentication process. Also defined are scopes that our application is requesting access to. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
 
 <img class="google-login-screen" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
 
-After entering their credentials, they are asked to accept the scopes
+After entering their credentials, they are asked to accept the scopes that were defined and provided to the OAuth library when generating the redirect URL
 
 <img class="google-scopes" src="./images/GoogleAccessToken/GoogleAccessTokenGeneralClaims.png">
 
-Clicking on the "5 Services" button reveals the specific scopes that are defined when generating the redirect url
+Clicking on the "5 Services" link reveals the specific scopes that the application is requesting access to
 <img class="google-scopes-detailed" src="./images/GoogleAccessToken/GoogleAccessTokenClaims.png">
 
 After the user accepts the scopes, Google redirects the browser to the provided redirect URI, which is hosting an HTTP endpoint. Google sends an authorization code, which the backend parses from the query parameters and exchanges for an access token. 
