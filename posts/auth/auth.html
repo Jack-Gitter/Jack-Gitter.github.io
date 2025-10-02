@@ -152,7 +152,7 @@ is actually in the repository, as the real code implements a local access token 
                     to access the resource. During the auth flow, this information must be encapsulated in the access token so that the in-house resource server can determine
                     access rights. The token that 
                     results from the encapsulation this data is known as a local access token. Generally speaking, after an access token is retrieved from 
-                    a third party such as Google, it is used to find metadata about the user such as their email, name, etc. Additionally, data about the specific user is looked up 
+                    a third party such as Google, it is used to find metadata about the user such as their email and name. After this, data about the specific user is looked up 
                     in an internal database. Both the third party and local data about the user is wrapped up in a JWT and signed with an internal private key, 
                     and returned to the frontend. 
                     On requests to an internal resource server, this JWT is provided and verified with the same key used for signing. The JWT is the local access token. 
