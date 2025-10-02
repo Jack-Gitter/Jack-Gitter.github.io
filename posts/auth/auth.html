@@ -275,9 +275,13 @@ with, and the user roles can be analyzed to see if the requester has access to t
 
                 This is what the cookie looks like after it is set in the browser
 
-                <img class="jwt-io" src="./images/jwt/JWTPayload.png">
-
-                This is what the actual payload contained in the JWT looks like. Here, the "roles" field is visible, and accurately portrays the user roles stored in the database
+            <div class="image-description-block">
+                <img src="./images/jwt/JWTPayload.png" alt="JWT Payload">
+                <p>
+                    This image shows the decoded payload of a JSON Web Token (JWT). 
+                    Notably, the <code>"roles"</code> field is present, reflecting the user's assigned roles as stored in the database.
+                </p>
+            </div>
 
 
             <h2>IDPs</h2>
