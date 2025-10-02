@@ -95,7 +95,7 @@ export function redirect_to_google_acess_token_auth(req:Request, res:Response) {
     res.redirect(url)
 }</pre>
 
-Firstly, the code initializes the google OAuth2 client library for node. We provide the client a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This the endpoint that Google will redirect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
+Firstly, the code initializes the Google OAuth2 client library for node. We provide the client a clientId and secret, which can be found in the Google dashboard after creating a project. Additionally supplied to the OAuth2 client is a redirect URI. This the endpoint that Google will redirect to after the end user finishes the authorization process. Also defined are scopes that our application is requesting access to. During the auth process, a popup will appear and ask the user to confirm the application can have access to said resources. Finally, the OAuth2 library is used to generate the url to the auth server login form, and express redirects the browser there. Once the user is redirected, they are greeted with a normal Google login screen. 
 
 <img class="google-login-screen" src="./images/GoogleAccessToken/GoogleAccessTokenSignIn.png">
 
