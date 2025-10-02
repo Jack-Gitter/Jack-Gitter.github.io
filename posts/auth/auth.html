@@ -479,13 +479,17 @@ and wrapping the roles and other user metadata in the JWT. It is signed the same
 <div class="image-description-block">
 <img class="google-oidc-component" src="./images/googleidtoken/uicomponent.png">
 <p>
-Rendered UI component
+    Rendered UI component
 </p>
 </div>
 
-After clicking on the button to sign in with Google, the user is asked to select an account
 
+<div class="image-description-block">
 <img class="google-oidc-login" src="./images/googleidtoken/chooseaccount.png">
+<p>
+    Redirect after clicking "Sign in with Google" button
+</p>
+</div>
 
 Notice with this flow, there is no mention of scopes. This is because the token that is provided to our backend endpoint upon redirection is not an access token. Therefore, no scopes
 are required as the token only contains data about who the user is, and does not grant the application with access to any other information. This user information can be used to create, yet again, a local access token
@@ -608,10 +612,14 @@ volumes:
 </pre>
 
 In order to setup the integration, there are a couple of things that have to be done. Firstly, a client application has to be created in Keycloak so that the IDP knows to accept 
-incomming requests from Grafana. Within the keycloak UI, a client is created and information about where our application is running, what type of authentication flow we are using, and where we should redirect to after authentication is specified.
+incomming requests from Grafana. 
 
 
-<img class="keycloak-settings" src="./images/sso/keycloaksettings.png">
+<div class="image-description-block">
+    <img class="keycloak-settings" src="./images/sso/keycloaksettings.png">
+    <p>Within the keycloak UI, a client is created and information about where our application is running, what type of authentication flow we are using, and where we should redirect to after authentication is specified.
+    </p>
+</div>
 
 
 Then, the grafana.ini configuration file is modified to specify Keycloak configuration details, so that Grafana can redirect users to log in via the IDP properly
@@ -636,16 +644,29 @@ role_attribute_path = contains(roles[*], &#x27;admin&#x27;) &amp;&amp; &#x27;Adm
 
 Important OAuth settings are specified, such as the scopes Grafana has access to, some of which are required to fetch user info. Additionally 
 the urls which Keycloak serves oauth endpoints at are defined, so that Grafana can complete the auth flow and request user info after receiving an access token from Keycloak
-. With this all in place, the setup is complete. The user first navigates to Grafana and clicks on the "Sign in with Keycloak"
+. With this all in place, the setup is complete. 
 
+<div class="image-description-block">
 <img class="grafana-login" src="./images/sso/graphanalogin.png">
+<p>
+    Grafana login UI, with "Sign in with Keycloak" button
+</p>
+</div>
 
-Next, they are redirected to the IDP. After entering their credentials, Keycloak will redirect to Grafana's backend login/generic_oauth endpoint. 
 
+<div class="image-description-block">
 <img class="keycloak-login" src="./images/sso/keycloaklogin.png">
-Once Grafana gathers user info and validates the authentication, a session is created and the user is redirected to the Grafana UI
+<p>
+Redirect to Keycloak login form. After entering their credentials, Keycloak will redirect to Grafana's backend <code>login/generic_oauth</code> endpoint. 
+</p>
+</div>
 
+<div class="image-description-block">
 <img class="grafana-ui" src="./images/sso/grafana.png">
+<p>
+Once Grafana gathers user info and validates the authentication, a session is created and the user is redirected to the Grafana UI
+</p>
+</div>
         
             <a href="https://github.com/Jack-Gitter/auth">Link to the GitHub repository</a>
         </article>
