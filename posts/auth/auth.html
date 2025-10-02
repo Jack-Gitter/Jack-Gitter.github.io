@@ -315,6 +315,8 @@ with, and the user roles can be analyzed to see if the requester has access to t
 
 
             <h2>Authentication</h2>
+                Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requester has access to the resource,
+                authentication involves a user entering credentials to verify themselves.
             <h3>IDPs</h3>
                 An IDP, also known as an identity provider, is a service that helps to create and store users and associated information, along with providing management tools and 
                 authentication processes. By utilizing an IDP, applications do not have to worry about a lot of the overhead that comes with managing all aspects of users, and 
@@ -448,9 +450,6 @@ user, along with session tokens provided by Stytch. These tokens act as access t
 and can be used to retrieve all sorts of user information. After authenticating the JWT, the code proceeds as normal, either creating or looking up the user in the local database, 
 and wrapping the roles and other user metadata in the JWT. It is signed the same, and set in the same cookie as seen previously. After this, the user is once again redirected to the frontend application
 
-            <h2>Authentication</h2>
-                Authentication is the process of a user proving that they are who they say they are. While authorization only cares that the requester has access to the resource,
-                authentication involves a user entering credentials to verify themselves.
             <h3>OIDC</h3>
 
                 OIDC is an authentication layer that is built on top of the OAuth 2.0 Authorization framework. Rather than receiving an access token, after completing the OIDC flow
