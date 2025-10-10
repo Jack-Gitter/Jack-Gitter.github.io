@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFL OCTOBOT</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./nfloctobot.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -54,21 +55,98 @@ await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
                 
             <p>
                 Twitter rate limits posts to 17 per 24 hours on the free tier. I don't forsee this being a problem for tweeting about octopi.
-        
             </p>
             
             
             <h2>ESPN Hidden API</h2>
             
-            // link to github docs repo
-            // historical data importing from there
-            // limitations on import, api format changes
-            <p> </p>
-            
+            In order to get data on octopi, I'm using ESPN's hidden api, which ironically is 
+            <a href="https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b">documented</a> better than many other APIs I've worked with.
+            I'm performing HTTP short polling every minute in order to get up to date data, but also not overload ESPN's servers. The business logic is as follows
+
+            <ol>
+                <li>
+                    Fetch all games for the current day
+                </li>
+                <li>
+                    Fetch all plays for each game
+                </li>
+                <li>
+                    Filter out scoring plays which are not two point conversions
+                </li>
+                <li>
+                    Filter out scoring plays where the pat scorer, or intended pat scorer, was not the same as the touchdown scorer
+                </li>
+                <li>
+                    Gather specifics about the player and play information
+                </li>
+                <li>
+                    Save statistics and play information to the database for leaderboard, and deduplication purposes
+                </li>
+                <li>
+                    Post to Twitter
+                </li>
+            </ol>
+
             <h2>Postgres Database</h2>
             <p>
-            Wrap up your thoughts here. Maybe mention what you learned or what you're planning to work on next.
-            </p>
+            For persistance, I'm using postgres and Typeorm. It was easy enough to create a couple of entities that would keep track of all of the necessary information. 
+            Since I'm paying to host the database myself, I've kept the models quite slim, relying only on ESPN internal identifiers to uniquely identify plays, players, 
+            and other things. 
+
+
+
+<pre class='prettyprint lang-typescript'>
+@Entity()
+export class OctopusCount {
+
+    constructor(id: number, count: number) {
+        this.id = id
+        this.count = count
+    }
+
+    @Column({primary: true})
+    id: number
+
+    @Column({type: 'int'})
+    count: number
+
+}
+</pre>
+
+<pre class='prettyprint lang-typescript'>
+@Entity()
+export class ScoringPlay {
+
+    constructor(id: number) {
+        this.id = id
+    }
+
+    @Column({primary: true, type: 'bigint'})
+    id: number
+}
+</pre>
+
+<pre class='prettyprint lang-typescript'>
+@Entity()
+export class PlayerOctopusCount {
+
+    constructor(id: number, octopusCount: number = 0) {
+        this.id = id
+        this.octopusCount = octopusCount
+    }
+
+    @Column({primary: true, type: 'bigint'})
+    public id: number
+
+    @Column({type: 'int', default: 0})
+    public octopusCount: number
+
+}
+</pre>
+
+
+
             
             <p>
             <h2>Render Deployment</h2>
