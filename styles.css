@@ -94,4 +94,25 @@ pre.code {
         font-size: 0.9em;
         color: white;
         width: 85%;
-    }
+}
+
+.top-right-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #6c757d; /* gray */
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  z-index: 1000;
+}
+
+.top-right-button:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+}
