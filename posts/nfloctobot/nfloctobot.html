@@ -24,14 +24,14 @@
             <h2>Twitter Bot</h2>
 
             <h3>Purpose</h3>
-                The intention is to tweet wehenver an NFL player gets an octopus, or whenever the indended receiver who dropped the ball was the player who scored the touchdown. 
+                The intention is to tweet whenever an NFL player gets an octopus, or whenever the intended receiver who dropped the ball was the player who scored the touchdown. 
                 <a href="https://x.com/NFLOCTOBOT">@NFLOCTOBOT</a> is the handle. If you want to support me and keep the bot running, you can <a href="https://buymeacoffee.com/jackgitter">donate</a>.
             <p>
 
             <h3>Process</h3>
             Creating a Twitter bot is pretty straightforward. After creating an account, you can go to the Twitter developer console to fetch all necessary
-            tokens for auth, allowing access to api endpoints that are very well <a href="https://docs.x.com/x-api/introduction">documented</a>. 
-            Because I used NodeJS, I was able to install a <a href="https://github.com/PLhery/node-twitter-api-v2">package</a> which aids in formatting the oauth 
+            tokens for auth, allowing access to API endpoints that are very well <a href="https://docs.x.com/x-api/introduction">documented</a>. 
+            Because I used NodeJS, I was able to install a <a href="https://github.com/PLhery/node-twitter-api-v2">package</a> which aids in formatting the OAuth 
             request parameters, along with some other helper functions which wrap requests. Overall after instantiating the client, 
             making requests was pretty straightforward
             
@@ -54,13 +54,13 @@ await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
 </pre>
                 
             <p>
-                Twitter rate limits posts to 17 per 24 hours on the free tier. I don't forsee this being a problem for tweeting about octopi.
+                Twitter rate limits posts to 17 per 24 hours on the free tier. I don't anticipate this being a problem for tweeting about octopi.
             </p>
             
             
             <h2>ESPN Hidden API</h2>
             
-            In order to get data on octopi, I'm using ESPN's hidden api, which ironically is 
+            In order to get data on octopi, I'm using ESPN's hidden API, which ironically is 
             <a href="https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b">documented</a> better than many other APIs I've worked with.
             I'm performing HTTP short polling every minute in order to get up to date data, but also not overload ESPN's servers. The business logic is as follows
 
@@ -90,7 +90,7 @@ await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
 
             <h2>Postgres Database</h2>
             <p>
-            For persistance, I'm using postgres and Typeorm. It was easy enough to create a couple of entities that would keep track of all of the necessary information. 
+            For persistence, I'm using Postgres and Typeorm. It was easy enough to create a couple of entities that would keep track of all of the necessary information. 
             Since I'm paying to host the database myself, I've kept the models quite slim, relying only on ESPN internal identifiers to uniquely identify plays, players, 
             and other things. 
 
@@ -152,7 +152,7 @@ export class PlayerOctopusCount {
             <h2>Docker</h2>
 
             <p>
-                The entire project is containerized, running in Docker for ease of deployment and system independence. Both a local postgres and application instance can be spun
+                The entire project is containerized, running in Docker for ease of deployment and system independence. Both a local Postgres and application instance can be spun
                 up with the docker compose file.
 
 <pre class='prettyprint lang-typescript'>
@@ -202,7 +202,7 @@ Additionally, the image is built and deployed to Docker Hub, to make the deploym
             <h2>Render Deployment</h2>
 
             <a href="https://render.com/">Render</a> offers a hosted Postgres solution, which is extremely easy to get up and running. 
-            Additionally The bot is deployed via a Render webworker, by simply pointing to the container repository localed on Docker Hub. The 
+            Additionally The bot is deployed via a Render webworker, by simply pointing to the container repository living on Docker Hub. The 
             last piece of the puzzle is to fill out the necessary environment variables to connect to the database, access twitter, and set up the application.
             The total cost of deployment will most likely not exceed $15 dollars a month
             <a href="https://github.com/jack-gitter/nfl_octobot">Repo Link</a> 
