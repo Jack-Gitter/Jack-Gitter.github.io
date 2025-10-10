@@ -22,12 +22,39 @@
             
             <h2>Twitter Bot</h2>
 
+            <h3>Purpose</h3>
+                The intention is to tweet wehenver an NFL player gets an octopus, or whenever the indended receiver who dropped the ball was the player who scored the touchdown. 
+                <a href="https://x.com/NFLOCTOBOT">@NFLOCTOBOT</a> is the handle.
             <p>
-                
-            // process of making the twitter account, etc
-            // where to find the bot
-            // limitations, 17 posts a day
 
+            <h3>Process</h3>
+            Creating a Twitter bot is pretty straightforward. After creating an account, you can go to the Twitter developer console to fetch all necessary
+            tokens for auth, allowing access to api endpoints that are very well <a href="https://docs.x.com/x-api/introduction">documented</a>. 
+            Because I used NodeJS, I was able to install a <a href="https://github.com/PLhery/node-twitter-api-v2">package</a> which aids in formatting the oauth 
+            request parameters, along with some other helper functions which wrap requests. Overall after instantiating the client, 
+            making requests was pretty straightforward
+            
+<pre class='prettyprint lang-typescript'>
+
+export const twitterBaseUrl = `https://api.x.com/2`
+
+export const getTwitterClient = async () => {
+    return new TwitterApi({
+      appKey: process.env.X_API_KEY as string,
+      appSecret: process.env.X_API_KEY_SECRET as string,
+      accessToken: process.env.X_ACCESS_TOKEN as string,
+      accessSecret: process.env.X_ACCESS_TOKEN_SECRET as string
+    });
+}
+
+...
+
+await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
+</pre>
+                
+            <p>
+                Twitter rate limits posts to 17 per 24 hours on the free tier. I don't forsee this being a problem for tweeting about octopi.
+        
             </p>
             
             
