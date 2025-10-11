@@ -92,6 +92,182 @@ await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
             
             The overall process is a bit more involved than that, but that gives a good enough high level overview to understand the flow.
 
+            <h3>Data Modeling and Anticorruption Layer</h3>
+            In my efforts to process ESPN data efficiently, I created my own notion of models for things such as games, scoring plays, athletes, and many other things.
+            My data models are below
+
+
+
+<pre class='prettyprint lang-typescript'>
+export class Game {
+    constructor(public gameId: number, public scoringPlays: ScoringPlayInformation[] = []) {}
+
+    public deduplicateProcessedPlays(playIds: number[]) {
+        const gameScoringPlays = this.scoringPlays?.length
+        const playIdsSet = new Set(playIds)
+        this.scoringPlays = this.scoringPlays?.filter(scoringPlay => {
+            return !playIdsSet.has(scoringPlay.id)
+        })
+        const unprocessedGameScoringPlays = this.scoringPlays.length
+        console.log(
+            `Removed ${gameScoringPlays - unprocessedGameScoringPlays} already processed scoring plays from game ${this.gameId}`
+        )
+
+    }
+
+    public filterScoringPlays() {
+        const scoringPlays = this.scoringPlays?.filter((scoringPlay) => {
+            return scoringPlay.isOctopus() || scoringPlay.isMissedOctopus()
+        })
+        console.log(`Found ${scoringPlays.length} new plays that are either octopi, or missed octopi`)
+        return scoringPlays
+    }
+}
+</pre>
+
+
+
+<pre class='prettyprint lang-typescript'>
+export class ScoringPlayInformation {
+    constructor(
+        public id: number,
+        public participants: Athlete[],
+        public pointAfterAttempt: PointAfterAttempt,
+        public shortText: string,
+        public text: string,
+        public wallclock: Date,
+        public octopusScorer?: Athlete,
+        public octopusMissedAthlete?: Athlete,
+    ) {}
+
+    public isOctopus() {
+        if (this.pointAfterAttempt.isTwoPointAttempt && this.pointAfterAttempt.success && this.pointAfterAttempt.scorer) {
+            const tdScorer = this.participants.find((participant: Athlete) =&gt {
+                return participant.type === SCORER_TYPE.TD_SCORER
+            })
+            return (tdScorer && this.pointAfterAttempt.scorer.id === tdScorer.id) 
+        }
+        return false
+    }
+
+    public isMissedOctopus() {
+        if (this.pointAfterAttempt.isTwoPointAttempt && !this.pointAfterAttempt.success && this.pointAfterAttempt.scorer) {
+            const tdScorer = this.participants.find((participant: Athlete) =&gt {
+                return participant.type === SCORER_TYPE.TD_SCORER
+            })
+            return (tdScorer && this.pointAfterAttempt.scorer.id === tdScorer.id) 
+        }
+        return false
+
+    }
+
+    public async saveOctopusToDatabase(datasource: DataSource) {
+        await datasource.transaction(async (entityManager: EntityManager) =&gt {
+            const scoringPlayRepository = entityManager.getRepository(ScoringPlay)
+            const octopusCountRepository = entityManager.getRepository(OctopusCount)
+            const playerOctopusCountRepository = entityManager.getRepository(PlayerOctopusCount)
+            if (this.octopusScorer) {
+                const playerId = this.octopusScorer?.id
+                const play = new ScoringPlay(this.id)
+                await scoringPlayRepository.save(play)
+                await octopusCountRepository.increment({id: 1}, 'count', 1)
+                const playerOctopusCount = await playerOctopusCountRepository.findOneBy({id: playerId})
+                if (!playerOctopusCount) {
+                    const newPlayerOctopusCount = new PlayerOctopusCount(playerId, 1)
+                    await playerOctopusCountRepository.save(newPlayerOctopusCount)
+                } else {
+                    playerOctopusCount.octopusCount += 1
+                    await playerOctopusCountRepository.save(playerOctopusCount)
+                }
+                console.log(`Successfully saved the playId ${this.id}`)
+                console.log(`Successfully updated player octopus count for player with id ${playerId}`)
+                console.log(`Successfully updated global octopus count`)
+            }
+        })
+    }
+
+    public async postFailedOctopusToTwitter(twitterClient: TwitterApi, datasource: DataSource) {
+
+        const octopusCountRepository = datasource.getRepository(OctopusCount)
+        const scoringPlayRepository = datasource.getRepository(ScoringPlay)
+        const scoringPlay = new ScoringPlay(this.id)
+        await scoringPlayRepository.save(scoringPlay)
+        const octopusCount = await octopusCountRepository.findOneBy({id: 1}) 
+        if (this.octopusMissedAthlete && octopusCount) {
+            await postFailedOctopusToTwitter(twitterClient, this.shortText, this.octopusMissedAthlete?.firstName, this.octopusMissedAthlete?.lastName, octopusCount?.count + 1)
+        }
+
+    }
+
+    public async postOctopusToTwitter(twitterClient: TwitterApi, datasource: DataSource) {
+        let playerOctopusCount = 0
+        let globalOctopusCount = 0
+        let playerOctopusRanking = 0
+        let playerOctopusRankingTiedWith = 0
+        await datasource.transaction(async (entityManager) =&gt {
+            if (this.octopusScorer)  {
+                const playerOctopusCountRepository = entityManager.getRepository(PlayerOctopusCount)
+                const octopusCountRepository = entityManager.getRepository(OctopusCount)
+
+                const octopusCount = await octopusCountRepository.findOneBy({id: 1})
+                const playerOctopus = await playerOctopusCountRepository.findOneBy({id: this.octopusScorer.id})
+
+                if (playerOctopus && octopusCount) {
+                    globalOctopusCount = octopusCount.count
+                    playerOctopusCount = playerOctopus.octopusCount
+                    playerOctopusRanking = await playerOctopusCountRepository.count({where: {octopusCount: MoreThan(playerOctopusCount)}}) + 1
+                    playerOctopusRankingTiedWith = await playerOctopusCountRepository.count({where: {octopusCount: Equal(playerOctopusCount)}}) - 1
+                }
+
+            }
+        })
+
+        if (this.octopusScorer) {
+            return await postOctopusToTwitter(
+                twitterClient, 
+                this.shortText,
+                this.octopusScorer?.firstName, 
+                this.octopusScorer?.lastName, 
+                playerOctopusCount, 
+                globalOctopusCount,
+                playerOctopusRanking,
+                playerOctopusRankingTiedWith
+            )
+        }
+    }
+    public async populateOctopusPlayerInformation() {
+        this.octopusScorer = this.pointAfterAttempt.scorer
+    }
+
+    public async populateFailedOctopusPlayerInformation() {
+        this.octopusMissedAthlete = this.pointAfterAttempt.scorer
+    }
+
+    public setOctopusScorer() {
+        this.octopusScorer = this.pointAfterAttempt.scorer
+    }
+</pre>
+
+
+
+<pre class='prettyprint lang-typescript'>
+export class PointAfterAttempt {
+    constructor(public success: boolean, public isTwoPointAttempt: boolean, public scorer?: Athlete) { }
+}
+</pre>
+
+
+<pre class='prettyprint lang-typescript'>
+export class Athlete {
+    constructor(public firstName: string, public lastName: string, public id: number, public type: string) {}
+}
+</pre>
+
+If you have critiques of my data model, well so do I. This is a for fun bot, so I'm not particularly invested in making the code as perfect as possible.
+In particular, I feel that some of the logic is overcomplicated, and posting to Twitter should not be encompased within the data model of a scoring play, but rather
+externally defined and parameterized with a scoring play. 
+
+
             <h2>Postgres Database</h2>
             <p>
             For persistence, I'm using Postgres and Typeorm. It was easy enough to create a couple of entities that would keep track of all of the necessary information. 
