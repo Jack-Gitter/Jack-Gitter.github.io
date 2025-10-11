@@ -272,8 +272,7 @@ externally defined and parameterized with a scoring play.
 <h3>Anti-Corrpution Layer</h3>
 In order to populate my data models, I have an anti-corruption layer which helps to query the ESPN API and create said models.
 
-<pre class='prettyprint lang-typescript'>
-export const getScoringPlayInformation = async (gameId: number, scoringPlayIds: number[]) => {
+<pre class='prettyprint lang-typescript'>export const getScoringPlayInformation = async (gameId: number, scoringPlayIds: number[]) => {
     if (scoringPlayIds) {
         return await Promise.all(scoringPlayIds.map(async (scoringPlayId) =&gt {
             const url = `https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/${gameId}/competitions/${gameId}/plays/${scoringPlayId}`
@@ -338,8 +337,9 @@ export const getGameInformation = async (gameId: number) =&gt {
 
     return new Game(gameId, scoringPlays)
 
-}
-</pre>
+}</pre>
+
+    Again, the code is not perfect. There should be enums for readability, cleaner logic, and improvements around error handling.
 
             <h2>Postgres Database</h2>
             <p>
