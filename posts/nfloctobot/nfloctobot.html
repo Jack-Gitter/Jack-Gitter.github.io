@@ -265,7 +265,7 @@ export class Athlete {
 
 If you have critiques of my data model, well so do I. This bot was made over the course of a couple of days, and was a fun side project. 
 I'm not particularly invested in making the code as perfect as possible.
-In particular, I feel that some of the logic is overcomplicated, and posting to Twitter should not be encompased within the data model of a scoring play, but rather
+In particular, I feel that some of the logic is overcomplicated, and posting to Twitter should not be encompassed within the data model of a scoring play, but rather
 externally defined and parameterized with a scoring play. 
 
 
@@ -401,11 +401,11 @@ export class PlayerOctopusCount {
 
             <h3>Leaderboard and Historical Data</h3>
             In order to differentiate my bot from other "competitors", I decided to include statistics in the form of a leaderboard, and an all time player octopus count. 
-            The entities which aid me in this are <code>PlayerOctopusCount</code> and <code>OctopusCount</code>. Each time a player gets an octopus, these two tables
-            are updated, and therefore allows me to gather relevant statistics when going to post to Twitter. Additionally, the <code>ScoringPlay</code> entity is vital.
+            The entities which aid me in this are <span class="inline-code">PlayerOctopusCount</span> and <span class='inline-code'>OctopusCount</span>. 
+            Each time a player gets an octopus, these two tables
+            are updated, and therefore allows me to gather relevant statistics when going to post to Twitter. Additionally, the <span class="inline-code">ScoringPlay</span> 
+            entity is vital.
             This helps to deduplicate already processed scoring plays, so no octopus or missed octopus is posted twice.
-            
-            <p>
             <h2>Docker</h2>
 
             <p>
