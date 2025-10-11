@@ -92,7 +92,7 @@ await twitterClient.post(`${twitterBaseUrl}/tweets`, body)
             
             The overall process is a bit more involved than that, but that gives a good enough high level overview to understand the flow.
 
-            <h3>Data Modeling and Anticorruption Layer</h3>
+            <h3>Data Modeling</h3>
             In my efforts to process ESPN data efficiently, I created my own notion of models for things such as games, scoring plays, athletes, and many other things.
             My data models are below
 
@@ -263,10 +263,83 @@ export class Athlete {
 }
 </pre>
 
-If you have critiques of my data model, well so do I. This is a for fun bot, so I'm not particularly invested in making the code as perfect as possible.
+If you have critiques of my data model, well so do I. This bot was made over the course of a couple of days, and was a fun side project. 
+I'm not particularly invested in making the code as perfect as possible.
 In particular, I feel that some of the logic is overcomplicated, and posting to Twitter should not be encompased within the data model of a scoring play, but rather
 externally defined and parameterized with a scoring play. 
 
+
+<h3>Anti-Corrpution Layer</h3>
+In order to populate my data models, I have an anti-corruption layer which helps to query the ESPN API and create said models.
+
+<pre class='prettyprint lang-typescript'>
+export const getScoringPlayInformation = async (gameId: number, scoringPlayIds: number[]) => {
+    if (scoringPlayIds) {
+        return await Promise.all(scoringPlayIds.map(async (scoringPlayId) =&gt {
+            const url = `https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/${gameId}/competitions/${gameId}/plays/${scoringPlayId}`
+            const result = await fetch(url)
+            const scoringPlayInformationResponse: ScoringPlayInformationResponse = await result.json()
+            return scoringPlayInformationResponse
+        }))
+    }
+}
+
+export const getScoringPlayAthletes = async (scoringPlay: ScoringPlayInformationResponse) =&gt {
+        const athletes: Athlete[] = []
+        if (scoringPlay?.participants) {
+            await Promise.all(scoringPlay?.participants.map(async (participant) =&gt {
+                const athleteResponse = await getAtheleteInformation(participant.athlete.$ref)
+                if (athleteResponse) {
+                    const athlete = new Athlete(athleteResponse.firstName, athleteResponse.lastName, athleteResponse.id, participant.type)
+                    athletes.push(athlete)
+                }
+            }))
+        }
+        return athletes
+}
+
+export const getScoringPlayPat = async (scoringPlay: ScoringPlayInformationResponse) =&gt {
+        const isTwoPointAttempt = scoringPlay?.pointAfterAttempt?.id === 15 || scoringPlay?.pointAfterAttempt?.id === 16 || scoringPlay?.text?.toLowerCase()?.includes('two point')
+
+        const twoPointAttemptSuccess = 
+                scoringPlay?.pointAfterAttempt?.value === 2 || 
+                (scoringPlay?.text?.toLowerCase()?.includes('two-point') && 
+                scoringPlay?.text?.toLowerCase()?.includes('attempt succeeds'))
+
+        const participant = scoringPlay?.participants.find((participant: ParticipantResponse) =&gt {
+            return participant.type === SCORER_TYPE.PAT_SCORER
+        })
+
+        const patScorerResponse = await getAtheleteInformation(participant?.athlete.$ref)
+
+        let patScorer = undefined
+
+        if (patScorerResponse && participant) {
+            patScorer = new Athlete(patScorerResponse.firstName, patScorerResponse.lastName, patScorerResponse.id, participant.type)
+        }
+
+        return new PointAfterAttempt(twoPointAttemptSuccess, isTwoPointAttempt, patScorer)
+
+}
+
+export const getGameInformation = async (gameId: number) =&gt {
+
+    const scoringPlayIds = await getGameScoringPlayIds(gameId)
+    const scoringPlayInformationResponse = await getScoringPlayInformation(gameId, scoringPlayIds)
+
+    let scoringPlays: ScoringPlayInformation[] = []
+    if (scoringPlayInformationResponse) {
+        scoringPlays = await Promise.all(scoringPlayInformationResponse.map(async (scoringPlay) =&gt {
+            const scoringPlayAthletes = await getScoringPlayAthletes(scoringPlay)
+            const pointAfterAttempt = await getScoringPlayPat(scoringPlay)
+            return new ScoringPlayInformation(scoringPlay.id, scoringPlayAthletes, pointAfterAttempt, scoringPlay.shortText, scoringPlay.text, new Date(scoringPlay.wallclock))
+        }))
+    }
+
+    return new Game(gameId, scoringPlays)
+
+}
+</pre>
 
             <h2>Postgres Database</h2>
             <p>
