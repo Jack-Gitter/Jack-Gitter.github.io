@@ -400,7 +400,10 @@ export class PlayerOctopusCount {
 
 
             <h3>Leaderboard and Historical Data</h3>
-            //
+            In order to differentiate my bot from other "competitors", I decided to include statistics in the form of a leaderboard, and an all time player octopus count. 
+            The entities which aid me in this are <code>PlayerOctopusCount</code> and <code>OctopusCount</code>. Each time a player gets an octopus, these two tables
+            are updated, and therefore allows me to gather relevant statistics when going to post to Twitter. Additionally, the <code>ScoringPlay</code> entity is vital.
+            This helps to deduplicate already processed scoring plays, so no octopus or missed octopus is posted twice.
 
 
             
