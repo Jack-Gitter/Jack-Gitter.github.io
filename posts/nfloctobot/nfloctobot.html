@@ -580,8 +580,8 @@ export class Donation {
 
 In order to verify that the request is sent by the intended source, buy me a coffee attaches a signed HTTP header in the request. The <span class="inline-code">isSignatureValid</span>
 method utilizes a secret value provided by buy me a coffee and set as an environment variable which verifies the signature against the request body. If all is aligned, then 
-the donation amount gets normalized to USD, and the record gets saved to the database. Every last day of the month, a cron job runs which aggregates donation data, and 
-posts to twitter
+the donation amount gets normalized to USD, and the record gets saved to the database. Every last day of the month, a cron job runs which aggregates donation data and 
+posts to Twitter
 
 
 <pre class='prettyprint lang-typescript'>
