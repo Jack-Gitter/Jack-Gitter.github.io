@@ -501,6 +501,119 @@ jobs:
 This as well requires additional secrets, particularly the docker hub username and password to allow the CLI to push the image on my behalf.
 
 <br>
+
+            <h2>Donations</h2>
+                
+            Donations are all performed via my <a href="https://buymeacoffee.com/jackgitter">buy me a cofee</a> account. In order to keep track of all donations, I've created 
+            another entity
+
+<pre class='prettyprint lang-typescript'>
+@Entity('donations')
+export class Donation {
+
+    constructor(
+        id: number, 
+        money: number, 
+        donatorName: string, 
+        unixTimestamp: number
+    ) {
+        this.id = id
+        this.money = money
+        this.donatorName = donatorName
+        this.timestamp = new Date(unixTimestamp * 1000)
+    }
+
+    @Column({primary: true, type: 'bigint'})
+    id: number
+
+    @Column({type: 'float'})
+    money: number
+
+    @Column({name: 'donator_name'})
+    donatorName: string
+
+    @Column()
+    timestamp: Date
+
+}
+</pre>
+
+        Upon a donation, a webhook set up with buy me a cofee calls an endpoint in my application which creates a corresponding donation record in the database.
+
+
+
+<pre class='prettyprint lang-typescript'>
+    app.post('/hook', async (req, res) =&gt {
+        if (!datasource.isInitialized) {
+            await datasource.initialize()
+        }
+
+        const donationRepository = datasource.getRepository(Donation)
+
+        const body: BuyMeACoffeeWebhook = req.body
+
+            
+        const valid = isSignatureValid(req)
+        if (!valid) {
+            res.status(403).send(`Invalid Signature`)
+            return
+        }
+
+        console.log(`Donation Received! ${JSON.stringify(body)}`)
+
+        const money = body?.data?.amount
+        const name = body?.data.supporter_name
+        const currency = body?.data?.currency
+        const unixTimestamp = body?.data?.created_at
+
+        const usdMoney = await convertToUSD(money, currency)
+
+        const donation = new Donation(body?.data?.id, usdMoney, name, unixTimestamp)
+
+        await donationRepository.save(donation)
+
+        console.log(`Donation saved to database`)
+
+        res.send(`Saved Donation`)
+    })
+</pre>
+
+In order to verify that the request is sent by the intended source, buy me a coffee attaches a signed HTTP header in the request. The <span class="inline-code">isSignatureValid</span>
+method utilizes a secret value provided by buy me a coffee and set as an environment variable which verifies the signature against the request body. If all is aligned, then 
+the donation amount gets normalized to USD, and the record gets saved to the database. Every last day of the month, a cron job runs which aggregates donation data, and 
+posts to twitter
+
+
+<pre class='prettyprint lang-typescript'>
+    cron.schedule('0 0 28-31 * *', async () =&gt {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        if (tomorrow.getMonth() !== today.getMonth()) {
+          console.log('📅 Running monthly donation summary...');
+
+          const highestAllTime = await getHighestAllTimeDonator(datasource);
+          const highestMonthly = await getHighestMonthlyDonator(datasource);
+          const totalMonthlyDonations = await getMonthlyDonationCount(datasource)
+
+          console.log(`highest all time: ${JSON.stringify(highestAllTime)}`)
+          console.log(`highest monthly: ${JSON.stringify(highestMonthly)}`)
+          console.log(`total monthly: ${JSON.stringify(totalMonthlyDonations)}`)
+
+          await tweetDonations(
+                twitterClient, 
+                highestAllTime?.donatorName, 
+                highestAllTime?.total, 
+                highestMonthly?.donatorName,
+                highestMonthly?.total,
+                totalMonthlyDonations?.total
+          )
+        }
+    });
+</pre>
+
+
             <a href="https://github.com/jack-gitter/nfl_octobot">Repo Link</a> 
         </article>
     </main>
