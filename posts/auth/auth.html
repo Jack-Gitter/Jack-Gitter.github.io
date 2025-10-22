@@ -431,8 +431,6 @@ export async function stytchAuth(req: Request, res: Response) {
             sub: content.user_id,
             roles,
             authProvider: AUTH_PROVIDER.stytch,
-            accessToken: undefined,
-            refreshToken: undefined
         }
         res.cookie('jwt', ourjwt, {maxAge: Date.now() + 60 * 60}).redirect('http://localhost:3001')
     } catch (error) {
@@ -535,8 +533,6 @@ export async function auth_id_token(req: Request, res: Response) {
             iss: 'Test App',
             aud: 'Test App',
             roles: roles, 
-            accessToken: undefined,
-            refreshToken: undefined,
             authProvider: AUTH_PROVIDER.google,
         }
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
