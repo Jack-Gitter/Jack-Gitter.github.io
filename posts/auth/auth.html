@@ -183,8 +183,8 @@ is actually in the repository, as the real code implements a local access token 
                     so there is no need to have them duplicate information inside of whatever application is being developed.
                 </div>
 
-                Within the same application, the implementation has been extended to include the creation of a local access token by wrapping the provided Google access token 
-                with a customized JWT, containing application specific information such as user roles. Before looking at the JWT creation, 
+                Within the same application, the implementation has been extended to include the creation of a local access token by wrapping the user data fetched with the 
+                Google access token inside a custom JWT, containing additional application specific information such as user roles. Before looking at the JWT creation, 
                 it is important to understand the specifics about what information is going to be encapsulated within it, and how it might be stored in a database.
 
                 In order to keep track of user roles, this application has a very simple model. There are two entities, the User entity and the Role entity
