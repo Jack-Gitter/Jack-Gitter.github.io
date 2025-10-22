@@ -446,7 +446,7 @@ export async function stytchAuth(req: Request, res: Response) {
 To start, the endpoint expects a token which can be authenticated via the Stytch library's authenticate method. This is exchanged for an object which contains metadata about the 
 user, along with session tokens provided by Stytch. These tokens act as access tokens to the Stytch resource server, 
 and can be used to retrieve all sorts of user information. After authenticating the JWT, the code proceeds as normal, either creating or looking up the user in the local database, 
-and wrapping the roles and other user metadata in the JWT. It is signed the same, and set in the same cookie as seen previously. After this, the user is once again redirected to the frontend application
+and wrapping the roles and other user metadata in the JWT. It is signed the same, and set in the same cookie as seen previously. After this, the user is once again redirected to the frontend application. The stytch access tokens and refresh tokens should not be stored in the JWT, unless the JWT is sameSite strict and HTTP only.
 
             <h3>OIDC</h3>
 
