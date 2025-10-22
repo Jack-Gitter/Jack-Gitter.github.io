@@ -157,7 +157,7 @@ After receiving the access and refresh tokens, they can be set as cookies for th
 <div class="image-description-block">
     <img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
     <p>
-        It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. 
+        It can be seen that indicator in the top left has now changed to show a logged in status. To achieve this, the code simply verifies the existence of the access token and refresh tokens in the cookies. This is only possible if httpOnly is false, which is not advised. This is only for demonstration purposes.
     </p>
 </div>
 
