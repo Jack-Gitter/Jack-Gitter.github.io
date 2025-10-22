@@ -153,7 +153,7 @@ export async function auth_access_token(req: Request, res: Response) {
 }
 </pre>
 
-After receiving the access and refresh tokens, they can be set as cookies for the frontend to store. The user is yet again redirected, this time back to the frontend. 
+After receiving the access and refresh tokens, they can be set as cookies for the frontend to store. These should ALWAYS be HTTP only and same-site when possible, to avoid XSS attacks. The user is yet again redirected, this time back to the frontend. 
 <div class="image-description-block">
     <img class="google-access-token-button" src="./images/GoogleAccessToken/GoogleAccessTokenLoggedIn.png">
     <p>
@@ -266,8 +266,6 @@ Here, the Google access token is used to fetch the user's info from Google's res
             iss: 'Test App',
             aud: 'Test App',
             roles: roles, 
-            accessToken: accessToken ?? undefined,
-            refreshToken: refreshToken ?? undefined,
             authProvider: AUTH_PROVIDER.google,
         }
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
@@ -286,7 +284,7 @@ In this code, the user roles are fetched after retrieving the user from the data
 the roles would be empty array. 
 In this example, the user has both the admin and manager roles assigned. These are fetched these from the database, 
 and then inserted into the "roles" field of our JWT. Additionally, a couple of other things are added to the JWT payload. All of the information retrieved
-from the userinfo query to Google, the access and refresh tokens for Google, and some metadata of the token issuer. 
+from the userinfo query to Google, and some metadata of the token issuer. 
 The JWT is then created and signed with an internal private key, and afterwards is added to the set-cookie response header. The user is then redirected back to the frontend. 
 On subsequent reqeusts to the resource server, 
 the browser automatically sends the JWT. The signature can be verified with the application's secret key to ensure it has not been tampered
