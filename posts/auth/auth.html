@@ -269,7 +269,7 @@ Here, the Google access token is used to fetch the user's info from Google's res
             authProvider: AUTH_PROVIDER.google,
         }
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
-        res.cookie('jwt', token, {maxAge: expiresIn}).redirect('http://localhost:3001')
+        res.cookie('jwt', token, {maxAge: expiresIn, sameSite: 'strict', httpOnly: true}).redirect('http://localhost:3001')
     } catch (e) {
         if (e instanceof Error) {
             res.status(400).send(e.message)
@@ -432,7 +432,7 @@ export async function stytchAuth(req: Request, res: Response) {
             roles,
             authProvider: AUTH_PROVIDER.stytch,
         }
-        res.cookie('jwt', ourjwt, {maxAge: Date.now() + 60 * 60}).redirect('http://localhost:3001')
+        res.cookie('jwt', ourjwt, {maxAge: Date.now() + 60 * 60, sameSite: 'strict', httpOnly: true}).redirect('http://localhost:3001')
     } catch (error) {
             if (error instanceof Error) {
                 res.status(400).send(error.message)
@@ -536,7 +536,7 @@ export async function auth_id_token(req: Request, res: Response) {
             authProvider: AUTH_PROVIDER.google,
         }
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET ?? '')
-        res.cookie('jwt', token, {maxAge: Date.now() + 60 * 60}).redirect('http://localhost:3001')
+        res.cookie('jwt', token, {maxAge: Date.now() + 60 * 60, sameSite: 'strict', httpOnly: true}).redirect('http://localhost:3001')
     } catch (error) {
         if (error instanceof Error) {
             res.status(400).send(error.message)
