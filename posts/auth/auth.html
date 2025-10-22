@@ -140,8 +140,8 @@ export async function auth_access_token(req: Request, res: Response) {
         const accessToken = tokens.access_token
         const refreshToken = tokens.refresh_token
         const expiresIn = tokens.expiry_date ?? Date.now() + 60 * 60
-        res.cookie('access_token', token)
-        res.cookie('refresh_token', token)
+        res.cookie('access_token', token, {sameSite: 'strict', httpOnly: true})
+        res.cookie('refresh_token', token, {sameSite: 'strict', httpOnly: true})
         res.redirect('http://localhost:3001')
     } catch (e) {
         if (e instanceof Error) {
