@@ -271,24 +271,107 @@
 			<h2>IAmShowcase website</h2>
 			For all the code examples, the code will be acting as the identity provider in the flow. As such, we need a service provider in the loop. A great website for this is <a href="https://sptest.iamshowcase.com">IAmShowcase</a> which acts as a mock service provider and supports both idp initiated and service provider initiated SSO. 
 
+			<h2>Metadata</h2>
+			<p>
+			Before we jump into the samlify code, its first important to describe IDP and SP metadata. These are also in the format of XML, and describe the specifics of what both the IDP 
+			and SP expect during the SSO flow. 
+			</p>
+			<h3>Downloading SP metadata</h3>
+				<p>
+				For all service providers, metadata should be downloadable. Since we are working with IAMShowcase, a demo site specifically made to test SAML integration, the download
+				is pretty straight forward
+
+				<div class="image-description-block">
+					<img src="./download-sp-meta.png" style="width:100%">
+					<p>
+					IAmShowcase metadata download
+					</p>
+				</div>
+
+				The IAmShowcase metadata looks like so
+
+			<pre class="prettyprint lang-xml" id="xml-block">
+&lt;md:EntityDescriptor xmlns:md=&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot; xmlns:ds=&quot;http://www.w3.org/2000/09/xmldsig#&quot; entityID=&quot;IAMShowcase&quot; validUntil=&quot;2025-12-09T09:13:31.006Z&quot;&gt;
+	&lt;md:SPSSODescriptor AuthnRequestsSigned=&quot;false&quot; WantAssertionsSigned=&quot;true&quot; protocolSupportEnumeration=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;&gt;
+		&lt;md:NameIDFormat&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified&lt;/md:NameIDFormat&gt;
+		&lt;md:NameIDFormat&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress&lt;/md:NameIDFormat&gt;
+		&lt;md:AssertionConsumerService Binding=&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST&quot; Location=&quot;https://sptest.iamshowcase.com/acs&quot; index=&quot;0&quot; isDefault=&quot;true&quot;/&gt;
+	&lt;/md:SPSSODescriptor&gt;
+&lt;/md:EntityDescriptor&gt; </pre>
+
+			This XML provides the IDP with important information in regards to what the SP expects in the given SAML Response, things such as whether the assertion should be signed, 
+			the supported nameID formats, the assertion consumer service URL (location to send SAML response to), and potentially much more. 
+			Even potentially providing a public key to encrypt the contents of the SAML assertion
+				</p>
+
+			<h3>Creating IDP metadata</h3>
+			<p>
+			Because we are our own IDP here, we need to generate some IDP metadata. The IDP metadata does not need to be uploaded to the service provider, although typically the saml 
+			assertion sent by the IDP is signed. The public certificate used is often embedded in the SAML Response, but it is still required to upload the public key to the service provider
+			so that they can verify the authenticity of the SAML Response. In this case, IAmShowcase doesn't validate the signature on the SAMLResponse, so we do not need to upload anything.
+
+			<br>
+
+			In order to generate IDP metadata, first a keypair is required for the aforementioned signing portion. In order to generate this, I've created a simple bash script with openssl.
+
+
+			<pre class="prettyprint lang-bsh">
+#!/bin/bash
+
+KEY=$(openssl genrsa 2048 2&gt/dev/null)
+echo "$KEY"
+echo "$KEY" | openssl req -new -key /dev/stdin -subj "/C=US/ST=CA/L=SF/O=Org/CN=localhost" 2&gt/dev/null | \
+openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
+
+			This code utilizes the openssl command line tool, and prints out a public x509 cert, and the corresponding private key
+			</p>
+
+			<br>
+
+			to actually create the IDP metadata, a website such as https://www.samltool.com/idp_metadata.php can be used. Simply entering information into the required 
+			fields, along with the x509 public certificate generated in the last step will produce a file like so
+
+			<pre class="prettyprint lang-xml" id="xml-block">
+<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" validUntil="2025-11-24T19:31:58Z" cacheDuration="PT1764444718S" entityID="http://localhost:3000">
+  <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:KeyDescriptor use="encryption">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+	<md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://localhost:3000/saml/auth/logout"/>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+	<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://localhost:3000/saml/auth"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>
+			</pre>
+
+			As you can see here, mostly all the information from the website is embeded here. Information on where to send login requests for SP initiated SSO, the entityID,
+			the public certificate for the signature value on the SAML Response, and a public key that can be used by service providers to encrypt the SAML Request, if applicable.
+
 			<h3>Code examples</h3>
 				<h4>samlify</h4>
-				<h4>iamshowcase</h4>
-				<h4>creating idp and sp metadata</h4>
-					<p>what are bindings? which are accepted by our IDP</p>
-						<p>
-						post and relaystate
-						</p>
-						<p>
-						redirect
-						</p>
-					<p>what are bindings? which are accepted by SP</p>
-				<h4>idp initiated sso default format</h4>
+				<p>
+				Samlify is a NodeJS library that I used to implement the SAML SSO flows. It allows for creation, parsing, and much more of both SAML requests and responses.
+				</p>
+				<h4>idp initiated sso default code example</h4>
+					<p>bindings, post</p>
 					<p>mention relay state color</p>
 					<p>picture of the login page after sso works</p>
-				<h4>idp initiated sso custom format</h4>
+				<h4>idp initiated sso custom format code example</h4>
 					<p>picture of the login page after sso works</p>
-				<h4>sp initiated sso</h4>
+				<h4>sp initiated sso code example</h4>
+					<p>bindings, redirect</p>
 					<p>explain URL that is generated by iamshowcase</p>
 					<p>show authn request</p>
 					<p>picture of my login page</p>
