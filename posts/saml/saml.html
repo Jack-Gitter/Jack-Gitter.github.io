@@ -67,6 +67,7 @@
 			<h2>SP Initiated SSO</h2>
 				The other flow option for SSO is SP-initiated SSO. This flow goes like so
 
+				<h3>Very high-level example</h3>
 				<ol>
 					<li>
 						User navigates to their SP of choice, for example www.linkedin.com
@@ -88,14 +89,55 @@
 					</li>
 				</ol>
 
-			<h3>Very high-level example</h3>
 			<h2>What is XML</h2>
+			XML, also known as extensible markup language, 
+			is the format in which messages are sent between the IDP and the SP. It is important for them to establish a "language" to 
+			communicate with, so that they can parse and understand messages easily
 			<h2>What is SAML</h2>
+			SAML is a security assertion markup language, which utilizes XML. It is an open standard, essentially a defined schema in which to write XML that both the service providers and identity providers expect. 
 			<h3>SAML Request</h3>
+			The SAML request is what is sent from the sp to the idp during service provider initiated SSO. The service provider essentially is requesting the user be authenticated via the IDP.
+			An example of a SAML request looks like so:
+
+			<img src="blah">
+
+                <dl>
+                  <dt>AuthnRequest</dt>
+                  <dd></dd>
+                  <dt>Issuer</dt>
+                  <dd></dd>
+                </dl>
+
+
 			<h3>SAML Response</h3>
-				<p>
-				explain the different types of the response, the assertion, etc
-				</p>
+			The SAML response is used in both the IDP initiated and sp initiated sso flows. This is the bundle of user information that is sent from the idp to the service provider, to explain that the user has authenticated properly and apss any relevaant user information to the SP. There are many more important fields in this, so we will take a deeper look
+			<img src="blah">
+
+                <dl>
+                  <dt>Response</dt>
+                  <dd></dd>
+                  <dt>Status</dt>
+                  <dd></dd>
+                  <dt>Assertion</dt>
+                  <dd></dd>
+                  <dt>Issuer</dt>
+                  <dd></dd>
+                  <dt>Conditions</dt>
+                  <dd></dd>
+                  <dt>Audience</dt>
+                  <dd></dd>
+                  <dt>Signing Information</dt>
+                  <dd></dd>
+                  <dt>Subject</dt>
+                  <dd></dd>
+                  <dt>NameID</dt>
+                  <dd></dd>
+                  <dt>Attributes</dt>
+                  <dd></dd>
+                  <dt>AuthnStatement</dt>
+                  <dd></dd>
+                </dl>
+
 			<h2>IAmShowcase website</h2>
 			<h3>Code examples</h3>
 				<h4>samlify</h4>
