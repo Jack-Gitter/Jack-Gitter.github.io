@@ -15,8 +15,25 @@
     <main>
         <article>
             <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
-			<h2>What is SSO<h2>
+			<h2>What is SSO</h2>
+				Single sign on, otherwise known as SSO, is a technique that allows an end user to sign in once, and access an entire suite of applications without having to authenticate into each individual service. Before understanding the intricacies of SSO, there are a couple of useful terms to understand
+
+                <dl>
+                  <dt>Identity Provider</dt>
+                  <dd>The identity provider is the "service" that handles authentication for end users. It keeps track of user logins, and verifies that users are who they say they are. Common examples of an IDP are Okta, and Auth0</dd>
+
+                  <dt>Service Provider</dt>
+                  <dd>
+					  The Service Provider, or SP, is the service that the end user actually wants to gain access to after authenticating. Depending on the end user, they might have access to a variety of different services, such as gitlab, or a CRM. After authenticating via an IDP, the users are able to access the SP without requiring another round of authentcation
+				  </dd>
+                </dl>
+
 			<h2>IDP Initiated SSO</h2>
+			<p>
+			IDP initiated SSO is one of the two possible SSO flows involved with SAML, which is something we will discuss later. IDP initiated SSO involves first signing into an identity provider, like okta, and then being able to click into individual service providers. 
+
+			<img src="./okta-experience.png" style="width:100%">
+			</p>
 			<h3>Very high-level example</h3>
 			<h2>SP Initiated SSO</h2>
 			<h3>Very high-level example</h3>
