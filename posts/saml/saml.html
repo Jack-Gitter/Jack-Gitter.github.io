@@ -50,20 +50,44 @@
 						User navigates to their IDP, for example www.okta.com
 					</li>
 					<li>
-						User enters authentication information and signs-in
+						User enters authentication information and signs-in, and the IDP creates a session for the user
 					</li>
 					<li>
 						The IDP gathers information on the logged-in user, and 
-						creates something known as a SAML Response (more on this later)
+						creates a bundle of information to send to the service provider
 					</li>
 					<li>
 						When the user clicks the cards for a service provider, the user information 
-						is sent to the service provider. The service providers validate the SAML Response is 
+						is sent to the service provider. The service providers validate the information is 
 						from Okta, and then create a user session and allow the user in based on the information
 						that okta has provided in the SAML Response
 					</li>
 				</ol>
+
 			<h2>SP Initiated SSO</h2>
+				The other flow option for SSO is SP-initiated SSO. This flow goes like so
+
+				<ol>
+					<li>
+						User navigates to their SP of choice, for example www.linkedin.com
+					</li>
+					<li>
+						the service provider sends an authentication request to the IDP with information about who the service provider is, what time the request occured, etc.
+					</li>
+					<li>
+						The IDP will parse this response, and then redirect the user to their login screen
+					</li>
+					<li>
+						The user signs in with their IDP, and the IDP once again creates the bundle of user information
+					</li>
+					<li>
+						This time, the user is automatically redirected to the service provider,  
+					</li>
+					<li>
+						The service provider verifies in the information is from the IDP, and then cretes the user session
+					</li>
+				</ol>
+
 			<h3>Very high-level example</h3>
 			<h2>What is XML</h2>
 			<h2>What is SAML</h2>
