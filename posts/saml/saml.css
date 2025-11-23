@@ -32,7 +32,10 @@ dd {
 dl ul li {
     margin: 0 0 0 0;
     line-height: 1.4;
-    color: #888;
+    color: white;
     font-style: italic;
 }
 
+dl ul li span {
+    color: #888;
+}
