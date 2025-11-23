@@ -233,36 +233,20 @@
                   <dt>Status</dt>
                   <dd>conveys whether the sign-in was successful or not</dd>
                   <dt>Assertion</dt>
-					<ul>
-						<li style="margin-left: 20px">
-							<dt>Issuer</dt>
-							<dd>The IDP's entity name or id</dd>
-						</li>
-						<li style="margin-left: 20px">
-							<dt>Signature</dt>
-							<dd>Digital signature of the assertion contents</dd>
-						</li>
-						<li style="margin-left: 20px">
-						<dt>Subject</dt>
-						<dd>Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. It all depends on how the SP intents to use the nameID</dd>
-						</li>
-						<li style="margin-left: 20px">
-							<dt>Conditions</dt>
-							<dd>Typically defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
-						</li>
-						<li style="margin-left: 20px">
-							<dt>Audience</dt>
-							<dd>Contains the URI that identifies the intended recipient of the SAML Response</dd>
-						</li>
-						<li style="margin-left: 20px">
-							<dt>Atribute Statement</dt>
-							<dd>Contains claims about the user, typically additional information that the IDP would store such as email, name, etc</dd>
-						</li>
-						<li style="margin-left: 20px">
-							<dt>AuthnStatement</dt>
-							<dd>Describes what method the user authenticated with, such as a password. Also provides timestamp information similar to conditions</dd>
-						</li>
-					</ul>
+							<dt style="margin-left: 20px">Issuer</dt>
+							<dd style="margin-left: 40px">The IDP's entity name or id</dd>
+							<dt style="margin-left: 20px">Signature</dt>
+							<dd style="margin-left: 40px">Digital signature of the assertion contents</dd>
+							<dt style="margin-left: 20px">Subject</dt>
+							<dd style="margin-left: 40px">Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. It all depends on how the SP intents to use the nameID</dd>
+							<dt style="margin-left: 20px">Conditions</dt>
+							<dd style="margin-left: 40px">Typically defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
+							<dt style="margin-left: 20px">Audience</dt>
+							<dd style="margin-left: 40px">Contains the URI that identifies the intended recipient of the SAML Response</dd>
+							<dt style="margin-left: 20px">Atribute Statement</dt>
+							<dd style="margin-left: 40px">Contains claims about the user, typically additional information that the IDP would store such as email, name, etc</dd>
+							<dt style="margin-left: 20px">AuthnStatement</dt>
+							<dd style="margin-left: 40px">Describes what method the user authenticated with, such as a password. Also provides timestamp information similar to conditions</dd>
                 </dl>
 
 
