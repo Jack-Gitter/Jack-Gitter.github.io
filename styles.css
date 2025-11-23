@@ -116,3 +116,43 @@ pre.code {
   background-color: #5a6268;
   transform: translateY(-2px);
 }
+
+
+.image-description-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1.25rem;
+    border: 1px solid #555; /* slightly lighter border */
+    border-radius: 8px;
+    background-color: #2a2a2e; /* lighter than #1e1e1e */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* slightly stronger shadow for pop */
+}
+
+.image-description-block img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #666;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    background-color: #3a3a3f;
+}
+
+.image-description-block p {
+    font-size: 0.95rem;
+    color: #e0e0e0; /* lighter text */
+    line-height: 1.6;
+    text-align: center;
+    margin: 0;
+}
+
+.image-description-block code {
+    background-color: #3b3b3f;
+    color: #fafafa;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}

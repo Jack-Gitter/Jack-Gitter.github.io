@@ -32,9 +32,37 @@
 			<p>
 			IDP initiated SSO is one of the two possible SSO flows involved with SAML, which is something we will discuss later. IDP initiated SSO involves first signing into an identity provider, like okta, and then being able to click into individual service providers. 
 
+
+            <div class="image-description-block">
 			<img src="./okta-experience.png" style="width:100%">
+                <p>
+				Example login screen after authenticating via Okta
+                </p>
+            </div>
+
+			As you can see, all of the available clickable boxes represents a service provider that the user has access to
 			</p>
 			<h3>Very high-level example</h3>
+				IDP initiated SSO flow goes like this
+
+				<ol>
+					<li>
+						User navigates to their IDP, for example www.okta.com
+					</li>
+					<li>
+						User enters authentication information and signs-in
+					</li>
+					<li>
+						The IDP gathers information on the logged-in user, and 
+						creates something known as a SAML Response (more on this later)
+					</li>
+					<li>
+						When the user clicks the cards for a service provider, the user information 
+						is sent to the service provider. The service providers validate the SAML Response is 
+						from Okta, and then create a user session and allow the user in based on the information
+						that okta has provided in the SAML Response
+					</li>
+				</ol>
 			<h2>SP Initiated SSO</h2>
 			<h3>Very high-level example</h3>
 			<h2>What is XML</h2>
