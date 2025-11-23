@@ -332,28 +332,28 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 			fields, along with the x509 public certificate generated in the last step will produce a file like so
 
 			<pre class="prettyprint lang-xml" id="xml-block">
-<?xml version="1.0"?>
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" validUntil="2025-11-24T19:31:58Z" cacheDuration="PT1764444718S" entityID="http://localhost:3000">
-  <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-    <md:KeyDescriptor use="signing">
-      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-        <ds:X509Data>
-          <ds:X509Certificate>MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3</ds:X509Certificate>
-        </ds:X509Data>
-      </ds:KeyInfo>
-    </md:KeyDescriptor>
-    <md:KeyDescriptor use="encryption">
-      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-        <ds:X509Data>
-          <ds:X509Certificate>MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3</ds:X509Certificate>
-        </ds:X509Data>
-      </ds:KeyInfo>
-    </md:KeyDescriptor>
-	<md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://localhost:3000/saml/auth/logout"/>
-    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
-	<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://localhost:3000/saml/auth"/>
-  </md:IDPSSODescriptor>
-</md:EntityDescriptor>
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;md:EntityDescriptor xmlns:md=&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot; validUntil=&quot;2025-11-24T19:31:58Z&quot; cacheDuration=&quot;PT1764444718S&quot; entityID=&quot;http://localhost:3000&quot;&gt;
+  &lt;md:IDPSSODescriptor WantAuthnRequestsSigned=&quot;false&quot; protocolSupportEnumeration=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;&gt;
+    &lt;md:KeyDescriptor use=&quot;signing&quot;&gt;
+      &lt;ds:KeyInfo xmlns:ds=&quot;http://www.w3.org/2000/09/xmldsig#&quot;&gt;
+        &lt;ds:X509Data&gt;
+          &lt;ds:X509Certificate&gt;MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3&lt;/ds:X509Certificate&gt;
+        &lt;/ds:X509Data&gt;
+      &lt;/ds:KeyInfo&gt;
+    &lt;/md:KeyDescriptor&gt;
+    &lt;md:KeyDescriptor use=&quot;encryption&quot;&gt;
+      &lt;ds:KeyInfo xmlns:ds=&quot;http://www.w3.org/2000/09/xmldsig#&quot;&gt;
+        &lt;ds:X509Data&gt;
+          &lt;ds:X509Certificate&gt;MIIDQTCCAimgAwIBAgIUfKGITEBcwtKMKHPSumomAbLfS/kwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTkzMTI2WhcNMjYxMTIyMTkzMTI2WjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJT02NwZbGyhS8iXxtTeEiwnCaffwHL6e5M8opMRiqDsM6roFeGb96bcBVAmuTv5GpVkcBN1jN/o8nkcqfMXq678H3aT2N+LqbHsWFhU969j0j/57Im267H6Z7+eRPcEnAL8ETTT6TEUY/XFYsb41kjrH9XXL0s8pLdzR0XTFLLEXc0qHU0uFVns5JftJS7o+nQ8uOO1QrJ8Xeh10qDio00D8rqMF3DTYrLJo4UkEYoz3oa04MLWOgiNbEqsW5X11JaJnJqeQD078jruT71IO2gAOd7KkOpuZP9Swse00EXTHTx7WMYodw7l6emjU1GOJXuSbHkA1ZCEAMLjje9TFEUCAwEAAaMhMB8wHQYDVR0OBBYEFFV7jw3PtIjLQZjsu7YRXPIGmsYcMA0GCSqGSIb3DQEBCwUAA4IBAQAQZg84siAYgG4blFBmyDx+Ksy1tpemxDfGRDo3zN3mvJDsQVZU5OQIpMzp8tKoVGK+1MOEi+3sO9gnXA7moDwfqsyE2GQOurLbMhO6XJluytX0La783PJrOMf6nL6oV4vEnjqIYDa31XvYy40/XY27PRkb9HWfm3QmbxwCy1XBdu6vhAWrCON+gCWh/DUjAa21MwOwNsL1H4FAdnSS8f49E6sH15WNi2lMr8uMU9wo6vkbY5REUOE2JX/xGKrQiEHBxEuiXoiyWaS8fFuO2vJlcXjs1TxBT1ZV/dCr8TC0zKv9i4GggWijtIXEb4VcsVO9IXGF3POWo/HVex7tSQQ3&lt;/ds:X509Certificate&gt;
+        &lt;/ds:X509Data&gt;
+      &lt;/ds:KeyInfo&gt;
+    &lt;/md:KeyDescriptor&gt;
+	&lt;md:SingleLogoutService Binding=&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect&quot; Location=&quot;http://localhost:3000/saml/auth/logout&quot;/&gt;
+    &lt;md:NameIDFormat&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified&lt;/md:NameIDFormat&gt;
+	&lt;md:SingleSignOnService Binding=&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect&quot; Location=&quot;http://localhost:3000/saml/auth&quot;/&gt;
+  &lt;/md:IDPSSODescriptor&gt;
+&lt;/md:EntityDescriptor&gt;
 			</pre>
 
 			As you can see here, mostly all the information from the website is embeded here. Information on where to send login requests for SP initiated SSO, the entityID,
