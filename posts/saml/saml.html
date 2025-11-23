@@ -19,7 +19,7 @@
 			<h2>What is SSO</h2>
 				Single sign on, otherwise known as SSO, is a technique that allows an end user to sign in once, and access an entire suite of applications without having to authenticate into each individual service. Before understanding the intricacies of SSO, there are a couple of useful terms to understand
 
-                <dl>
+                <dl class="light-gray">
                   <dt>Identity Provider</dt>
                   <dd>The identity provider is the "service" that handles authentication for end users. It keeps track of user logins, and verifies that users are who they say they are. Common examples of an IDP are Okta, and Auth0</dd>
 
@@ -126,29 +126,33 @@
 &lt;/samlp:AuthnRequest&gt;
 			</pre>
 
-                <dl>
-                  <dt>AuthnRequest</dt>
-                  <dd>The authnRequest, or authentication request, is the wrapped for the request from the service provider to the identity provider. It has a a couple of key attributes</dd>
-				  <ul>
-					<li>
-						ID: <span>the specific AuthnRequest ID. Unique for each request. This is used in the SAML Response to indicate which request the response is tied to</span>
-					</li>
-					<li>
-						Issue Instant: <span>The time when the request was created</span>
-					</li>
-					<li>
-						Destination: <span>Where the request is being sent to</span>
-					</li>
-					<li>
-						Assertion Consumer Service URL: <span>Where the IDP should send the SAML response to</span>
-					</li>
-					<li>
-						Protocol Binding: <span>The method which the IDP should send the SAML resposne via</span>
-					</li>
-				  </ul>
-                  <dt>Issuer</dt>
-                  <dd>the issuer field is who issues the AuthnRequest</dd>
-                </dl>
+				Here is a description of the purpose of the fields, and some key attributes
+
+				<br>
+					<dl class="light-gray">
+					  <dt>AuthnRequest</dt>
+					  <dd>The authnRequest, or authentication request, is the wrapped for the request from the service provider to the identity provider. It has a a couple of key attributes
+					  <ul>
+						<li style="margin-left: 20px">
+							ID: <span>the specific AuthnRequest ID. Unique for each request. This is used in the SAML Response to indicate which request the response is tied to</span>
+						</li >
+						<li style="margin-left: 20px">
+							Issue Instant: <span>The time when the request was created</span>
+						</li>
+						<li style="margin-left: 20px">
+							Destination: <span>Where the request is being sent to</span>
+						</li>
+						<l style="margin-left: 20px">
+							Assertion Consumer Service URL: <span>Where the IDP should send the SAML response to</span>
+						</li>
+						<li style="margin-left: 20px">
+							Protocol Binding: <span>The method which the IDP should send the SAML resposne via</span>
+						</li>
+					  </ul>
+					  </dd>
+					  <dt>Issuer</dt>
+					  <dd>the issuer field is who issues the AuthnRequest</dd>
+					</dl>
 
 				there are more fields, all of which can be found here described in greater detail: https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#authnrequest. 
 
@@ -214,49 +218,49 @@
 &lt;/samlp:Response&gt;
 			</pre>
 	There are many more fields to a SAML Resonse than to a SAML request. Below is described some of the most important, and required fields 
-                <dl>
+                <dl class='light-gray'>
                   <dt>Response</dt>
                   <dd>The outer wrapper of the information sent from IDP to SP. It has a couple of important attributes
 					  <ul>
-						  <li>ID : <span>unique id for this response<span></li>
-						  <li>Issue Insant : <span>instant this was issued</span></li>
-						  <li>Destination : <span>the ACS endpoint, found in the request</span></li>
-						  <li>In Response To : <span>The ID of the request. Here it is blank, as this was an IDP initiated SSO payload</span></li>
+						  <li style="margin-left: 20px">ID : <span>unique id for this response<span></li>
+						  <li style="margin-left: 20px">Issue Insant : <span>instant this was issued</span></li>
+						  <li style="margin-left: 20px">Destination : <span>the ACS endpoint, found in the request</span></li>
+						  <li style="margin-left: 20px">In Response To : <span>The ID of the request. Here it is blank, as this was an IDP initiated SSO payload</span></li>
 					  </ul>
 				  </dd>
                   <dt>Issuer</dt>
-                  <dd></dd>
+                  <dd>The IDP's entity name or id</dd>
                   <dt>Status</dt>
-                  <dd></dd>
+                  <dd>conveys whether the sign-in was successful or not</dd>
                   <dt>Assertion</dt>
 					<ul>
 						<li>
 							<dt>Issuer</dt>
-							<dd>testing this out</dd>
+							<dd>The IDP's entity name or id</dd>
 						</li>
 						<li>
-						<dt>Signature</dt>
-						<dd>and again</dd>
+							<dt>Signature</dt>
+							<dd>Digital signature of the assertion contents</dd>
 						</li>
 						<li>
 						<dt>Subject</dt>
-						<dd></dd>
+						<dd>Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. It all depends on how the SP intents to use the nameID</dd>
 						</li>
 						<li>
-						<dt>Conditions</dt>
-						<dd></dd>
+							<dt>Conditions</dt>
+							<dd>Typically defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
 						</li>
 						<li>
-						<dt>Audience</dt>
-						<dd></dd>
+							<dt>Audience</dt>
+							<dd>Contains the URI that identifies the intended recipient of the SAML Response</dd>
 						</li>
 						<li>
-						<dt>Atribute Statement</dt>
-						<dd></dd>
+							<dt>Atribute Statement</dt>
+							<dd>Contains claims about the user, typically additional information that the IDP would store such as email, name, etc</dd>
 						</li>
 						<li>
-						<dt>AuthnStatement</dt>
-						<dd></dd>
+							<dt>AuthnStatement</dt>
+							<dd>Describes what method the user authenticated with, such as a password. Also provides timestamp information similar to conditions</dd>
 						</li>
 					</ul>
                 </dl>
