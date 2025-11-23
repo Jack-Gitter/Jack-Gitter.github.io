@@ -234,31 +234,31 @@
                   <dd>conveys whether the sign-in was successful or not</dd>
                   <dt>Assertion</dt>
 					<ul>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>Issuer</dt>
 							<dd>The IDP's entity name or id</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>Signature</dt>
 							<dd>Digital signature of the assertion contents</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 						<dt>Subject</dt>
 						<dd>Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. It all depends on how the SP intents to use the nameID</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>Conditions</dt>
 							<dd>Typically defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>Audience</dt>
 							<dd>Contains the URI that identifies the intended recipient of the SAML Response</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>Atribute Statement</dt>
 							<dd>Contains claims about the user, typically additional information that the IDP would store such as email, name, etc</dd>
 						</li>
-						<li>
+						<li style="margin-left: 20px">
 							<dt>AuthnStatement</dt>
 							<dd>Describes what method the user authenticated with, such as a password. Also provides timestamp information similar to conditions</dd>
 						</li>
@@ -266,7 +266,7 @@
                 </dl>
 
 
-				There are even more fields, these are just the basic ones. Here you can find more, described in greated detail: https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response
+				To find out more, visit Microsoft's <a href='https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response'>documentation</a>
 
 			<h2>IAmShowcase website</h2>
 			For all the code examples, the code will be acting as the identity provider in the flow. As such, we need a service provider in the loop. A great website for this is <a href="https://sptest.iamshowcase.com">IAmShowcase</a> which acts as a mock service provider and supports both idp initiated and service provider initiated SSO. 
