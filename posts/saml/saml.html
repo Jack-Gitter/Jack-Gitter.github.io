@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSO via SAML</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./saml.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -49,7 +50,7 @@
 					<li>
 						User navigates to their IDP, for example www.okta.com
 						<div class="image-description-block">
-							<img src="./okta login.png" style="width: 100%">
+							<img src="./okta login.png">
 							<p>
 							Okta login screen
 							</p>
@@ -84,7 +85,7 @@
 					<li>
 						The IDP will parse this response, and then redirect the user to their login screen
 						<div class="image-description-block">
-							<img src="./okta login.png" style="width: 100%">
+							<img src="./okta login.png">
 							<p>
 							Okta login screen
 							</p>
@@ -111,44 +112,157 @@
 			The SAML request is what is sent from the sp to the idp during service provider initiated SSO. The service provider essentially is requesting the user be authenticated via the IDP.
 			An example of a SAML request looks like so:
 
-			<img src="blah">
+			<pre class="prettyprint lang-xml" id="xml-block">
+&lt;samlp:AuthnRequest xmlns:samlp=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;
+				xmlns:saml=&quot;urn:oasis:names:tc:SAML:2.0:assertion&quot;
+				ForceAuthn=&quot;false&quot;
+				ID=&quot;ac3757ab77f8f87c695cbc073c3720b4e4348e518&quot;
+				IssueInstant=&quot;2025-11-23T13:31:51Z&quot;
+				Destination=&quot;http://localhost:3000/saml/auth&quot;
+				AssertionConsumerServiceURL=&quot;https://sptest.iamshowcase.com/acs&quot;
+				ProtocolBinding=&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST&quot;
+				Version=&quot;2.0&quot;&gt;
+&lt;saml:Issuer&gt;IAMShowcase&lt;/saml:Issuer&gt;
+&lt;/samlp:AuthnRequest&gt;
+			</pre>
 
                 <dl>
                   <dt>AuthnRequest</dt>
-                  <dd></dd>
+                  <dd>The authnRequest, or authentication request, is the wrapped for the request from the service provider to the identity provider. It has a a couple of key attributes</dd>
+				  <ul>
+					<li>
+						ID: the specific AuthnRequest ID. Unique for each request. This is used in the SAML Response to indicate which request the response is tied to
+					</li>
+					<li>
+						Issue Instant: The time when the request was created
+					</li>
+					<li>
+						Destination: Where the request is being sent to
+					</li>
+					<li>
+						Assertion Consumer Service URL: Where the IDP should send the SAML response to
+					</li>
+					<li>
+						Protocol Binding: The method which the IDP should send the SAML resposne via
+					</li>
+				  </ul>
                   <dt>Issuer</dt>
-                  <dd></dd>
+                  <dd>the issuer field is who issues the AuthnRequest</dd>
                 </dl>
 
+				there are more fields, all of which can be found here described in greater detail: https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#authnrequest. 
 
 			<h3>SAML Response</h3>
-			The SAML response is used in both the IDP initiated and sp initiated sso flows. This is the bundle of user information that is sent from the idp to the service provider, to explain that the user has authenticated properly and apss any relevaant user information to the SP. There are many more important fields in this, so we will take a deeper look
-			<img src="blah">
-
+			The SAML response is used in both the IDP initiated and sp initiated sso flows. This is the bundle of user information that is sent from the idp to the service provider, to explain that the user has authenticated properly and apss any relevaant user information to the SP. 
+			<pre class="prettyprint lang-xml" id="xml-block">
+&lt;samlp:Response
+    xmlns:samlp=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;
+    xmlns:saml=&quot;urn:oasis:names:tc:SAML:2.0:assertion&quot;
+    ID=&quot;_0e266799-35e6-4131-85b3-d049d6097536&quot;
+    Version=&quot;2.0&quot;
+    IssueInstant=&quot;2025-11-22T19:06:04.594Z&quot;
+    Destination=&quot;https://sptest.iamshowcase.com/acs&quot;
+    InResponseTo=&quot;&quot;&gt;
+  &lt;saml:Issuer&gt;https://test-saml.com&lt;/saml:Issuer&gt;
+  &lt;samlp:Status&gt;
+    &lt;samlp:StatusCode Value=&quot;urn:oasis:names:tc:SAML:2.0:status:Success&quot; /&gt;
+  &lt;/samlp:Status&gt;
+  &lt;saml:Assertion
+      xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+      xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;
+      xmlns:saml=&quot;urn:oasis:names:tc:SAML:2.0:assertion&quot;
+      ID=&quot;_8dea871c-d9a2-4928-8219-2bad6cc9a9b0&quot;
+      Version=&quot;2.0&quot;
+      IssueInstant=&quot;2025-11-22T19:06:04.594Z&quot;&gt;
+    &lt;saml:Issuer&gt;https://test-saml.com&lt;/saml:Issuer&gt;
+    &lt;ds:Signature
+        xmlns:ds=&quot;http://www.w3.org/2000/09/xmldsig#&quot;&gt;
+      &lt;ds:SignedInfo&gt;
+        &lt;ds:CanonicalizationMethod Algorithm=&quot;http://www.w3.org/2001/10/xml-exc-c14n#&quot; /&gt;
+        &lt;ds:SignatureMethod Algorithm=&quot;http://www.w3.org/2001/04/xmldsig-more#rsa-sha256&quot; /&gt;
+        &lt;ds:Reference URI=&quot;#_8dea871c-d9a2-4928-8219-2bad6cc9a9b0&quot;&gt;
+          &lt;ds:Transforms&gt;
+            &lt;ds:Transform Algorithm=&quot;http://www.w3.org/2000/09/xmldsig#enveloped-signature&quot; /&gt;
+            &lt;ds:Transform Algorithm=&quot;http://www.w3.org/2001/10/xml-exc-c14n#&quot; /&gt;
+          &lt;/ds:Transforms&gt;
+          &lt;ds:DigestMethod Algorithm=&quot;http://www.w3.org/2001/04/xmlenc#sha256&quot; /&gt;
+          &lt;ds:DigestValue&gt;q8x9brh1e7pMcTKLPMGa5RyGPgyy7EGiFD4eEwoRI0Q=&lt;/ds:DigestValue&gt;
+        &lt;/ds:Reference&gt;
+      &lt;/ds:SignedInfo&gt;
+      &lt;ds:SignatureValue&gt;WQW3+5vmnaOXPPPD5gz1gw0I8CU1tv0jRjHhG1l2oxPmyUgRBa8dGZjderuPg70oaMcakUgLN/dOfwKE6BKMnanw42PqyZO/kIHtwepniiXMJQ+BT4Lc1MX1TLOzpqomFtoD//0jRKW0R0uvF5yOOEKMwDoh9Zkjq0WQfUlxlwrt6oTlIfNJruEtiH0pApfp2EqJ4XrKjEr39NQh2UDJfJwQOx1NMNRnyI6IjfzRYJHY/14lMjUWfe1mG3NDU1LhsUYfe4Myzg0T5ahiYmZqjCXYMEsaUJJvKlC17M23ovSa+YVP8zl0WUvMD+fpy3lewfayj6ZUl6JkuVUYQ+0MsQ==&lt;/ds:SignatureValue&gt;
+      &lt;ds:KeyInfo&gt;
+        &lt;ds:X509Data&gt;
+          &lt;ds:X509Certificate&gt;MIIDQTCCAimgAwIBAgIUdYK4XoQpN1hFs9yHDGAU/M2cCEgwDQYJKoZIhvcNAQELBQAwSTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjEMMAoGA1UECgwDT3JnMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMjUxMTIyMTY0NDQyWhcNMjYxMTIyMTY0NDQyWjBJMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExCzAJBgNVBAcMAlNGMQwwCgYDVQQKDANPcmcxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKc+bRQeN+KXlE3IB5U+VJ0rU7Wv+EC9L44IbgODEWPqq6aJ0lPUwLrM7embvqFHKP/0lwbINyrwnOkVtwpmG0D43qtOACcmM6XUU9cB8j1TjEMgddVURI+TaMvWIKfV2rOzcB6x4oEOQ5cKVFMLJtTCcZwd8TKGnAbVw0jbV3cK7HW9bLtyQApZB2s41f1fyDvnOmrOShuDfLvnHaHjXD55Gjd4RpddxAMqKaL5bUIR2KPJkgb7As07ELIQmai6in0Aco5jV5HJsrJinMdIT6BOisP4DM3LjO7v5UsO8ZLqpQzg03l6fOIsiOdluAokq8N48nh/Ms2wBSs04+BKY68CAwEAAaMhMB8wHQYDVR0OBBYEFBT0hqLfFDC/87ywfCPKuw9M1xylMA0GCSqGSIb3DQEBCwUAA4IBAQA2uDbyXTqaVYrDdb0jcAmEQEMMP2YWCJhPSkgn9URqdlByG6UtVsA+ZbDUFgaQpPK9oM5yLJFeyQGhFs9hoodoqT3mhp3q/mXfEk95e7uPUV+v9HdBO1jB1PUX1j104QVmhbEGQqBMDsIPclEcXmUn3EOXSNZhQGXV/D8GRAjHvpO0bl/s9CFxvwBwupKXT5e4c61scjD17dmeVMTTfh653JGZAyR32oTFkzrZcDAO9soBUxo6dsK/mHiir5i/viVI3uS5izNHgp4aHN4awnEWm9hAMxaX16MYcXFyv4n2Prc2EM+DaNbD5Jh5GMo+VDmK8fkqaBsro+SO/o1/eFgA&lt;/ds:X509Certificate&gt;
+        &lt;/ds:X509Data&gt;
+      &lt;/ds:KeyInfo&gt;
+    &lt;/ds:Signature&gt;
+    &lt;saml:Subject&gt;
+      &lt;saml:NameID Format=&quot;urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified&quot;&gt;jack.gitter@gmail.com&lt;/saml:NameID&gt;
+      &lt;saml:SubjectConfirmation Method=&quot;urn:oasis:names:tc:SAML:2.0:cm:bearer&quot;&gt;
+        &lt;saml:SubjectConfirmationData NotOnOrAfter=&quot;2025-11-22T19:11:04.594Z&quot;
+                                      Recipient=&quot;https://sptest.iamshowcase.com/acs&quot;
+                                      InResponseTo=&quot;&quot; /&gt;
+      &lt;/saml:SubjectConfirmation&gt;
+    &lt;/saml:Subject&gt;
+    &lt;saml:Conditions NotBefore=&quot;2025-11-22T19:06:04.594Z&quot;
+                     NotOnOrAfter=&quot;2025-11-22T19:11:04.594Z&quot;&gt;
+      &lt;saml:AudienceRestriction&gt;
+        &lt;saml:Audience&gt;IAMShowcase&lt;/saml:Audience&gt;
+      &lt;/saml:AudienceRestriction&gt;
+    &lt;/saml:Conditions&gt;
+  &lt;/saml:Assertion&gt;
+&lt;/samlp:Response&gt;
+			</pre>
+	There are many more fields to a SAML Resonse than to a SAML request. Below is described some of the most important, and required fields 
                 <dl>
                   <dt>Response</dt>
+                  <dd>The outer wrapper of the information sent from IDP to SP. It has a couple of important attributes
+					  <ul>
+						  <li>ID: unique id for this response</li>
+						  <li>Issue Insant: instant this was issued</li>
+						  <li>Destination: the ACS endpoint, found in the request</li>
+						  <li>In Response To: The ID of the request. Here it is blank, as this was an IDP initiated SSO payload</li>
+					  </ul>
+				  </dd>
+                  <dt>Issuer</dt>
                   <dd></dd>
                   <dt>Status</dt>
                   <dd></dd>
                   <dt>Assertion</dt>
-                  <dd></dd>
-                  <dt>Issuer</dt>
-                  <dd></dd>
-                  <dt>Conditions</dt>
-                  <dd></dd>
-                  <dt>Audience</dt>
-                  <dd></dd>
-                  <dt>Signing Information</dt>
-                  <dd></dd>
-                  <dt>Subject</dt>
-                  <dd></dd>
-                  <dt>NameID</dt>
-                  <dd></dd>
-                  <dt>Attributes</dt>
-                  <dd></dd>
-                  <dt>AuthnStatement</dt>
-                  <dd></dd>
+					<ul>
+						<li>
+							<dt>Issuer</dt>
+							<dd>testing this out</dd>
+						</li>
+						<li>
+						<dt>Signature</dt>
+						<dd>and again</dd>
+						</li>
+						<li>
+						<dt>Subject</dt>
+						<dd></dd>
+						</li>
+						<li>
+						<dt>Conditions</dt>
+						<dd></dd>
+						</li>
+						<li>
+						<dt>Audience</dt>
+						<dd></dd>
+						</li>
+						<li>
+						<dt>Atribute Statement</dt>
+						<dd></dd>
+						</li>
+						<li>
+						<dt>AuthnStatement</dt>
+						<dd></dd>
+						</li>
+					</ul>
                 </dl>
+
+
+				There are even more fields, these are just the basic ones. Here you can find more, described in greated detail: https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response
 
 			<h2>IAmShowcase website</h2>
 			For all the code examples, the code will be acting as the identity provider in the flow. As such, we need a service provider in the loop. A great website for this is <a href="https://sptest.iamshowcase.com">IAmShowcase</a> which acts as a mock service provider and supports both idp initiated and service provider initiated SSO. 
@@ -157,6 +271,8 @@
 				<h4>samlify</h4>
 				<h4>iamshowcase</h4>
 				<h4>creating idp and sp metadata</h4>
+					<p>what bindings are accepted by our IDP</p>
+					<p>what bindings are accepted by SP</p>
 				<h4>idp initiated sso default format</h4>
 					<p>mention relay state color</p>
 					<p>picture of the login page after sso works</p>
