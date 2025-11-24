@@ -233,6 +233,7 @@
                   <dt>Status</dt>
                   <dd>conveys whether the sign-in was successful or not</dd>
                   <dt>Assertion</dt>
+					<dd>The main element encopassing most of the user and auth information. The following are the most important inclusions that reside within the assertion</dd>
 							<dt style="margin-left: 20px">Issuer</dt>
 							<dd style="margin-left: 40px">The IDP's entity name or id</dd>
 							<dt style="margin-left: 20px">Signature</dt>
@@ -251,6 +252,22 @@
 
 
 				To find out more, visit Microsoft's <a href='https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response'>documentation</a>
+				
+			<h2>Bindings</h2>
+			In order to send the SAML Request and SAML Response between SP and IDP, there needs to be some conventions and protocols used. The protocol used to transport these are HTTP, although there are two main, distinct ways that these request can be sent, known as bindings
+
+			<h3>POST binding</h3>
+			The post binding is when communication between IDP and SP is done through an HTTP post request. This request is expected to be performed via HTTP form control,
+			and has two important fields. 
+			SAMLResponse: the actual SAML Response, base64 encoded
+			RelayState: this really only has one main purpose in the IDP initiated SSO. The IDP can send along a URL of the service provider, and after the service provider parses and 
+			accepts the SAML Resposne, the user gets redirected to that URL. This is not specifically stated in the SAML specification, but is often utilized
+
+			This is most commonly used for SAML Responses, rather than requests
+			<h3>REDIRECT binding</h3>
+			The Redirect binding is the most commonly used format for SAML Requests. In this binding, the entity sending the SAML (either request or response). They are transmitted via the 
+			HTTP GET method. Most commonly, the deflate compression algorithm is used, and then the resulting encoded binary is encoded via base64, and then urlencoded to make it url safe and sendable. Additionally if a RelayState must be included in the request or response, it must be url encoded and placed as a query parameter as well. In SP initiated SSO, if a relay state 
+			is sent to the IDP, then the IDP must echo back the relay state exactly as is to the service provider.
 
 			<h2>IAmShowcase website</h2>
 			For all the code examples, the code will be acting as the identity provider in the flow. As such, we need a service provider in the loop. A great website for this is <a href="https://sptest.iamshowcase.com">IAmShowcase</a> which acts as a mock service provider and supports both idp initiated and service provider initiated SSO. 
@@ -343,12 +360,25 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 			As you can see here, mostly all the information from the website is embeded here. Information on where to send login requests for SP initiated SSO, the entityID,
 			the public certificate for the signature value on the SAML Response, and a public key that can be used by service providers to encrypt the SAML Request, if applicable.
 
-			<h3>Code examples</h3>
+			<h3>Implementation</h3>
 				<h4>samlify</h4>
 				<p>
-				Samlify is a NodeJS library that I used to implement the SAML SSO flows. It allows for creation, parsing, and much more of both SAML requests and responses.
+				Samlify is a NodeJS library that can be used to implement the SAML SSO flows. It allows for creation, parsing, and much more of both SAML requests and responses.
+				The first thing that should be done when working with samlify is downloading the IDP and SP metadata, and creating the respective objects. We already took a look
+				at the metadata for ourselves (IDP) and for the SP (IAmShowcase), so we can jump right into some examples. To demonstrate the various examples, I've create a super basic
+				web server, that has three functionalities. One is a basic IDP initiated flow with no special SAML Response template, another is an IDP initated SSO with a custom SAML Response template, and the final one is a service provider initated SSO.
 				</p>
+
+
 				<h4>idp initiated sso default code example</h4>
+
+				<p>
+				The first example that I want to show is the most basic. Implementing an IDP initiated SSO with no custom SAML Response template. To demonstrate how to create the SAML Response itself, 
+				</p>
+
+				<pre class='prettyprint lang-typescript'>
+				</pre>
+
 					<p>bindings, post</p>
 					<p>mention relay state color</p>
 					<p>picture of the login page after sso works</p>
