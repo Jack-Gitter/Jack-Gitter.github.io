@@ -473,6 +473,9 @@ form.submit();
       &lt;/saml:SubjectConfirmation&gt;
     &lt;/saml:Subject&gt;
 	&lt;saml:Conditions NotBefore=&quot;{NotBefore}&quot; NotOnOrAfter=&quot;{NotOnOrAfter}&quot;&gt;
+      &lt;saml:AudienceRestriction&gt;
+        &lt;saml:Audience&gt;{AudienceURI}&lt;/saml:Audience&gt;
+      &lt;/saml:AudienceRestriction&gt;
     &lt;/saml:Conditions&gt;
 	&lt;saml:AuthnStatement AuthnInstant=&quot;{AuthnInstant}&quot; SessionNotOnOrAfter=&quot;{NotOnOrAfter}&quot; SessionIndex=&quot;{SessionIndex}&quot;&gt;
       &lt;saml:AuthnContext&gt;
@@ -489,8 +492,8 @@ form.submit();
     &lt;/saml:AttributeStatement&gt;
   &lt;/saml:Assertion&gt;
 &lt;/samlp:Response&gt;
-					</pre>
-					You can see that we have variables in {} which are going to be replaced with information that is either taken from the IDP and SP metadata, the incoming http request (in the event of sp initiated sso), or from user information after login. Additionally to this we have notably added both attributes, and an authn statement which most service providers will require some form of. In order to utilize this template with samlify, the code looks like this
+			</pre>
+					You can see that we have variables in {} which are going to be replaced with information that is either taken from the IDP and SP metadata, the incoming http request (in the event of sp initiated sso), or from user information after login. Additionally to this we have notably added both attributes, and an authn statement, audience restriction, which most service providers will require some form of. In order to utilize this template with samlify, the code looks like this
 
 				<pre class='prettyprint lang-typescript'>
 	const template = readFileSync(`${__dirname}/idp/templates/response.xml`).toString()
@@ -557,6 +560,7 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 		SessionIndex: sessionIndex,
 		Name: user.name,
 		Email: user.email,
+		AudienceURI: acsUrl
     }
 
     return {
@@ -585,6 +589,12 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 				<img src="./attributes.png"/>
                 <p>
 				User attributes that were included in the custom SAML Response
+                </p>
+            </div>
+            <div class="image-description-block">
+				<img src="./details.png"/>
+                <p>
+				Other details, not audience tag
                 </p>
             </div>
 				<h4>sp initiated sso code example</h4>
