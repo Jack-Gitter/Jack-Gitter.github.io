@@ -495,39 +495,33 @@ form.submit();
 
 <pre class='prettyprint lang-typescript'>
 export const generateCustomSAMLResponse = async (entityId: string) =&gt {
-	const template = readFileSync(`${__dirname}/idp/templates/response.xml`).toString()
-	const idp = IdentityProvider({
-		metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
-		privateKey: readFileSync(`${__dirname}/idp/private-key.pem`),
-		loginResponseTemplate: {
-			context: template,
-			attributes: []
-		}
-	})
-
-	const sp = ServiceProvider({
-		metadata: readFileSync(`${__dirname}/sp/${entityId}/metadata.xml`),
-		wantMessageSigned: true
-	})
-
-	const request = {
-		extract: {
-			request: {
-				id: undefined
-			}
-		}
+  const template = readFileSync(`${__dirname}/idp/templates/response.xml`).toString()
+  const idp = IdentityProvider({
+	metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
+	privateKey: readFileSync(`${__dirname}/idp/private-key.pem`),
+	loginResponseTemplate: {
+		context: template,
+		attributes: []
 	}
+  })
 
-	const user = {
-		email: 'jack.gitter@gmail.com',
-		name: 'jack',
-	}
+  const sp = ServiceProvider({
+	metadata: readFileSync(`${__dirname}/sp/${entityId}/metadata.xml`),
+	wantMessageSigned: true
+  })
 
-	const { context, entityEndpoint } = await idp.createLoginResponse(sp, request, Constants.wording.binding.post, user, (template: string) =&gt {
-		return createTemplateCallback(idp, sp, user, template)
-	})
+  const request = { extract: { request: { id: undefined } } }
 
-	return { context, entityEndpoint, relayState: 'light-blue' }
+  const user = {
+	email: 'jack.gitter@gmail.com',
+	name: 'jack',
+  }
+
+  const { context, entityEndpoint } = await idp.createLoginResponse(sp, request, Constants.wording.binding.post, user, (template: string) =&gt {
+	return createTemplateCallback(idp, sp, user, template)
+  })
+
+  return { context, entityEndpoint, relayState: 'light-blue' }
 }
 
 
@@ -560,7 +554,7 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 		Name: user.name,
 		Email: user.email,
 		AudienceURI: acsUrl
-    }
+          }
 
     return {
         id,
@@ -614,38 +608,38 @@ http://localhost:3000/saml/auth?SAMLRequest=fZFRT4MwFIX%2FStP3ja4D3ZpBgi5Gki0uA3
 
 					The code to handle this request is a bit involved
 
-					<pre class="prettyprint lang-typescript">
+<pre class="prettyprint lang-typescript">
 export const parseSpInitiatedLoginRequest = async (req: any, entityId: string) =&gt {
-	const idp = IdentityProvider({
-		metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
-		privateKey: readFileSync(`${__dirname}/idp/private-key.pem`),
-        wantAuthnRequestsSigned: false,
-	})
+  const idp = IdentityProvider({
+    metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
+    privateKey: readFileSync(`${__dirname}/idp/private-key.pem`),
+    wantAuthnRequestsSigned: false,
+  })
 
-	const sp = ServiceProvider({
-		metadata: readFileSync(`${__dirname}/sp/${entityId}/metadata.xml`),
-        authnRequestsSigned: false
-	})
+  const sp = ServiceProvider({
+    metadata: readFileSync(`${__dirname}/sp/${entityId}/metadata.xml`),
+    authnRequestsSigned: false
+  })
 
-	const {extract} = await idp.parseLoginRequest(sp, 'redirect', req)
-	return {issuer: extract.issuer, id: extract.request.id}
+  const {extract} = await idp.parseLoginRequest(sp, 'redirect', req)
+  return {issuer: extract.issuer, id: extract.request.id}
 }
 
 
 const generateSignature = (...fields: string[]) =&gt {
-	const payload = JSON.stringify(fields);
-	const signature = crypto.createHmac('sha256', 'secret').update(payload).digest('hex');
-	return signature
+  const payload = JSON.stringify(fields);
+  const signature = crypto.createHmac('sha256', 'secret').update(payload).digest('hex');
+  return signature
 }
 
-	app.get('/saml/auth', async (req: Request, res: Response) =&gt {
-		const {issuer, id} = await parseSpInitiatedLoginRequest(req, ENTITY_ID.I_AM_SHOWCASE)
-		const signature = generateSignature(issuer, id)
-		res.cookie('signature', signature, {sameSite: 'strict', httpOnly: true})
-		res.cookie('issuer', issuer, {sameSite: 'strict', httpOnly: true})
-		res.cookie('id', id, {sameSite: 'strict', httpOnly: true})
-		res.redirect('/login')
-	})
+app.get('/saml/auth', async (req: Request, res: Response) =&gt {
+  const {issuer, id} = await parseSpInitiatedLoginRequest(req, ENTITY_ID.I_AM_SHOWCASE)
+  const signature = generateSignature(issuer, id)
+  res.cookie('signature', signature, {sameSite: 'strict', httpOnly: true})
+  res.cookie('issuer', issuer, {sameSite: 'strict', httpOnly: true})
+  res.cookie('id', id, {sameSite: 'strict', httpOnly: true})
+  res.redirect('/login')
+})
 					</pre>
 					first, we create the idp and service provider object again.
 					we are able to use the idp.parseLoginRequest method to parse the authNRequest that the service provider sends out application, and get relevant information from it
@@ -669,47 +663,39 @@ const generateSignature = (...fields: string[]) =&gt {
 			Upon filling out the username and password and hitting submit, the form calls our post
 			login endpoint
 
-			<pre class="prettyprint lang-typescript">
-
+<pre class="prettyprint lang-typescript">
 export const generateSpInitiatedSAMLResponse  = async (email: string, issuer: string, id: string) => {
-	const idp = IdentityProvider({
-		metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
-		privateKey: readFileSync(`${__dirname}/idp/private-key.pem`)
-	})
+  const idp = IdentityProvider({
+	metadata: readFileSync(`${__dirname}/idp/metadata.xml`),
+	privateKey: readFileSync(`${__dirname}/idp/private-key.pem`)
+  })
 
-	const sp = ServiceProvider({
-		metadata: readFileSync(`${__dirname}/sp/${issuer}/metadata.xml`),
-	})
+  const sp = ServiceProvider({
+	metadata: readFileSync(`${__dirname}/sp/${issuer}/metadata.xml`),
+  })
 
-	const request = {
-		extract: {
-			request: {
-				id
-			}
-		}
-	}
+  const request = { extract: { request: { id } } }
 
-	const { context, entityEndpoint } = await idp.createLoginResponse(sp, request, Constants.wording.binding.post, {email})
+  const { context, entityEndpoint } = await idp.createLoginResponse(sp, request, Constants.wording.binding.post, {email})
 
-	return { context, entityEndpoint, relayState: 'light-blue' }
+  return { context, entityEndpoint, relayState: 'light-blue' }
 
 }
 
-	app.post('/login', async (req: Request, res: Response) =&gt {
-		const email = req.body.email
-		const issuer = req.cookies.issuer
-		const id = req.cookies.id
-		const signature = req.cookies.signature
-		const expectedSignature = generateSignature(issuer, id)
-		if (signature !== expectedSignature) {
-			res.status(403).send()
-			return
-		}
-		const resp = await generateSpInitiatedSAMLResponse(email, issuer, id)
-		res.send(resp)
-
-	})
-			</pre>
+app.post('/login', async (req: Request, res: Response) =&gt {
+  const email = req.body.email
+  const issuer = req.cookies.issuer
+  const id = req.cookies.id
+  const signature = req.cookies.signature
+  const expectedSignature = generateSignature(issuer, id)
+  if (signature !== expectedSignature) {
+	res.status(403).send()
+	return
+  }
+  const resp = await generateSpInitiatedSAMLResponse(email, issuer, id)
+  res.send(resp)
+})
+</pre>
 
 
 			this code is practically the same as the basic SAML Response demonstration, except it uses the email entered in the login form to generate the SAML Response information. After the server responds, this is the frontend code
