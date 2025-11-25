@@ -99,13 +99,13 @@
 
 			<h2>What is XML</h2>
 			XML, also known as extensible markup language, 
-			is the format in which messages are sent between the IDP and the SP. It is important for them to establish a "language" to 
-			communicate with, so that they can parse and understand messages easily
+			is the format in which messages are sent between the IDP and the SP. It is important to establish a "language" to 
+			communicate with, so that messages can be parsed and processed easily
 			<h2>What is SAML</h2>
-			SAML is a security assertion markup language, which utilizes XML. It is an open standard, essentially a defined schema in which to write XML that both the service providers and identity providers expect. 
+			SAML, or security assertion markup language, is an open standard which utilizes XML. It is a defined schema which specifies how to write XML to transfer authentication information between service providers and identity providers
 			<h3>SAML Request</h3>
-			The SAML request is what is sent from the sp to the idp during service provider initiated SSO. The service provider essentially is requesting the user be authenticated via the IDP.
-			An example of a SAML request looks like so:
+			A SAML request is sent from the SP to the IDP during SP initiated SSO. It is a request for the IDP to handle a users authentication which is attempting to access the SP.
+			Below is an example of a SAML request
 
 			<pre class="prettyprint lang-xml" id="xml-block">
 &lt;samlp:AuthnRequest xmlns:samlp=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;
@@ -121,15 +121,15 @@
 &lt;/samlp:AuthnRequest&gt;
 			</pre>
 
-				Here is a description of the purpose of the fields, and some key attributes
+				Furthermore, here is a breakdown of some of the important aspects of this request
 
 				<br>
 					<dl class="light-gray">
 					  <dt>AuthnRequest</dt>
-					  <dd>The authnRequest, or authentication request, is the wrapped for the request from the service provider to the identity provider. It has a a couple of key attributes
+					  <dd>The authentication request. Acts as the wrapper for the request from the SP to the IDP. It has a a couple of key attributes
 					  <ul>
 						<li style="margin-left: 20px">
-							ID: <span>the specific AuthnRequest ID. Unique for each request. This is used in the SAML Response to indicate which request the response is tied to</span>
+							ID: <span>The specific AuthnRequest ID. Unique for each request. This is used in the SAML response to indicate which request the response is tied to</span>
 						</li >
 						<li style="margin-left: 20px">
 							Issue Instant: <span>The time when the request was created</span>
@@ -141,18 +141,20 @@
 							Assertion Consumer Service URL: <span>Where the IDP should send the SAML response to</span>
 						</li>
 						<li style="margin-left: 20px">
-							Protocol Binding: <span>The method which the IDP should send the SAML resposne via</span>
+							Protocol Binding: <span>The means by which the IDP should send the SAML response</span>
 						</li>
 					  </ul>
 					  </dd>
 					  <dt>Issuer</dt>
-					  <dd>the issuer field is who issues the AuthnRequest</dd>
+					  <dd>The creator of the AuthnRequest</dd>
 					</dl>
 
-				there are more fields, all of which can be found here described in greater detail: https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#authnrequest. 
+				These, by no means, are the only possible fields in a SAML request. There are many more included in the specification. Microsoft has a decent overview in their
+				<a href="https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#authnrequest">documentation</a>
 
 			<h3>SAML Response</h3>
-			The SAML response is used in both the IDP initiated and sp initiated sso flows. This is the bundle of user information that is sent from the idp to the service provider, to explain that the user has authenticated properly and apss any relevaant user information to the SP. 
+			A SAML response is a crucial part of both the IDP initiated and SP initiated SSO flows. This is the message containing proof of the user authentication, along with user information. It is sent from the IDP to the SP. Below is an example of a rudamentary SAML response
+
 			<pre class="prettyprint lang-xml" id="xml-block">
 &lt;samlp:Response
     xmlns:samlp=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;
@@ -212,31 +214,34 @@
   &lt;/saml:Assertion&gt;
 &lt;/samlp:Response&gt;
 			</pre>
-	There are many more fields to a SAML Resonse than to a SAML request. Below is described some of the most important, and required fields 
+
+	Below is listed some of the most important fields, along with their purpose
+
                 <dl class='light-gray'>
                   <dt>Response</dt>
                   <dd>The outer wrapper of the information sent from IDP to SP. It has a couple of important attributes
 					  <ul>
-						  <li style="margin-left: 20px">ID : <span>unique id for this response<span></li>
-						  <li style="margin-left: 20px">Issue Insant : <span>instant this was issued</span></li>
-						  <li style="margin-left: 20px">Destination : <span>the ACS endpoint, found in the request</span></li>
-						  <li style="margin-left: 20px">In Response To : <span>The ID of the request. Here it is blank, as this was an IDP initiated SSO payload</span></li>
+						  <li style="margin-left: 20px">ID : <span>The id for this response. Unique for each response<span></li>
+						  <li style="margin-left: 20px">Issue Insant : <span>When the response was created</span></li>
+						  <li style="margin-left: 20px">Destination : <span>Where the response is being sent to, in URL format</span></li>
+						  <li style="margin-left: 20px">In Response To : <span>The ID of the SAML request that corresponds to the response. 
+								  In this example it is blank, as this was an IDP initiated SSO payload</span></li>
 					  </ul>
 				  </dd>
                   <dt>Issuer</dt>
-                  <dd>The IDP's entity name or id</dd>
+                  <dd>The IDP's name</dd>
                   <dt>Status</dt>
-                  <dd>conveys whether the sign-in was successful or not</dd>
+                  <dd>Conveys whether the sign in was successful or not</dd>
                   <dt>Assertion</dt>
 					<dd>The main element encopassing most of the user and auth information. The following are the most important inclusions that reside within the assertion</dd>
 							<dt style="margin-left: 20px">Issuer</dt>
-							<dd style="margin-left: 40px">The IDP's entity name or id</dd>
+							<dd style="margin-left: 40px">The IDP's name</dd>
 							<dt style="margin-left: 20px">Signature</dt>
 							<dd style="margin-left: 40px">Digital signature of the assertion contents</dd>
 							<dt style="margin-left: 20px">Subject</dt>
-							<dd style="margin-left: 40px">Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. It all depends on how the SP intents to use the nameID</dd>
+							<dd style="margin-left: 40px">Defines who the SAML assertion is about. Contains a NameID field which represents the authenticated user. There are multiple different formats for NameID, and they can be persistent or transient. The format depends the support of the SP and IDP</dd>
 							<dt style="margin-left: 20px">Conditions</dt>
-							<dd style="margin-left: 40px">Typically defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
+							<dd style="margin-left: 40px">Often defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
 							<dt style="margin-left: 20px">Audience</dt>
 							<dd style="margin-left: 40px">Contains the URI that identifies the intended recipient of the SAML Response</dd>
 							<dt style="margin-left: 20px">Atribute Statement</dt>
@@ -249,17 +254,24 @@
 				To find out more, visit Microsoft's <a href='https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response'>documentation</a>
 				
 			<h2>Bindings</h2>
-			In order to send the SAML Request and SAML Response between SP and IDP, there needs to be some conventions and protocols used. The protocol used to transport these are HTTP, although there are two main, distinct ways that these request can be sent, known as bindings
+			In order to send SAML requests and responses between SPs and IDPs, there must be agreed upon conventions and protocols. The protocol used for SAML is HTTP, and there are two main, distinct ways that these request can be sent. These are called bindings. Both the IDP and SP can define their own preffered bindings
 
-			<h3>POST binding</h3>
-			The post binding is when communication between IDP and SP is done through an HTTP post request. This request is expected to be performed via HTTP form control,
-			and has two important fields. 
-			SAMLResponse: the actual SAML Response, base64 encoded
-			RelayState: this really only has one main purpose in the IDP initiated SSO. The IDP can send along a URL of the service provider, and after the service provider parses and 
-			accepts the SAML Resposne, the user gets redirected to that URL. This is not specifically stated in the SAML specification, but is often utilized
+			<h3>Post binding</h3>
+			When the post binding is used, communication between IDP and SP is done through an HTTP POST request. It is most commonly supported by service providers, rather than 
+			IDPs. This request is expected to be performed via HTTP form control, and has two important fields. 
+			<ul>
+				<li>
+					SAMLResponse: the SAML response, base64 encoded
+				</li>
+				<li>
+					RelayState: During SP initiated SSO, the IDP must echo back what the SP sent in the SAML Request. In an IDP initiated SSO,
+					the IDP can include the URL of a specific page hosted by the service provider. After the service provider parses and
+					validates the SAML resposne, the user would be redirected to that URL. 
+					This is not specifically stated in the SAML specification, but is often utilized in modern SAML flows.
+				</li>
+			</ul>
 
-			This is most commonly used for SAML Responses, rather than requests
-			<h3>REDIRECT binding</h3>
+			<h3>Redirect binding</h3>
 			The Redirect binding is the most commonly used format for SAML Requests. In this binding, the entity sending the SAML (either request or response). They are transmitted via the 
 			HTTP GET method. Most commonly, the deflate compression algorithm is used, and then the resulting encoded binary is encoded via base64, and then urlencoded to make it url safe and sendable. Additionally if a RelayState must be included in the request or response, it must be url encoded and placed as a query parameter as well. In SP initiated SSO, if a relay state 
 			is sent to the IDP, then the IDP must echo back the relay state exactly as is to the service provider.
