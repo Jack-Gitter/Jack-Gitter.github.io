@@ -259,18 +259,20 @@
 			<h3>Post binding</h3>
 			When the post binding is used, communication between IDP and SP is done through an HTTP POST request. It is most commonly supported by service providers, rather than 
 			IDPs. This request is expected to be performed via HTTP form control, and has two important fields. 
-			<ul>
-				<li>
-					SAMLResponse: the SAML response, base64 encoded
-				</li>
-				<li>
+
+                <dl class="light-gray">
+                  <dt>SAMLResponse</dt>
+                  <dd>
+					the SAML response, base64 encoded
+				  </dd>
+				  <dt>RelayState</dt>
+				  <dd>
 					RelayState: During SP initiated SSO, the IDP must echo back what the SP sent in the SAML Request. In an IDP initiated SSO,
 					the IDP can include the URL of a specific page hosted by the service provider. After the service provider parses and
 					validates the SAML response, the user would be redirected to that URL. 
 					This is not specifically stated in the SAML specification, but is often utilized in modern SAML flows.
-				</li>
-			</ul>
-
+				  </dd>
+				</dl>
 			<h3>Redirect binding</h3>
 			When the redirect binding is used, communication between IDP and SP is done via HTTP GET, and the SAMLResponse and RelayState fields are send as query parameters. 
 			The Redirect binding is the most commonly used format for SAML Requests. By default, the SAML is compressed via the deflate algorithm, the resulting encoded binary is 
