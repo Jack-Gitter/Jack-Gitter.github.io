@@ -411,7 +411,7 @@ app.get('/sso/iamshowcase/login', async (_req: Request, res: Response) =&gt {
 				IDP's private key used sign the SAML assertion, generated via the bash script shown earlier. The <code>idp.createLoginResponse</code> method is responsible 
 				for generating the SAML response. It requires the service provider, a SAML request object, which binding to use, and a user object. Because this is 
 				an IDP initiated SSO, I've created a mock SAML request object to pass in. The library will automatically extract relevant user information from the user object, and
-				put it within the NameId and attributes section. Finally, returned is a <code>context</code> variable (the SAML response), 
+				put it within the NameID and attributes section. Finally, returned is a <code>context</code> variable (the SAML response), 
 				the <code>entityEndpoint</code> which is the ACS URL, and the <code>relayState</code>. For IAMShowcase, 
 				setting the relay state changes the color of the UI of the website, nothing more.
 				This method is used in a simple HTTP get request after hitting the "sso" button on the frontend
