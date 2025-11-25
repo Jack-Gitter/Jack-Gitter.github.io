@@ -281,12 +281,13 @@
 
 			<h2>Metadata</h2>
 			<p>
-			Before we jump into the samlify code, its first important to describe IDP and SP metadata. These are also in the format of XML, and describe the specifics of what both the IDP 
-			and SP expect during the SSO flow. 
+			Before jumping into the code, its first important to understand IDP and SP metadata. These are files in written in XML which describe the specifics of what both the IDP 
+			and SP expect during the SSO flow. Things such as the SP's assertion consumer service endpoint, the SP's encryption key, the IDPs login request URL, etc.
 			</p>
 			<h3>Downloading SP metadata</h3>
 				<p>
-				For all service providers, metadata should be downloadable. Since we are working with IAMShowcase, a demo site specifically made to test SAML integration, the download
+				For most service providers, metadata should be downloadable. 
+				Since IAmShowcase is a demo site specifically made to test SAML integration, the download
 				is pretty straight forward
 
 				<div class="image-description-block">
@@ -296,7 +297,7 @@
 					</p>
 				</div>
 
-				The IAmShowcase metadata looks like so
+				The IAmShowcase metadata is as follows
 
 			<pre class="prettyprint lang-xml" id="xml-block">
 &lt;md:EntityDescriptor xmlns:md=&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot; xmlns:ds=&quot;http://www.w3.org/2000/09/xmldsig#&quot; entityID=&quot;IAMShowcase&quot; validUntil=&quot;2025-12-09T09:13:31.006Z&quot;&gt;
@@ -306,22 +307,14 @@
 		&lt;md:AssertionConsumerService Binding=&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST&quot; Location=&quot;https://sptest.iamshowcase.com/acs&quot; index=&quot;0&quot; isDefault=&quot;true&quot;/&gt;
 	&lt;/md:SPSSODescriptor&gt;
 &lt;/md:EntityDescriptor&gt; </pre>
-
-			This XML provides the IDP with important information in regards to what the SP expects in the given SAML Response, things such as whether the assertion should be signed, 
-			the supported nameID formats, the assertion consumer service URL (location to send SAML response to), and potentially much more. 
-			Even potentially providing a public key to encrypt the contents of the SAML assertion
 				</p>
 
 			<h3>Creating IDP metadata</h3>
 			<p>
-			Because we are our own IDP here, we need to generate some IDP metadata. The IDP metadata does not need to be uploaded to the service provider, although typically the saml 
-			assertion sent by the IDP is signed. The public certificate used is often embedded in the SAML Response, but it is still required to upload the public key to the service provider
-			so that they can verify the authenticity of the SAML Response. In this case, IAmShowcase doesn't validate the signature on the SAMLResponse, so we do not need to upload anything.
-
-			<br>
-
-			In order to generate IDP metadata, first a keypair is required for the aforementioned signing portion. In order to generate this, I've created a simple bash script with openssl.
-
+			Because we are our own IDP in this example, we need to generate IDP metadata. 
+			In order to do so, first a keypair is required so that the public certificate can be embedded into the IDP metadata, and later the SAML response. The service provider will
+			utilize this public key as a reference to look up internally stored keys, and verify the signature of the SAML response.
+			In order to generate the pair, a simple bash script written with openSSL should suffice.
 
 			<pre class="prettyprint lang-bsh">
 #!/bin/bash
@@ -330,16 +323,12 @@ KEY=$(openssl genrsa 2048 2&gt/dev/null)
 echo "$KEY"
 echo "$KEY" | openssl req -new -key /dev/stdin -subj "/C=US/ST=CA/L=SF/O=Org/CN=localhost" 2&gt/dev/null | \
 openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
-
-			This code utilizes the openssl command line tool, and prints out a public x509 cert, and the corresponding private key
 			</p>
 
-			<br>
+			To create the IDP metadata, a website such as <a href="https://www.samltool.com/idp_metadata.php">samltool.com</a> can be used. Entering information into the required 
+			fields will produce IDP metadata which looks something like the following
 
-			to actually create the IDP metadata, a website such as https://www.samltool.com/idp_metadata.php can be used. Simply entering information into the required 
-			fields, along with the x509 public certificate generated in the last step will produce a file like so
-
-			<pre class="prettyprint lang-xml" id="xml-block">
+<pre class="prettyprint lang-xml" id="xml-block">
 &lt;?xml version=&quot;1.0&quot;?&gt;
 &lt;md:EntityDescriptor xmlns:md=&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot; validUntil=&quot;2025-11-24T19:31:58Z&quot; cacheDuration=&quot;PT1764444718S&quot; entityID=&quot;http://localhost:3000&quot;&gt;
   &lt;md:IDPSSODescriptor WantAuthnRequestsSigned=&quot;false&quot; protocolSupportEnumeration=&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;&gt;
@@ -364,16 +353,19 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 &lt;/md:EntityDescriptor&gt;
 			</pre>
 
-			As you can see here, mostly all the information from the website is embeded here. Information on where to send login requests for SP initiated SSO, the entityID,
-			the public certificate for the signature value on the SAML Response, and a public key that can be used by service providers to encrypt the SAML Request, if applicable.
+			Mostly all the information entered into samltool's form is embeded here. From information about the login request endpoint for SP initiated SSO, the IDP's entityID,
+			the public certificate used to verify signature value on the SAML Response, and even a public key that can be used by service providers to encrypt SAML requests.
 
 			<h3>Implementation</h3>
-				<h4>samlify</h4>
+				<h4>Samlify</h4>
 				<p>
-				Samlify is a NodeJS library that can be used to implement the SAML SSO flows. It allows for creation, parsing, and much more of both SAML requests and responses.
-				The first thing that should be done when working with samlify is downloading the IDP and SP metadata, and creating the respective objects. We already took a look
-				at the metadata for ourselves (IDP) and for the SP (IAmShowcase), so we can jump right into some examples. To demonstrate the various examples, I've create a super basic
-				web server, that has three functionalities. One is a basic IDP initiated flow with no special SAML Response template, another is an IDP initated SSO with a custom SAML Response template, and the final one is a service provider initated SSO.
+				Samlify is a typescript library that can be used for a variety of SAML related tasks. 
+				For our use case, it provides functionality to create and parse both SAML requests and responses.
+				The first thing that should be done when working with samlify is downloading the IDP and SP metadata, 
+				and creating the respective objects. We already took a look at these metadata files, so we can jump right into some examples. 
+				To demonstrate various use cases, I've create a super basic web server that has three functionalities. 
+				One is a basic IDP initiated flow with no special SAML response template. Another is an IDP initated SSO with a custom SAML response template. 
+				The final one is a service provider initated SSO flow.
 				</p>
 
 
