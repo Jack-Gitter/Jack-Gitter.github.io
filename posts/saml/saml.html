@@ -369,10 +369,11 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 				</p>
 
 
-				<h4>idp initiated sso default code example</h4>
+				<h4>IDP initiated SSO example</h4>
 
 				<p>
-				The first example that I want to show is the most basic. Implementing an IDP initiated SSO with no custom SAML Response template. To demonstrate how to create the SAML Response itself, 
+				The first example is the most basic: Implementing an IDP initiated SSO with no custom SAML response template. 
+				The following code is used to create the SAML response itself
 				</p>
 
 <pre class='prettyprint lang-typescript'>
@@ -396,11 +397,21 @@ export const generateDefaultSAMLResponse = async (entityId: string) =&gt {
  
   const { context, entityEndpoint } = await idp.createLoginResponse(sp, request, Constants.wording.binding.post, {email: 'jack.a.gitter@gmail.com'})
   return { context, entityEndpoint, relayState: 'light-blue' }
-
 }
+
+app.get('/sso/iamshowcase/login', async (_req: Request, res: Response) =&gt {
+  const resp = await generateDefaultSAMLResponse(ENTITY_ID.I_AM_SHOWCASE)
+  res.send(resp)
+})
 </pre>
-				Here you can see that  we are able to create objects that represent both the sp and the idp, just by loading the meatdata files for each. We also need to provide a private key to sign the SAML assertion with, genearted via the bash script shown earlier. 
-				The idp.createLoginResponse method is the method responsible for generating the SAML Response. It requires the service provider, a SAML Request object (mock object created, bare minimum), the binding to use, and a user object. With the user object, it is able to set things such as the nameId, and attributes in the SAML Response. Finally from this method, we return the context which is the SAML Response, the entityEndpoint which is the ACS URL, and the relay state. For IAMShowcase, setting the relay state changes the color of the UI of the website. This method is used in a simple HTTP get request after hitting the "sso" button on the frontend
+				Two objects are created that represent the SP and the IDP which utilize the respective metadata files. Also necessary is the 
+				IDP's private key used sign the SAML assertion, genearted via the bash script shown earlier. The <code>idp.createLoginResponse</code> method is responsible 
+				for generating the SAML response. It requires the service provider, a SAML request object, which binding to use, and a user object. Because this is 
+				an IDP initiated SSO, I've created a mock SAML request object to pass in. The library will automatically extract relevant user information from the user object, and
+				put it within the nameId and attributes section. Finally, returned is a <code>context</code> varibale (the SAML response), 
+				the <code>entityEndpoint</code> which is the ACS URL, and the <code>relayState</code>. For IAMShowcase, 
+				setting the relay state changes the color of the UI of the website, nothing more.
+				This method is used in a simple HTTP get request after hitting the "sso" button on the frontend
 
 
 
@@ -411,17 +422,11 @@ export const generateDefaultSAMLResponse = async (entityId: string) =&gt {
                 </p>
             </div>
 
+			This is the code that is executed after clicking the SSO button. We parse the response from the HTTP handler in the backend, 
+			and then fill our a form and post submit with the relevant details
+
+
 <pre class='prettyprint lang-typescript'>
-app.get('/sso/iamshowcase/login', async (_req: Request, res: Response) =&gt {
-  const resp = await generateDefaultSAMLResponse(ENTITY_ID.I_AM_SHOWCASE)
-  res.send(resp)
-})
-</pre>
-
-				The frontend then parses the information, creates a form, and POSTS the information to the service provider
-
-
-				<pre class='prettyprint lang-typescript'>
 const response = await fetch('http://localhost:3000/sso/iamshowcase/login');
 const data = await response.json();
 
@@ -438,7 +443,8 @@ form.submit();
 </pre>
 
 
-				And upon reaching the service provider, we are greeted with our information. Beacuse this SAML Response only contained the bare minimum information, we are limited to what information is shown 
+				Upon reaching the service provider, we are greeted with the information held within the SAML response. Beacuse this response only contained the bare minimum 
+				information, the information shown is limited. We can see that the UI is a light blue color, as that is what we specified in our relay state
 
             <div class="image-description-block">
 				<img src="./sp-home.png"/>
@@ -448,11 +454,12 @@ form.submit();
             </div>
 
 
-				<h4>idp initiated sso custom format code example</h4>
+				<h4>IDP initated custom SAML response format example</h4>
 					<p>
-					Most SPs are going to request some more information about the user, 
-					or some specific fields such as an AuthnInformation field that is 
-					not put in by samlify. In this case, samlify allows for using a custom XML format to create SAML Responses. This is going to be the example template that I use to craft a SAML response from
+					Most SPs are going to require extra information about the user, 
+					or other specifics surrounding the authentication that is not included by default from samilfy. 
+					In these instances, samlify allows for IDPs to provide custom XML template for SAML responses. 
+					This is the template used in the folloiwng example
 
 
 			<pre class="prettyprint lang-xml" id="xml-block">
@@ -490,7 +497,10 @@ form.submit();
   &lt;/saml:Assertion&gt;
 &lt;/samlp:Response&gt;
 			</pre>
-					You can see that we have variables in {} which are going to be replaced with information that is either taken from the IDP and SP metadata, the incoming http request (in the event of sp initiated sso), or from user information after login. Additionally to this we have notably added both attributes, and an authn statement, audience restriction, which most service providers will require some form of. In order to utilize this template with samlify, the code looks like this
+					Note the variables encased in {}, which are our template placeholders. These will be replaced with information from various sources, such as the IDP 
+					and SP metadata, the incoming http request (in the event of SP initiated sso), or from user information the IDP has access to after login. 
+					Additionally, there is the inclusion user attributes, an Authn statement, and audience restriction, most of which service providers will require. 
+					The following code demonstrates how the template is used with samlify
 
 <pre class='prettyprint lang-typescript'>
 export const generateCustomSAMLResponse = async (entityId: string) =&gt {
@@ -562,7 +572,13 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 }
 					</pre>
 
-					The code is almost the same, although with a couple of tweaks. We supply the IDP with our custom template, and this time set the wantMessageSigned service provider field to be true, meaning the idp will sign both the message and the assertion. Not required, just for demo purposes. We once again make a bare minimum SP request, setting the id to undefined. this time, we create a mock user, something that would be looked up from a database after a user signs in. We supply all of the same paremters, although this time a function that takes in our template. We then are able to utilize our callback function in order to replace the {} variables with information coming from the metadata, user object, and other sources.
+					The code is fairly similar, and the core principals remain the same. The IDP is supplied the typical metadata information, although we now include 
+					the custom template. Additionally the <code>wantMessageSigned</code> variable is set, to demonstrate more capabilities of the library. This means samlify 
+					will sign both the message and the assertion automatically. Once again, a mock SAML request is utilized. One more difference in this example is 
+					the inclusion of a mock user, something that could represent a database entity stored at the IDP. We supply all of the same paremters, with the addition 
+					of one new one: a function which takes in our template, and should return the final SAML response. 
+					We then are able to the callback function in order to replace the placeholders within the template with 
+					information coming from the metadata, user object, and other sources.
 
 					<br>
 
