@@ -44,7 +44,7 @@
             </div>
 
 			</p>
-			<h3>High Level Walkthrough</h3>
+			<h3>High Level Walk Through</h3>
 				IDP initiated SSO basics
 				<ol>
 					<li>
@@ -57,7 +57,7 @@
 						</div>
 					</li>
 					<li>
-						User enters authentication information and signs in, after which the IDP creates a session and gathers necessary peristed information 
+						User enters authentication information and signs in, after which the IDP creates a session and gathers necessary persisted information 
 					</li>
 					<li>
 						The IDP utilizes the persisted user information to create a message to send to the service provider
@@ -74,7 +74,7 @@
 			<h2>SP Initiated SSO</h2>
 				The other main SSO flow is SP initiated SSO. 
 
-				<h3>High Level Walkthrough</h3>
+				<h3>High Level Walk Through</h3>
 				<ol>
 					<li>
 						User navigates to their SP of choice, for example LinkedIn
@@ -84,7 +84,7 @@
 						request to the IDP 
 					</li>
 					<li>
-						The IDP will recieve the request, and redirect the user to the IDP's login screen
+						The IDP will receive the request, and redirect the user to the IDP's login screen
 					</li>
 					<li>
 						The user signs in, and the IDP once again creates the message containing user information to send to the SP
@@ -93,7 +93,7 @@
 						The IDP automatically sends this user information to the SP, and if accepted the user is automatically redirected to the SP's website
 					</li>
 					<li>
-						The service provider verifies in the information is from the IDP (amongst other things), and then cretes the user session
+						The service provider verifies in the information is from the IDP (amongst other things), and then creates the user session
 					</li>
 				</ol>
 
@@ -126,7 +126,7 @@
 				<br>
 					<dl class="light-gray">
 					  <dt>AuthnRequest</dt>
-					  <dd>The authentication request. Acts as the wrapper for the request from the SP to the IDP. It has a a couple of key attributes
+					  <dd>The authentication request. Acts as the wrapper for the request from the SP to the IDP. It has a couple of key attributes
 					  <ul>
 						<li style="margin-left: 20px">
 							ID: <span>The specific AuthnRequest ID. Unique for each request. This is used in the SAML response to indicate which request the response is tied to</span>
@@ -153,7 +153,7 @@
 				<a href="https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#authnrequest">documentation</a>
 
 			<h3>SAML Response</h3>
-			A SAML response is a crucial part of both the IDP initiated and SP initiated SSO flows. This is the message containing proof of the user authentication, along with user information. It is sent from the IDP to the SP. Below is an example of a rudamentary SAML response
+			A SAML response is a crucial part of both the IDP initiated and SP initiated SSO flows. This is the message containing proof of the user authentication, along with user information. It is sent from the IDP to the SP. Below is an example of a rudimentary SAML response
 
 			<pre class="prettyprint lang-xml" id="xml-block">
 &lt;samlp:Response
@@ -222,7 +222,7 @@
                   <dd>The outer wrapper of the information sent from IDP to SP. It has a couple of important attributes
 					  <ul>
 						  <li style="margin-left: 20px">ID : <span>The id for this response. Unique for each response<span></li>
-						  <li style="margin-left: 20px">Issue Insant : <span>When the response was created</span></li>
+						  <li style="margin-left: 20px">Issue Instant : <span>When the response was created</span></li>
 						  <li style="margin-left: 20px">Destination : <span>Where the response is being sent to, in URL format</span></li>
 						  <li style="margin-left: 20px">In Response To : <span>The ID of the SAML request that corresponds to the response. 
 								  In this example it is blank, as this was an IDP initiated SSO payload</span></li>
@@ -233,7 +233,8 @@
                   <dt>Status</dt>
                   <dd>Conveys whether the sign in was successful or not</dd>
                   <dt>Assertion</dt>
-					<dd>The main element encopassing most of the user and auth information. The following are the most important inclusions that reside within the assertion</dd>
+					<dd>The main element encompassing most of the user and authentication 
+						information. The following are the most important inclusions that reside within the assertion</dd>
 							<dt style="margin-left: 20px">Issuer</dt>
 							<dd style="margin-left: 40px">The IDP's name</dd>
 							<dt style="margin-left: 20px">Signature</dt>
@@ -244,7 +245,7 @@
 							<dd style="margin-left: 40px">Often defines a NotBefore and NotOnOrAfter fields, determining what time period the assertion is valid for</dd>
 							<dt style="margin-left: 20px">Audience</dt>
 							<dd style="margin-left: 40px">Contains the URI that identifies the intended recipient of the SAML Response</dd>
-							<dt style="margin-left: 20px">Atribute Statement</dt>
+							<dt style="margin-left: 20px">Attribute Statement</dt>
 							<dd style="margin-left: 40px">Contains claims about the user, typically additional information that the IDP would store such as email, name, etc</dd>
 							<dt style="margin-left: 20px">AuthnStatement</dt>
 							<dd style="margin-left: 40px">Describes what method the user authenticated with, such as a password. Also provides timestamp information similar to conditions</dd>
@@ -254,7 +255,7 @@
 				To find out more, visit Microsoft's <a href='https://learn.microsoft.com/en-us/entra/identity-platform/single-sign-on-saml-protocol#response'>documentation</a>
 				
 			<h2>Bindings</h2>
-			In order to send SAML requests and responses between SPs and IDPs, there must be agreed upon conventions and protocols. The protocol used for SAML is HTTP, and there are two main, distinct ways that these request can be sent. These are called bindings. Both the IDP and SP can define their own preffered bindings
+			In order to send SAML requests and responses between SPs and IDPs, there must be agreed upon conventions and protocols. The protocol used for SAML is HTTP, and there are two main, distinct ways that these request can be sent. These are called bindings. Both the IDP and SP can define their own preferred bindings
 
 			<h3>Post binding</h3>
 			When the post binding is used, communication between IDP and SP is done through an HTTP POST request. It is most commonly supported by service providers, rather than 
@@ -266,7 +267,7 @@
 				<li>
 					RelayState: During SP initiated SSO, the IDP must echo back what the SP sent in the SAML Request. In an IDP initiated SSO,
 					the IDP can include the URL of a specific page hosted by the service provider. After the service provider parses and
-					validates the SAML resposne, the user would be redirected to that URL. 
+					validates the SAML response, the user would be redirected to that URL. 
 					This is not specifically stated in the SAML specification, but is often utilized in modern SAML flows.
 				</li>
 			</ul>
@@ -312,7 +313,8 @@
 			<h3>Creating IDP metadata</h3>
 			<p>
 			Because we are our own IDP in this example, we need to generate IDP metadata. 
-			In order to do so, first a keypair is required so that the public certificate can be embedded into the IDP metadata, and later the SAML response. The service provider will
+			In order to do so, 
+			first a key pair is required so that the public certificate can be embedded into the IDP metadata, and later the SAML response. The service provider will
 			utilize this public key as a reference to look up internally stored keys, and verify the signature of the SAML response.
 			In order to generate the pair, a simple bash script written with openSSL should suffice.
 
@@ -353,7 +355,7 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 &lt;/md:EntityDescriptor&gt;
 			</pre>
 
-			Mostly all the information entered into samltool's form is embeded here. From information about the login request endpoint for SP initiated SSO, the IDP's entityID,
+			Mostly all the information entered into samltool's form is embedded here. From information about the login request endpoint for SP initiated SSO, the IDP's entityID,
 			the public certificate used to verify signature value on the SAML Response, and even a public key that can be used by service providers to encrypt SAML requests.
 
 			<h3>Implementation</h3>
@@ -364,8 +366,8 @@ openssl x509 -req -days 365 -signkey <(echo "$KEY") 2>/dev/null</pre>
 				The first thing that should be done when working with samlify is downloading the IDP and SP metadata, 
 				and creating the respective objects. We already took a look at these metadata files, so we can jump right into some examples. 
 				To demonstrate various use cases, I've create a super basic web server that has three functionalities. 
-				One is a basic IDP initiated flow with no special SAML response template. Another is an IDP initated SSO with a custom SAML response template. 
-				The final one is a service provider initated SSO flow.
+				One is a basic IDP initiated flow with no special SAML response template. Another is an IDP initiated SSO with a custom SAML response template. 
+				The final one is a service provider initiated SSO flow.
 				</p>
 
 
@@ -405,10 +407,10 @@ app.get('/sso/iamshowcase/login', async (_req: Request, res: Response) =&gt {
 })
 </pre>
 				Two objects are created that represent the SP and the IDP which utilize the respective metadata files. Also necessary is the 
-				IDP's private key used sign the SAML assertion, genearted via the bash script shown earlier. The <code>idp.createLoginResponse</code> method is responsible 
+				IDP's private key used sign the SAML assertion, generated via the bash script shown earlier. The <code>idp.createLoginResponse</code> method is responsible 
 				for generating the SAML response. It requires the service provider, a SAML request object, which binding to use, and a user object. Because this is 
 				an IDP initiated SSO, I've created a mock SAML request object to pass in. The library will automatically extract relevant user information from the user object, and
-				put it within the nameId and attributes section. Finally, returned is a <code>context</code> varibale (the SAML response), 
+				put it within the NameId and attributes section. Finally, returned is a <code>context</code> variable (the SAML response), 
 				the <code>entityEndpoint</code> which is the ACS URL, and the <code>relayState</code>. For IAMShowcase, 
 				setting the relay state changes the color of the UI of the website, nothing more.
 				This method is used in a simple HTTP get request after hitting the "sso" button on the frontend
@@ -443,13 +445,13 @@ form.submit();
 </pre>
 
 
-				Upon reaching the service provider, we are greeted with the information held within the SAML response. Beacuse this response only contained the bare minimum 
+				Upon reaching the service provider, we are greeted with the information held within the SAML response. Because this response only contained the bare minimum 
 				information, the information shown is limited. We can see that the UI is a light blue color, as that is what we specified in our relay state
 
             <div class="image-description-block">
 				<img src="./sp-home.png"/>
                 <p>
-				service provider hoem screen after login via IDP
+				service provider home screen after login via IDP
                 </p>
             </div>
 
@@ -459,7 +461,7 @@ form.submit();
 					Most SPs are going to require extra information about the user, 
 					or other specifics surrounding the authentication that is not included by default from samilfy. 
 					In these instances, samlify allows for IDPs to provide custom XML template for SAML responses. 
-					This is the template used in the folloiwng example
+					This is the template used in the following example
 
 
 			<pre class="prettyprint lang-xml" id="xml-block">
@@ -575,7 +577,7 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 					The code is fairly similar, and the core principals remain the same. The IDP is supplied the typical metadata information, although we now include 
 					the custom template. Additionally the <code>wantMessageSigned</code> variable is set, to demonstrate more capabilities of the library. This means samlify 
 					will sign both the message and the assertion automatically. Once again, a mock SAML request is utilized. One more difference in this example is 
-					the inclusion of a mock user, something that could represent a database entity stored at the IDP. We supply all of the same paremters, with the addition 
+					the inclusion of a mock user, something that could represent a database entity stored at the IDP. We supply all of the same parameters, with the addition 
 					of one new one: a function which takes in our template, and should return the final SAML response. 
 					We then are able to the callback function in order to replace the placeholders within the template with 
 					information coming from the metadata, user object, and other sources. After logging in via the "custom sso" button in the UI, 
@@ -603,7 +605,7 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
                 </p>
             </div>
 				<h4>SP initiated SSO example</h4>
-					Service provider initiated SSO is a bit more involved. The joruney starts at the service provider. For IAMShowcase, they allow you to register IDP metadata, 
+					Service provider initiated SSO is a bit more involved. The journey starts at the service provider. For IAMShowcase, they allow you to register IDP metadata, 
 					and they generate a URL which will redirect to your IDPs single sign on service endpoint, as listed in the XML. For this instance, that is
 
 <pre class="prettyprint lang-xml" id="xml-block">
@@ -716,7 +718,7 @@ app.post('/login', async (req: Request, res: Response) =&gt {
 
 
 			This code is practically the same as the basic SAML response demonstration, with two major differences. Firstly, it utilizes the cookie values 
-			to create a signature and check it against the cookie signature value, to ensure no end user tampering occured with the SAML request information.
+			to create a signature and check it against the cookie signature value, to ensure no end user tampering occurred with the SAML request information.
 			Additionally it uses the email entered in the login form to generate the SAML response information. In a real production instance,
 			user information would be taken from the database after login. After the server responds, the frontend is able to utilize the information to 
 			send the SAML response to the service provider.
