@@ -17,21 +17,23 @@
         <article>
             <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
 			<h2>What is SSO</h2>
-				Single sign on, otherwise known as SSO, is a technique that allows an end user to sign in once, and access an entire suite of applications without having to authenticate into each individual service. Before understanding the intricacies of SSO, there are a couple of useful terms to understand
+				Single sign on, otherwise known as SSO, is a technique that allows an end user to sign in to a central authority once, and access an entire suite of applications without having to authenticate into each individual service. Before understanding the intricacies of SSO, there are a couple of useful terms to define
 
                 <dl class="light-gray">
                   <dt>Identity Provider</dt>
-                  <dd>The identity provider is the "service" that handles authentication for end users. It keeps track of user logins, and verifies that users are who they say they are. Common examples of an IDP are Okta, and Auth0</dd>
+                  <dd>The identity provider, or IDP, is the entity that handles authentication for users. Examples of popular IDPs are Okta, Auth0, and Azure</dd>
 
                   <dt>Service Provider</dt>
                   <dd>
-					  The Service Provider, or SP, is the service that the end user actually wants to gain access to after authenticating. Depending on the end user, they might have access to a variety of different services, such as gitlab, or a CRM. After authenticating via an IDP, the users are able to access the SP without requiring another round of authentcation
+					  The service provider, or SP, is the application that the user is attempting to access after authentication. Examples of popular SPs are Github,
+					  Twitter, and Facebook
 				  </dd>
                 </dl>
 
 			<h2>IDP Initiated SSO</h2>
 			<p>
-			IDP initiated SSO is one of the two possible SSO flows involved with SAML, which is something we will discuss later. IDP initiated SSO involves first signing into an identity provider, like okta, and then being able to click into individual service providers. 
+			IDP initiated SSO is one of the two main SSO flows. IDP initiated SSO entails the user initially signing into their identity provider. After authentication, 
+			they are able to click into individual service providers without having to enter credentials for each
 
 
             <div class="image-description-block">
@@ -41,14 +43,12 @@
                 </p>
             </div>
 
-			As you can see, all of the available clickable boxes represents a service provider that the user has access to
 			</p>
-			<h3>Very high-level example</h3>
-				IDP initiated SSO flow goes like this
-
+			<h3>High Level Walkthrough</h3>
+				IDP initiated SSO basics
 				<ol>
 					<li>
-						User navigates to their IDP, for example www.okta.com
+						User navigates to their IDP, in this example we will be using Okta
 						<div class="image-description-block">
 							<img src="./okta login.png">
 							<p>
@@ -57,48 +57,43 @@
 						</div>
 					</li>
 					<li>
-						User enters authentication information and signs-in, and the IDP creates a session for the user
+						User enters authentication information and signs in, after which the IDP creates a session and gathers necessary peristed information 
 					</li>
 					<li>
-						The IDP gathers information on the logged-in user, and 
-						creates a bundle of information to send to the service provider
+						The IDP utilizes the persisted user information to create a message to send to the service provider
 					</li>
 					<li>
-						When the user clicks the cards for a service provider, the user information 
-						is sent to the service provider. The service providers validate the information is 
-						from Okta, and then create a user session and allow the user in based on the information
-						that okta has provided in the SAML Response
+						When the user clicks the element to navigate into a service provider, the message the IDP created that contains the user information 
+						is sent to the service provider
+					</li>
+					<li>
+						The service providers validates the information is from Okta (amongst other things), and creates a user session 
 					</li>
 				</ol>
 
 			<h2>SP Initiated SSO</h2>
-				The other flow option for SSO is SP-initiated SSO. This flow goes like so
+				The other main SSO flow is SP initiated SSO. 
 
-				<h3>Very high-level example</h3>
+				<h3>High Level Walkthrough</h3>
 				<ol>
 					<li>
-						User navigates to their SP of choice, for example www.linkedin.com
+						User navigates to their SP of choice, for example LinkedIn
 					</li>
 					<li>
-						the service provider sends an authentication request to the IDP with information about who the service provider is, what time the request occured, etc.
+						The user clicks a button, such as "Sign in with Google", after which the service provider sends an authentication 
+						request to the IDP 
 					</li>
 					<li>
-						The IDP will parse this response, and then redirect the user to their login screen
-						<div class="image-description-block">
-							<img src="./okta login.png">
-							<p>
-							Okta login screen
-							</p>
-						</div>
+						The IDP will recieve the request, and redirect the user to the IDP's login screen
 					</li>
 					<li>
-						The user signs in with their IDP, and the IDP once again creates the bundle of user information
+						The user signs in, and the IDP once again creates the message containing user information to send to the SP
 					</li>
 					<li>
-						This time, the user is automatically redirected to the service provider,  
+						The IDP automatically sends this user information to the SP, and if accepted the user is automatically redirected to the SP's website
 					</li>
 					<li>
-						The service provider verifies in the information is from the IDP, and then cretes the user session
+						The service provider verifies in the information is from the IDP (amongst other things), and then cretes the user session
 					</li>
 				</ol>
 
