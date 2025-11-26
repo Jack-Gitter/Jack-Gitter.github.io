@@ -37,7 +37,7 @@
 
 
             <div class="image-description-block">
-			<img src="./okta-experience.png" style="width:100%">
+			<img src="./images/okta-experience.png" style="width:100%">
                 <p>
 				Example login screen after authenticating via Okta
                 </p>
@@ -50,7 +50,7 @@
 					<li>
 						User navigates to their IDP to login
 						<div class="image-description-block">
-							<img src="./okta login.png">
+							<img src="./images/okta login.png">
 							<p>
 							Okta login screen
 							</p>
@@ -293,7 +293,7 @@
 				is pretty straight forward
 
 				<div class="image-description-block">
-					<img src="./download-sp-meta.png" style="width:100%">
+					<img src="./images/download-sp-meta.png" style="width:100%">
 					<p>
 					IAmShowcase metadata download
 					</p>
@@ -408,18 +408,18 @@ app.get('/sso/iamshowcase/login', async (_req: Request, res: Response) =&gt {
 })
 </pre>
 				Two objects are created that represent the SP and the IDP which utilize the respective metadata files. Also necessary is the 
-				IDP's private key used sign the SAML assertion, generated via the bash script shown earlier. The <code>idp.createLoginResponse</code> method is responsible 
+				IDP's private key used sign the SAML assertion, generated via the bash script shown earlier. The <span class="inline-code">idp.createLoginResponse</span> method is responsible 
 				for generating the SAML response. It requires the service provider, a SAML request object, which binding to use, and a user object. Because this is 
 				an IDP initiated SSO, I've created a mock SAML request object to pass in. The library will automatically extract relevant user information from the user object, and
-				put it within the NameID and attributes section. Finally, returned is a <code>context</code> variable (the SAML response), 
-				the <code>entityEndpoint</code> which is the ACS URL, and the <code>relayState</code>. For IAMShowcase, 
+				put it within the NameID and attributes section. Finally, returned is a <span class="inline-code">context</span> variable (the SAML response), 
+				the <span class="inline-code">entityEndpoint</span> which is the ACS URL, and the <span class="inline-code">relayState</span>. For IAMShowcase, 
 				setting the relay state changes the color of the UI of the website, nothing more.
 				This method is used in a simple HTTP get request after hitting the "sso" button on the frontend
 
 
 
             <div class="image-description-block">
-				<img src="./home.png"/>
+				<img src="./images/home.png"/>
                 <p>
 				Extremely polished home screen
                 </p>
@@ -450,7 +450,7 @@ form.submit();
 				information, the information shown is limited. We can see that the UI is a light blue color, as that is what we specified in our relay state
 
             <div class="image-description-block">
-				<img src="./sp-home.png"/>
+				<img src="./images/sp-home.png"/>
                 <p>
 				Service provider home screen after login via IDP
                 </p>
@@ -576,7 +576,7 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 					</pre>
 
 					The code is fairly similar, and the core principals remain the same. The IDP is supplied the typical metadata information, although we now include 
-					the custom template. Additionally the <code>wantMessageSigned</code> variable is set, to demonstrate more capabilities of the library. This means samlify 
+					the custom template. Additionally the <span class="inline-code">wantMessageSigned</span> variable is set, to demonstrate more capabilities of the library. This means samlify 
 					will sign both the message and the assertion automatically. Once again, a mock SAML request is utilized. One more difference in this example is 
 					the inclusion of a mock user, something that could represent a database entity stored at the IDP. We supply all of the same parameters, with the addition 
 					of one new one: a function which takes in our template, and should return the final SAML response. 
@@ -588,19 +588,19 @@ const createTemplateCallback = (idp: any, sp: any, user: any, template: string) 
 
 					
             <div class="image-description-block">
-				<img src="./authn.png"/>
+				<img src="./images/authn.png"/>
                 <p>
 				Authn Information that was included in the SAML Response
                 </p>
             </div>
             <div class="image-description-block">
-				<img src="./attributes.png"/>
+				<img src="./images/attributes.png"/>
                 <p>
 				User attributes that were included in the custom SAML Response
                 </p>
             </div>
             <div class="image-description-block">
-				<img src="./details.png"/>
+				<img src="./images/details.png"/>
                 <p>
 				Other details, not audience tag
                 </p>
@@ -662,19 +662,19 @@ app.get('/saml/auth', async (req: Request, res: Response) =&gt {
 })
 					</pre>
 					First, we create the IDP and SP object as usual.
-					The <code>idp.parseLoginRequest</code> method can be used to parse the authentication request that the SP sent. 
+					The <span class="inline-code">idp.parseLoginRequest</span> method can be used to parse the authentication request that the SP sent. 
 					The main information from this request that is useful is the issuer, and the request ID. Utilizing those two values a signature is created, 
 					and all three are set as cookies. The user is then redirected to the IDP login page. 
 
             <div class="image-description-block">
-				<img src="./login.png"/>
+				<img src="./images/login.png"/>
                 <p>
 				Super advanced login page
                 </p>
             </div>
 
             <div class="image-description-block">
-				<img src="./cookies.png"/>
+				<img src="./images/cookies.png"/>
                 <p>
 				Cookies set by backend
                 </p>
