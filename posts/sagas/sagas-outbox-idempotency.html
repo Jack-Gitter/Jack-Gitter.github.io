@@ -367,6 +367,12 @@
                 eventually come back to the <span class='inline-service'>Orders</span> service, with no corresponding saga. This means that
                 we have to reconstruct the Sagas each time the application restarts, so that we can handle crashes properly. This could be done by looking at 
                 all currently pending orders upon server restart and constructing a saga from them, but it was beginning to feel over-engineered. 
+
+
+				<div class="sidenote"> 
+					I am a totally idiot. This approach was good, although utilization of a state machine library such as xstate, in comibination of writing the state machine
+					to the database on state transitions in a transaction with other completed work is the correct approach for an orchestration based saga.
+				</div>
                 Rather, I ended up going a much simpler route. I created message handlers for each response queue, and I attached the ID of each 
                 <span class='inline-code'>Order</span> Entity to every message to every service. This way, when the order
                 service got a message, it could simply look up the <span class='inline-code'>Order</span> Entity details from the database, craft the next message 
