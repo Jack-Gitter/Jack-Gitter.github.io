@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orchestration Sagas</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+</head>
+<body>
+    <header>
+        <h1>Orchestration Sagas</h1>
+        <p class="date">December 19, 2025</p>
+    </header>
+    <main>
+        <article>
+            <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
+			<h2>Brief Recap</h2>
+            <p>
+				If you haven't read my other post about sagas, it is <a href="">here</a>. That approach
+				was not super clean, and also I started with a orchestration based saga but reverted 
+				to choreography due to the challenge of an orchestrator failure. Since then, I've been thinking
+				about how to handle orchestration failure, and overall create a much better model of sagas
+				and orchestration in general. The following is the culmination of those thoughts and ideas 
+				exectued in a small project
+            </p>
+			<h2>General Patterns, High Level Overview</h2>
+				<h3>Idempotent Consumer/Inbox</h3>
+				<h3>Outbox</h3>
+				<h3>Saga</h3>
+
+			<h2>Infrastructure</h2>
+				<h3>postgres</h3>
+				<h3>rabbitmq</h3>
+				<h3>docker</h3>
+				<h3>run script</h3>
+
+			<h2>TypeORM Entities</h2>
+			<h2>Orders, Inventory, and Shipping services</h2>
+			<h2>Saga Step Interface</h2>
+			<h2>Saga Class</h2>
+			<h2>Saga Orchestrator</h2>
+				<h3>Recover sagas after crash</h3>
+			<h2>Http Server</h2>
+			<h2>RabbitMQ</h2>
+        </article>
+    </main>
+    <footer>
+        <span class="date">SWE @ Sentinel Group</span>
+    </footer>
+</body>
+</html>
