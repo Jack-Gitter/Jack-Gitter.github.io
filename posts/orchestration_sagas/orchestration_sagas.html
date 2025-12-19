@@ -17,34 +17,533 @@
             <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
 			<h2>Brief Recap</h2>
             <p>
-				If you haven't read my other post about sagas, it is <a href="">here</a>. That approach
-				was not super clean, and also I started with a orchestration based saga but reverted 
-				to choreography due to the challenge of an orchestrator failure. Since then, I've been thinking
-				about how to handle orchestration failure, and overall create a much better model of sagas
-				and orchestration in general. The following is the culmination of those thoughts and ideas 
-				exectued in a small project
+				This will be a continuation of my other post about sagas, which can be found
+				<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">here</a>.
+				Although the implementation worked, I was not extremely satisfied with the code itself.
+				That implementation started with an orchestration based saga, but reverted to a
+				choreography based approach due to the difficulties of dealing with an orchestration server crash.
+				For this implementation, I've decided to utilize all of the same robustness techniques, although
+				rework my classes and code organization into a more modular and clean approach.
             </p>
 			<h2>General Patterns, High Level Overview</h2>
-				<h3>Idempotent Consumer/Inbox</h3>
-				<h3>Outbox</h3>
-				<h3>Saga</h3>
+			The main patterns used to communicate between microservices  are: saga, idempotent consumer, and outbox. 
+			If you're not up to speed on one or any of these, my previous 
+			<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">post</a> goes into
+			great detail about them. More information can also be found <a href="https://microservices.io/patterns/">here</a>. 
+			I also use some simple OOP patterns, such as the <a href="https://refactoring.guru/design-patterns/factory-method">factory</a> 
+			and <a href="https://refactoring.guru/design-patterns/builder">builder</a> patterns.
 
 			<h2>Infrastructure</h2>
-				<h3>postgres</h3>
-				<h3>rabbitmq</h3>
+				In order to develop this project, I used a couple of different infrastructure dependencies
+				<h3>Postgres</h3>
+				Used for persistance of the saga, inbox and outbox messages, and overall "work" that the microservices needed to acomplish
+				<h3>RabbitMQ</h3>
+				Used for messaging between microservices, a simple message queue service
 				<h3>docker</h3>
+				Used in order to easily spin up the infrastructure dependencies
 				<h3>run script</h3>
+				Created a run script called "start.sh" at the root of the project, to easily start all services and dependencies
 
-			<h2>TypeORM Entities</h2>
 			<h2>Orders, Inventory, and Shipping services</h2>
+			The overall goal of this project is to create a microservice system that would always become eventually consistent
+			if the orchestrator or independent services crashed at any point. The simulated environment for this 
+			is an oversimplified ecommerce system which has three microservices: orders, inventory, and shipping. 
+			<h3>Orders Service</h3>
+			Firstly, requests come into the orders service via HTTP. The request is simple, it only contains a 
+			productId and a quantityt. This service acts as the orchestrator for the other microservices. 
+			It will create an order in a pending state for the given product and quantity, and continue to facilitate messages between
+			the other services until the order is shipped, after which it will finalize the order status. If anything goes 
+			wrong along the way, the orders service has all the infromation as to what has succeeded so far, and is able to send messages
+			to the microservices in order to rollback any changes
+			<h3>Inventory Service</h3>
+			The inventory service is responsible for managing how much of a specific product is available. In theory is would 
+			validate there is enough product for the given order requested, and remove the inventory from the system. In reality, 
+			most of this project was centered around the orchestrator, so the inventory service performs "fake" work
+			<h3>Shipping Service</h3>
+			The shipping service is responsible for shipping the product once the inventory has been removed. This would be the last 
+			step in the process, besides finalizing the order in the orders service. Again in reality, this service also doesn't do much 
+			of anything, besides sending messages back to the orchestrator
+
 			<h2>Saga Step Interface</h2>
+			Jumping into the code, we will work our way up from smallest buildling block to the largest. Firstly, we'll 
+			talk about the saga step interface. Its quite simple, it has an invoke function and a compensate function. 
+			The invoke function is meant to perform the work of the step, and compensate should revert whatever occured
+			during the invoke step for rollback purposes.
+
+<pre class='prettyprint lang-typescript'>
+import { STEP } from "../../../db/entities/types"
+
+export interface SagaStepInterface&ltT, U&gt {
+
+	step: STEP
+
+	invoke(data: T): Promise&ltvoid&gt
+
+	compenstate(data: U): Promise&ltvoid&gt
+
+}
+</pre>
+
+	<h2>OrderSaga Steps</h2>
+	In order to implement our saga, we're going to need a couple of concrete steps. Here they are for the orders saga.
+	These steps all have to be idempotent, and all actions have to occur in the same database transaction in order to 
+	achieve consistency
+	<h3>Create Order</h3>
+
+
+<pre class='prettyprint lang-typescript'>
+export class CreateOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
+
+	public step: STEP = STEP.CREATE_ORDER
+
+	constructor(private datasource: DataSource) {}
+
+    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`creating order with id ${data.orderId}`)
+		await this.datasource.transaction(async manager =&gt {
+			const orderRepository = manager.getRepository(Order)
+			const outboxRepository = manager.getRepository(OutboxMessage)
+			const orderSagaRepository = manager.getRepository(OrderSagaEntity)
+
+			const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
+			if (existingOrder) {
+				console.log(`already created order with id ${data.orderId}, skipping`)
+				return
+			}
+
+			const order = new Order(data.orderId, data.productId, data.quantity)
+			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL)
+			const orderSagaEntity = new OrderSagaEntity(data.orderId, data.quantity, data.productId, STEP.CREATE_ORDER)
+
+			await orderRepository.save(order)
+			await outboxRepository.save(outboxMessage)
+			await orderSagaRepository.save(orderSagaEntity)
+		})
+    }
+
+    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`compensating create order step`)
+		await this.datasource.transaction(async manager =&gt {
+			const orderRepository = manager.getRepository(Order)
+			const sagaRepository = manager.getRepository(OrderSagaEntity)
+
+			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.COMPENSATE)
+			const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
+			existingOrder.status = ORDER_STATUS.CANCELED
+
+			await sagaRepository.save(sagaEntity)
+			await orderRepository.save(existingOrder)
+		})
+
+    }
+}
+</pre>
+
+<h3>Remove Inventory</h3>
+
+<pre class='prettyprint lang-typescript'>
+export class RemoveInventoryStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
+
+	public step: STEP = STEP.REMOVE_INVENTORY
+
+	constructor(private datasource: DataSource) {}
+
+    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`removing inventory for order with id ${data.orderId}`)
+		await this.datasource.transaction(async manager =&gt {
+			const inboxRepository = manager.getRepository(InboxMessage)
+			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL})
+			if (existingMessage) {
+				console.log(`already removed inventory for order with id ${data.orderId}, skipping`)
+				return
+			}
+			const outboxRepository = manager.getRepository(OutboxMessage)
+			const sagaRepository = manager.getRepository(OrderSagaEntity)
+
+			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL, true)
+			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY)
+			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.REMOVE_INVENTORY)
+
+			await inboxRepository.save(inboxMessage)
+			await outboxRepository.save(outboxMessage)
+			await sagaRepository.save(sagaEntity)
+		})
+    }
+
+    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`compensating remove inventory step`)
+		await this.datasource.transaction(async manager =&gt {
+			const outboxRepository = manager.getRepository(OutboxMessage)
+
+			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.RESTORE_INVENTORY)
+
+			await outboxRepository.save(outboxMessage)
+		})
+    }
+}
+</pre>
+
+<h3>Ship Order</h3>
+
+
+<pre class='prettyprint lang-typescript'>
+export class ShipOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
+
+	public step: STEP = STEP.SHIP_ORDER
+
+	constructor(private datasource: DataSource) {}
+
+    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`shipping order for order with id ${data.orderId}`)
+		await this.datasource.transaction(async manager =&gt {
+			const inboxRepository = manager.getRepository(InboxMessage)
+			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE})
+			if (existingMessage) {
+				console.log(`already shipped order for order with id ${data.orderId}, skipping`)
+				return
+			}
+			const outboxRepository = manager.getRepository(OutboxMessage)
+			const sagaRepository = manager.getRepository(OrderSagaEntity)
+
+			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE, true)
+			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER)
+			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.SHIP_ORDER)
+
+			await inboxRepository.save(inboxMessage)
+			await outboxRepository.save(outboxMessage)
+			await sagaRepository.save(sagaEntity)
+		})
+    }
+    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`compensating ship order step`)
+		await this.datasource.transaction(async manager =&gt {
+			const outboxRepository = manager.getRepository(OutboxMessage)
+
+			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER_CANCEL)
+
+			await outboxRepository.save(outboxMessage)
+		})
+    }
+}
+</pre>
+
+<h3>Finalizing Order</h3>
+<pre class='prettyprint lang-typescript'>
+export class FinalizeOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
+
+	public step: STEP = STEP.FINALIZE_ORDER
+
+	constructor(private datasource: DataSource) {}
+
+    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+		console.log(`finalizing order with id ${data.orderId}`)
+		await this.datasource.transaction(async manager =&gt {
+			const inboxRepository = manager.getRepository(InboxMessage)
+			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE})
+			if (existingMessage) {
+				console.log(`already finalized order with id ${data.orderId}, skipping`)
+				return;
+			}
+
+			const sagaRepository = manager.getRepository(OrderSagaEntity)
+			const orderRepository = manager.getRepository(Order)
+
+			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE, true)
+			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.FINALIZE_ORDER)
+			const order = await orderRepository.findOneBy({orderId: data.orderId})
+			order.status = ORDER_STATUS.FULFILLED
+
+			await inboxRepository.save(inboxMessage)
+			await sagaRepository.save(sagaEntity)
+			await orderRepository.save(order)
+
+		})
+    }
+    async compenstate(): Promise&ltvoid&gt {
+		// last step, no compensation
+    }
+}
+</pre>
+
 			<h2>Saga Class</h2>
+			In order to string these steps together, I created a Saga class which represenents all of the steps that need 
+			to occur in order for an order to go from start to complete. It has a list of steps that it needs to complete,
+			and keeps track of which steps have completed so far. It additionally keeps some information about 
+			the order that it is coordinating the steps of, such as orderId, productId, and quantity
+
+<pre class='prettyprint lang-typescript'>
+export class OrderSaga {
+
+	public steps: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
+	public completed: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
+	public index: number
+	public orderId: UUID
+	public productId: number
+	public quantity: number
+
+	constructor(orderId: UUID, productId: number, quantity: number) {
+		this.orderId = orderId
+		this.productId = productId
+		this.quantity = quantity
+		this.index = 0
+		this.steps = []
+		this.completed = []
+	}
+
+	async invokeNext(messageId?: UUID) {
+		if (this.index == this.steps.length) {
+			console.log('No more steps left, saga is completed')
+			return
+		}
+		await this.steps[this.index].invoke({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
+		this.completed.push(this.steps[this.index])
+		this.index+=1
+	}
+
+	async compensate(messageId?: UUID) {
+		console.log(`compensating saga with orderId: ${this.orderId}`)
+		const stepsToRollback = this.completed.slice(0, -1).reverse()
+		for (const step of stepsToRollback) {
+			await step.compenstate({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
+		}
+	}
+}
+			</pre>
 				<h3>Builder Pattern</h3>
+				In order to easily create ordersagas, I've created a builder pattern to add steps incrementally 
+
+<pre class='prettyprint lang-typescript'>
+export class OrderSagaBuilder {
+
+	private orderSaga: OrderSaga
+
+	constructor(orderId: UUID, productId: number, quantity: number) {
+		this.orderSaga = new OrderSaga(orderId, productId, quantity)
+	}
+
+	addStep(step: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt) {
+		this.orderSaga.steps.push(step)
+		return this
+	}
+
+	setStep(lastCompletedStep: STEP) {
+		if (!lastCompletedStep) return
+		for (const step of this.orderSaga.steps) {
+			if (step.step === lastCompletedStep) {
+				this.orderSaga.completed.push(step)
+				this.orderSaga.index+=1
+				return
+			}
+			this.orderSaga.completed.push(step)
+			this.orderSaga.index+=1
+		}
+	}
+
+	build() {
+		return this.orderSaga
+	}
+}
+				</pre>
+
 				<h3>Factory Pattern</h3>
+
+				I use the builder pattern within my factor pattern. The factory pattern becomes very useful
+				when we have to recreate the sagas from the database during the even of an orchestrator crash.
+				We will see this later
+
+<pre class='prettyprint lang-typescript'>
+export class OrderSagaFactory {
+
+	constructor(private datasource: DataSource) {}
+
+	createSaga(orderId: UUID, productId: number, quantity: number, lastCompletedStep?: STEP) {
+		const builder = new OrderSagaBuilder(orderId, productId, quantity)
+
+		builder.addStep(new CreateOrderStep(this.datasource))
+		.addStep(new RemoveInventoryStep(this.datasource))
+		.addStep(new ShipOrderStep(this.datasource))
+		.addStep(new FinalizeOrderStep(this.datasource))
+
+		builder.setStep(lastCompletedStep)
+
+		return builder.build()
+	}
+}
+</pre>
 			<h2>Saga Orchestrator</h2>
+			The orchestrator is the class which manages the lifecycle of all sagas ongoing in the program.
+			For each order there would be an instance of the saga class, and the orchestrator keeps track 
+			of all of these in a map from orderId to saga. It then is able to call the invoke or compensate 
+			actions of a respective saga based on an orderId
+
+<pre class='prettyprint lang-typescript'>
+export class OrderSagaOrchestrator {
+
+	private sagas = new Map&ltUUID, OrderSaga&gt();
+
+	constructor(private orderSagaFactory: OrderSagaFactory, private datasource: DataSource) {}
+
+	async newSaga(productId: number, quantity: number) {
+		const orderId = randomUUID()
+		const saga = this.orderSagaFactory.createSaga(orderId, productId, quantity)
+		this.sagas.set(orderId, saga)
+		await this.invokeNext(orderId)
+	}
+
+	async invokeNext(orderId: UUID, messageId?: UUID) {
+		const saga = this.sagas.get(orderId)
+		if (!saga) {
+			console.log(`No saga with orderId ${orderId} found`)
+			return
+		}
+		await saga.invokeNext(messageId)
+	}
+
+	async compensateSaga(orderId: UUID, messageId?: UUID) {
+		const saga = this.sagas.get(orderId)
+		await saga.compensate(messageId)
+	}
+
+	async restoreFromDb() {
+		const sagaRepository = this.datasource.getRepository(OrderSagaEntity)
+		const sagaEntities = await sagaRepository.find()
+		const sagas = sagaEntities.filter(entity =&gt entity.lastCompletedStep !== STEP.FINALIZE_ORDER && entity.lastCompletedStep !== STEP.COMPENSATE).map(entity =&gt {
+			console.log(`restoring saga with order id ${entity.orderId}. Last completed step was ${entity.lastCompletedStep}`)
+			return this.orderSagaFactory.createSaga(
+				entity.orderId, 
+				entity.productId, 
+				entity.quantity,
+				entity.lastCompletedStep
+			)
+		})
+		sagas.forEach(saga =&gt {
+			this.sagas.set(saga.orderId, saga)
+		})
+	}
+}
+			</pre>
 				<h3>Recover sagas after crash</h3>
+				The most interesting piece of this class is the restoreFromDb method. This utilizes the order saga factory 
+				and typeorm ordersagaEntity repository in order to fetch all sagas that have been persisted to the database,
+				and recreate them and put them in the right step. If any sagas have completed, they are not instantiated 
+				again. After a while, sagas within this set that are completed are also cleaned up
+
 			<h2>Http Server</h2>
+
+			There is a super simple http server built using express to accept incoming requests to the order service, and kick
+			off a new sgaa for the order
+<pre class='prettyprint lang-typescript'>
+export class Server {
+	private app: express.Express
+
+	constructor(private port: number, private orderSagaOrchestrator: OrderSagaOrchestrator) {}
+
+	init() {
+		this.app = express()
+		this.app.use(bodyParser.json())
+		this.registerRoute('/', HTTP_METHOD.POST, this.placeOrder)
+		this.listen()
+	}
+
+	private placeOrder = async (req: express.Request, res: express.Response) => {
+		const {productId, quantity}: {productId: number, quantity: number} = req.body
+		if (!productId || !quantity) {
+			res.status(400).send('No product or quantity')
+		}
+		await this.orderSagaOrchestrator.newSaga(productId, quantity)
+		res.send()
+	}
+
+	private registerRoute = (path: string, method: HTTP_METHOD, func: (req: express.Request, res: express.Response) => any) => {
+		switch(method) {
+			case HTTP_METHOD.GET: 
+				this.app.get(path, func)
+				break;
+			case HTTP_METHOD.POST: 
+				this.app.post(path, func)
+				break;
+			default: 
+				throw new Error('not supported')
+		}
+	}
+
+	private listen = () =&gt {
+		this.app.listen(this.port, () =&gt {
+		  console.log(`Example app listening on port ${this.port}`)
+		})
+	}
+}
+			</pre>
+
 			<h2>RabbitMQ</h2>
+			The rabbitMQ service is what listens to the channels and routes messages back to the order saga orchestrator. There is 
+			also a critical method called pollOutbox, which is used to send the outbox messages that have been persisted to the database
+			to the downstream services
+<pre class='prettyprint lang-typescript'>
+
+export class RabbitMQService {
+
+	private channel: amqplib.Channel
+
+	constructor(private datasource: DataSource, private orderSagaOrchestrator: OrderSagaOrchestrator) {
+	}
+
+	async init() {
+	  const connection = await amqplib.connect({
+		  username: process.env.RABBITMQ_USER,
+		  password: process.env.RABBITMQ_PASSWORD
+	  });
+	  const channel = await connection.createChannel();
+	  this.channel = channel;
+
+	  for (const queue of Object.values(OUTBOX_MESSAGE_TYPE)) {
+		await channel.assertQueue(queue)
+	  }
+
+	  for (const queue of Object.values(INBOX_MESSAGE_TYPE)) {
+		await channel.assertQueue(queue)
+		this.listenForMessage(queue)
+	  }
+		this.pollOutbox()
+	}
+
+	listenForMessage = async (queue: INBOX_MESSAGE_TYPE) => {
+		await this.channel.consume(queue, async (msg) => {
+			if (msg !== null) {
+				const message: ResponseMessage = JSON.parse(msg.content.toString())
+				console.log(`Received message with orderId ${message.orderId} and status ${message.success}`);
+				if (message.success) {
+					await this.orderSagaOrchestrator.invokeNext(message.orderId, message.id)
+				} else {
+					await this.orderSagaOrchestrator.compensateSaga(message.orderId)
+				}
+				this.channel.ack(msg)
+			}
+		})
+	}
+
+	pollOutbox = () => {
+		const outboxRepository = this.datasource.getRepository(OutboxMessage)
+		setInterval(async () => {
+			const outboxMessages = await outboxRepository.find()
+			outboxMessages.forEach(async outboxMessage => {
+				const json = outboxMessage.toJson();
+				const buffer = Buffer.from(JSON.stringify(json))
+				console.log(`sending outbox message to ${outboxMessage.messageType} queue`)
+				this.channel.sendToQueue(outboxMessage.messageType, buffer)
+				await outboxRepository.remove(outboxMessage)
+			})
+		}, 5000)
+	}
+
+}
+			</pre>
+
+			<h3>orderId on messages</h3>
+			On each message between services, there is an OrderId. This allows the rabbitMQ service to pass it to the saga orchestrator
+			and then the saga orchestrator can fetch the saga that is corresponding to that message
+
+
         </article>
     </main>
     <footer>
