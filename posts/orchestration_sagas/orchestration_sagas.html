@@ -291,282 +291,282 @@ export class FinalizeOrderStep implements SagaStepInterface&ltOrderSagaStepData,
 			keeps track of which steps have completed so far in another array. It might be cleaner to implement this as a linked list
 			to better represent an ordering of the steps, although I'm not convinced it is critically important.
 			The saga additionally keeps information about the order that it is coordinating, 
-			such as orderId, productId, and quantity
+			such as orderId, productId, and quantity.
 			</p>
 
 <pre class='prettyprint lang-typescript'>
 export class OrderSaga {
 
-	public steps: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
-	public completed: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
-	public index: number
-	public orderId: UUID
-	public productId: number
-	public quantity: number
+  public steps: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
+  public completed: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt[]
+  public index: number
+  public orderId: UUID
+  public productId: number
+  public quantity: number
 
-	constructor(orderId: UUID, productId: number, quantity: number) {
-		this.orderId = orderId
-		this.productId = productId
-		this.quantity = quantity
-		this.index = 0
-		this.steps = []
-		this.completed = []
-	}
+  constructor(orderId: UUID, productId: number, quantity: number) {
+    this.orderId = orderId
+    this.productId = productId
+    this.quantity = quantity
+    this.index = 0
+    this.steps = []
+    this.completed = []
+  }
 
-	async invokeNext(messageId?: UUID) {
-		if (this.index == this.steps.length) {
-			console.log('No more steps left, saga is completed')
-			return
-		}
-		await this.steps[this.index].invoke({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
-		this.completed.push(this.steps[this.index])
-		this.index+=1
-	}
+  async invokeNext(messageId?: UUID) {
+    if (this.index == this.steps.length) {
+      console.log('No more steps left, saga is completed')
+      return
+    }
+    await this.steps[this.index].invoke({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
+    this.completed.push(this.steps[this.index])
+    this.index+=1
+  }
 
-	async compensate(messageId?: UUID) {
-		console.log(`compensating saga with orderId: ${this.orderId}`)
-		const stepsToRollback = this.completed.slice(0, -1).reverse()
-		for (const step of stepsToRollback) {
-			await step.compenstate({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
-		}
-	}
+  async compensate(messageId?: UUID) {
+    console.log(`compensating saga with orderId: ${this.orderId}`)
+    const stepsToRollback = this.completed.slice(0, -1).reverse()
+    for (const step of stepsToRollback) {
+      await step.compenstate({messageId, orderId: this.orderId, productId: this.productId, quantity: this.quantity, orderSaga: this})
+    }
+  }
 }
 			</pre>
 				<h3>Builder Pattern</h3>
-				In order to easily create ordersagas, I've created a builder pattern to add steps incrementally 
+				In order to easily create a saga, I'm using the builder pattern to add steps incrementally.
 
 <pre class='prettyprint lang-typescript'>
 export class OrderSagaBuilder {
 
-	private orderSaga: OrderSaga
+  private orderSaga: OrderSaga
 
-	constructor(orderId: UUID, productId: number, quantity: number) {
-		this.orderSaga = new OrderSaga(orderId, productId, quantity)
-	}
+  constructor(orderId: UUID, productId: number, quantity: number) {
+    this.orderSaga = new OrderSaga(orderId, productId, quantity)
+  }
 
-	addStep(step: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt) {
-		this.orderSaga.steps.push(step)
-		return this
-	}
+  addStep(step: SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt) {
+    this.orderSaga.steps.push(step)
+    return this
+  }
 
-	setStep(lastCompletedStep: STEP) {
-		if (!lastCompletedStep) return
-		for (const step of this.orderSaga.steps) {
-			if (step.step === lastCompletedStep) {
-				this.orderSaga.completed.push(step)
-				this.orderSaga.index+=1
-				return
-			}
-			this.orderSaga.completed.push(step)
-			this.orderSaga.index+=1
-		}
-	}
+  setStep(lastCompletedStep: STEP) {
+    if (!lastCompletedStep) return
+    for (const step of this.orderSaga.steps) {
+      if (step.step === lastCompletedStep) {
+        this.orderSaga.completed.push(step)
+        this.orderSaga.index+=1
+        return
+      }
+      this.orderSaga.completed.push(step)
+      this.orderSaga.index+=1
+    }
+  }
 
-	build() {
-		return this.orderSaga
-	}
+  build() {
+    return this.orderSaga
+  }
 }
-				</pre>
+</pre>
 
 				<h3>Factory Pattern</h3>
 
-				I use the builder pattern within my factor pattern. The factory pattern becomes very useful
-				when we have to recreate the sagas from the database during the even of an orchestrator crash.
-				We will see this later
+				I utilize the builder pattern within my factory pattern. The main reason I'm using the factory pattern
+				is so that I do not have to worry about adding steps in the correct order each time I want to instantiate 
+				a saga. The pattern becomes very useful when recreating sagas from persistence.
 
 <pre class='prettyprint lang-typescript'>
 export class OrderSagaFactory {
 
-	constructor(private datasource: DataSource) {}
+  constructor(private datasource: DataSource) {}
 
-	createSaga(orderId: UUID, productId: number, quantity: number, lastCompletedStep?: STEP) {
-		const builder = new OrderSagaBuilder(orderId, productId, quantity)
+  createSaga(orderId: UUID, productId: number, quantity: number, lastCompletedStep?: STEP) {
+    const builder = new OrderSagaBuilder(orderId, productId, quantity)
 
-		builder.addStep(new CreateOrderStep(this.datasource))
-		.addStep(new RemoveInventoryStep(this.datasource))
-		.addStep(new ShipOrderStep(this.datasource))
-		.addStep(new FinalizeOrderStep(this.datasource))
+    builder.addStep(new CreateOrderStep(this.datasource))
+    .addStep(new RemoveInventoryStep(this.datasource))
+    .addStep(new ShipOrderStep(this.datasource))
+    .addStep(new FinalizeOrderStep(this.datasource))
 
-		builder.setStep(lastCompletedStep)
+    builder.setStep(lastCompletedStep)
 
-		return builder.build()
-	}
+    return builder.build()
+  }
 }
 </pre>
 			<h2>Saga Orchestrator</h2>
-			The orchestrator is the class which manages the lifecycle of all sagas ongoing in the program.
-			For each order there would be an instance of the saga class, and the orchestrator keeps track 
-			of all of these in a map from orderId to saga. It then is able to call the invoke or compensate 
-			actions of a respective saga based on an orderId
+			The orchestrator is the class which manages the lifecycle of all sagas. 
+			For each order there exists an instance of the saga class which manages the lifecycle of the order. This orchestrator 
+			keeps track of all of these via a map from unique orderId to saga. 
+			It then is trivial to call functions related to a saga given an orderId.
 
 <pre class='prettyprint lang-typescript'>
 export class OrderSagaOrchestrator {
 
-	private sagas = new Map&ltUUID, OrderSaga&gt();
+  private sagas = new Map&ltUUID, OrderSaga&gt();
 
-	constructor(private orderSagaFactory: OrderSagaFactory, private datasource: DataSource) {}
+  constructor(private orderSagaFactory: OrderSagaFactory, private datasource: DataSource) {}
 
-	async newSaga(productId: number, quantity: number) {
-		const orderId = randomUUID()
-		const saga = this.orderSagaFactory.createSaga(orderId, productId, quantity)
-		this.sagas.set(orderId, saga)
-		await this.invokeNext(orderId)
-	}
+  async newSaga(productId: number, quantity: number) {
+    const orderId = randomUUID()
+    const saga = this.orderSagaFactory.createSaga(orderId, productId, quantity)
+    this.sagas.set(orderId, saga)
+    await this.invokeNext(orderId)
+  }
 
-	async invokeNext(orderId: UUID, messageId?: UUID) {
-		const saga = this.sagas.get(orderId)
-		if (!saga) {
-			console.log(`No saga with orderId ${orderId} found`)
-			return
-		}
-		await saga.invokeNext(messageId)
-	}
+  async invokeNext(orderId: UUID, messageId?: UUID) {
+    const saga = this.sagas.get(orderId)
+    if (!saga) {
+      console.log(`No saga with orderId ${orderId} found`)
+      return
+    }
+    await saga.invokeNext(messageId)
+  }
 
-	async compensateSaga(orderId: UUID, messageId?: UUID) {
-		const saga = this.sagas.get(orderId)
-		await saga.compensate(messageId)
-	}
+  async compensateSaga(orderId: UUID, messageId?: UUID) {
+    const saga = this.sagas.get(orderId)
+    await saga.compensate(messageId)
+  }
 
-	async restoreFromDb() {
-		const sagaRepository = this.datasource.getRepository(OrderSagaEntity)
-		const sagaEntities = await sagaRepository.find()
-		const sagas = sagaEntities.filter(entity =&gt entity.lastCompletedStep !== STEP.FINALIZE_ORDER && entity.lastCompletedStep !== STEP.COMPENSATE).map(entity =&gt {
-			console.log(`restoring saga with order id ${entity.orderId}. Last completed step was ${entity.lastCompletedStep}`)
-			return this.orderSagaFactory.createSaga(
-				entity.orderId, 
-				entity.productId, 
-				entity.quantity,
-				entity.lastCompletedStep
-			)
-		})
-		sagas.forEach(saga =&gt {
-			this.sagas.set(saga.orderId, saga)
-		})
-	}
+  async restoreFromDb() {
+    const sagaRepository = this.datasource.getRepository(OrderSagaEntity)
+    const sagaEntities = await sagaRepository.find()
+    const sagas = sagaEntities.filter(entity =&gt entity.lastCompletedStep !== STEP.FINALIZE_ORDER && entity.lastCompletedStep !== STEP.COMPENSATE).map(entity =&gt {
+      console.log(`restoring saga with order id ${entity.orderId}. Last completed step was ${entity.lastCompletedStep}`)
+      return this.orderSagaFactory.createSaga(
+        entity.orderId, 
+        entity.productId, 
+        entity.quantity,
+        entity.lastCompletedStep
+      )
+    })
+    sagas.forEach(saga =&gt {
+      this.sagas.set(saga.orderId, saga)
+    })
+  }
 }
 			</pre>
-				<h3>Recover sagas after crash</h3>
-				The most interesting piece of this class is the restoreFromDb method. This utilizes the order saga factory 
-				and typeorm ordersagaEntity repository in order to fetch all sagas that have been persisted to the database,
-				and recreate them and put them in the right step. If any sagas have completed, they are not instantiated 
-				again. After a while, sagas within this set that are completed are also cleaned up
-
+				<h3>Orchestrator Recovery</h3>
+				The most interesting piece of this class is the <span class="inline-code">restoreFromDb</span> method. 
+				This utilizes the order saga factory and typeorm repository in order to fetch all 
+				sagas that have been persisted to the database, recreate them in memory, and put them in the right step. 
+				If any sagas have completed, successfully or not, they are not instantiated again. 
+				After a while, sagas within this set that are completed should also be cleaned up, to avoid a memory leak.
 			<h2>Http Server</h2>
 
-			There is a super simple http server built using express to accept incoming requests to the order service, and kick
-			off a new sgaa for the order
+			There is basic http server built using express to accept incoming requests to the order service, and 
+			create a new saga.
+
 <pre class='prettyprint lang-typescript'>
 export class Server {
-	private app: express.Express
+  private app: express.Express
 
-	constructor(private port: number, private orderSagaOrchestrator: OrderSagaOrchestrator) {}
+  constructor(private port: number, private orderSagaOrchestrator: OrderSagaOrchestrator) {}
 
-	init() {
-		this.app = express()
-		this.app.use(bodyParser.json())
-		this.registerRoute('/', HTTP_METHOD.POST, this.placeOrder)
-		this.listen()
-	}
+  init() {
+    this.app = express()
+    this.app.use(bodyParser.json())
+    this.registerRoute('/', HTTP_METHOD.POST, this.placeOrder)
+    this.listen()
+  }
 
-	private placeOrder = async (req: express.Request, res: express.Response) => {
-		const {productId, quantity}: {productId: number, quantity: number} = req.body
-		if (!productId || !quantity) {
-			res.status(400).send('No product or quantity')
-		}
-		await this.orderSagaOrchestrator.newSaga(productId, quantity)
-		res.send()
-	}
+  private placeOrder = async (req: express.Request, res: express.Response) => {
+    const {productId, quantity}: {productId: number, quantity: number} = req.body
+    if (!productId || !quantity) {
+      res.status(400).send('No product or quantity')
+    }
+    await this.orderSagaOrchestrator.newSaga(productId, quantity)
+    res.send()
+  }
 
-	private registerRoute = (path: string, method: HTTP_METHOD, func: (req: express.Request, res: express.Response) => any) => {
-		switch(method) {
-			case HTTP_METHOD.GET: 
-				this.app.get(path, func)
-				break;
-			case HTTP_METHOD.POST: 
-				this.app.post(path, func)
-				break;
-			default: 
-				throw new Error('not supported')
-		}
-	}
+  private registerRoute = (path: string, method: HTTP_METHOD, func: (req: express.Request, res: express.Response) => any) => {
+    switch(method) {
+      case HTTP_METHOD.GET: 
+        this.app.get(path, func)
+        break;
+      case HTTP_METHOD.POST: 
+        this.app.post(path, func)
+        break;
+      default: 
+        throw new Error('not supported')
+    }
+  }
 
-	private listen = () =&gt {
-		this.app.listen(this.port, () =&gt {
-		  console.log(`Example app listening on port ${this.port}`)
-		})
-	}
+  private listen = () =&gt {
+    this.app.listen(this.port, () =&gt {
+      console.log(`Example app listening on port ${this.port}`)
+    })
+  }
 }
 			</pre>
 
 			<h2>RabbitMQ</h2>
-			The rabbitMQ service is what listens to the channels and routes messages back to the order saga orchestrator. There is 
-			also a critical method called pollOutbox, which is used to send the outbox messages that have been persisted to the database
-			to the downstream services
+			The rabbitMQ service is what listens to the channels and routes messages back to the saga orchestrator class. 
+			There is also a critical method called <span class="inline-code">pollOutbox</span>, 
+			which is used to send the outbox messages that have been persisted to the database to the downstream services.
 <pre class='prettyprint lang-typescript'>
 
 export class RabbitMQService {
 
-	private channel: amqplib.Channel
+  private channel: amqplib.Channel
 
-	constructor(private datasource: DataSource, private orderSagaOrchestrator: OrderSagaOrchestrator) {
-	}
+  constructor(private datasource: DataSource, private orderSagaOrchestrator: OrderSagaOrchestrator) {
+  }
 
-	async init() {
-	  const connection = await amqplib.connect({
-		  username: process.env.RABBITMQ_USER,
-		  password: process.env.RABBITMQ_PASSWORD
-	  });
-	  const channel = await connection.createChannel();
-	  this.channel = channel;
+  async init() {
+    const connection = await amqplib.connect({
+      username: process.env.RABBITMQ_USER,
+      password: process.env.RABBITMQ_PASSWORD
+    });
+    const channel = await connection.createChannel();
+    this.channel = channel;
 
-	  for (const queue of Object.values(OUTBOX_MESSAGE_TYPE)) {
-		await channel.assertQueue(queue)
-	  }
+    for (const queue of Object.values(OUTBOX_MESSAGE_TYPE)) {
+    await channel.assertQueue(queue)
+    }
 
-	  for (const queue of Object.values(INBOX_MESSAGE_TYPE)) {
-		await channel.assertQueue(queue)
-		this.listenForMessage(queue)
-	  }
-		this.pollOutbox()
-	}
+    for (const queue of Object.values(INBOX_MESSAGE_TYPE)) {
+    await channel.assertQueue(queue)
+    this.listenForMessage(queue)
+    }
+    this.pollOutbox()
+  }
 
-	listenForMessage = async (queue: INBOX_MESSAGE_TYPE) => {
-		await this.channel.consume(queue, async (msg) => {
-			if (msg !== null) {
-				const message: ResponseMessage = JSON.parse(msg.content.toString())
-				console.log(`Received message with orderId ${message.orderId} and status ${message.success}`);
-				if (message.success) {
-					await this.orderSagaOrchestrator.invokeNext(message.orderId, message.id)
-				} else {
-					await this.orderSagaOrchestrator.compensateSaga(message.orderId)
-				}
-				this.channel.ack(msg)
-			}
-		})
-	}
+  listenForMessage = async (queue: INBOX_MESSAGE_TYPE) => {
+    await this.channel.consume(queue, async (msg) => {
+      if (msg !== null) {
+        const message: ResponseMessage = JSON.parse(msg.content.toString())
+        console.log(`Received message with orderId ${message.orderId} and status ${message.success}`);
+        if (message.success) {
+          await this.orderSagaOrchestrator.invokeNext(message.orderId, message.id)
+        } else {
+          await this.orderSagaOrchestrator.compensateSaga(message.orderId)
+        }
+        this.channel.ack(msg)
+      }
+    })
+  }
 
-	pollOutbox = () => {
-		const outboxRepository = this.datasource.getRepository(OutboxMessage)
-		setInterval(async () => {
-			const outboxMessages = await outboxRepository.find()
-			outboxMessages.forEach(async outboxMessage => {
-				const json = outboxMessage.toJson();
-				const buffer = Buffer.from(JSON.stringify(json))
-				console.log(`sending outbox message to ${outboxMessage.messageType} queue`)
-				this.channel.sendToQueue(outboxMessage.messageType, buffer)
-				await outboxRepository.remove(outboxMessage)
-			})
-		}, 5000)
-	}
+  pollOutbox = () => {
+    const outboxRepository = this.datasource.getRepository(OutboxMessage)
+    setInterval(async () => {
+      const outboxMessages = await outboxRepository.find()
+      outboxMessages.forEach(async outboxMessage => {
+        const json = outboxMessage.toJson();
+        const buffer = Buffer.from(JSON.stringify(json))
+        console.log(`sending outbox message to ${outboxMessage.messageType} queue`)
+        this.channel.sendToQueue(outboxMessage.messageType, buffer)
+        await outboxRepository.remove(outboxMessage)
+      })
+    }, 5000)
+  }
 
 }
 			</pre>
 
-			<h3>orderId on messages</h3>
-			On each message between services, there is an OrderId. This allows the rabbitMQ service to pass it to the saga orchestrator
-			and then the saga orchestrator can fetch the saga that is corresponding to that message. 
-
-
+			<h3>OrderId on Messages</h3>
+			On each message between services, there is an <span class="inline-code">orderId</span>. 
+			This is passed to the saga orchestrator, allowing the orchestrator to 
+			find the saga that is corresponding to that message. 
         </article>
     </main>
     <footer>
