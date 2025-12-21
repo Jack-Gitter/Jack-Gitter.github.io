@@ -570,44 +570,54 @@ export class RabbitMQService {
 
 			<h2>Crash Mitigation Walk Through</h2>
 					<p>
-					in this section, I'll briefly go over each spot where the orchestrator may crash, and how the 
-					architecture of the application mitigates the concern
+					Finally, I will briefly go over the main checkpoints at which the orchestrator may crash, 
+					and how the architecture of the application mitigates the concern.
 					</p>
 					<h3>Before Persisting the Order in Pending State</h3>
-					This is really not a big concern. The end user will get a 500 HTTP response, 
-					but no consistency issues could occur as we have not done any work.
+					The end user will get a 500 HTTP response, 
+					but no consistency issues can occur as we have not done any work. 
 					<h3>Before Sending a Message</h3>
-					Using the transactional outbox pattern, if we crash before we send a message we know 
-					that the message will eventually be sent when our orchestrator comes back up, 
-					as we are always polling the outbox.
+					Using the transactional outbox pattern, if a crash occurs before sending a message,
+					the message will be sent when our orchestrator comes back up, as the outbox is always being polled.
 					<h3>During Processing of an Incoming Message</h3>
-					Because we ensure to ack our messages only after the work of each step of the saga is done,
-					we can be sure that if we crash during performing the work, the message will still exist in our queue.
-					When the orchestrator comes back online, it will reprocess the message and perform the work
+					Thanks to acking messages only after the work of each step is completed,
+					it is guaranteed that if a crash occurs during the 
+					database transaction, the message will still exist in the queue.
+					Upon the orchestrator coming back online, the sagas will first be re-instantiated within the main
+					class before out RabbitMQ service so that the sagas are in the proper state before 
+					we consume any messages. Then, the service will reprocess the message and the work can be completed.
 					<h3>Before Acking a Message</h3>
-					If we persist the changes to the database, but do not ack the message this is also ok because 
-					our steps are idempotent. We will simply receive the message, check the inbox to see if we have processed
-					the message before, and if so ignore it and ack to remove from rabbitMQ.
+					If work is persisted to the database but the application crashes before the corresponding message 
+					is ackd, the message will still exist in the queue. Upon restoration of the orchestrator, 
+					the message will be reconsumed. Thanks to the idempotent consumer pattern, this is not a concern.
+					The inbox is examined to see if this message has already been processed
+					and if so ignore it and ack to remove from RabbitMQ.
 					<h3>Before Compensating Actions are Performed</h3>
-					If we crash before compensating actions are performed, we will just come back online, 
-					process the message from the queue, and rollback all compensating actions
+					If a crash occurs before compensating actions are performed, the orchestrator would, 
+					process the message from the queue, and rollback all compensating actions upon coming online.
 					<h3>During Compensating Actions</h3>
-					Because we perform all compensating actions at once without persistance inbetween, it might seem
-					like we have potential for issues. Although we mitigate this in two ways. Firstly at the downstream
-					microservices we implement the idempotent consumer pattern, so if we receive a compensation message
-					for an order with the same orderId, we can safely ignore it knowing we have done it before. Secondly
-					we check in our compensating actions if we have written a compensating message to our outbox already.
-					There is a small possiblity for a datarace here though, where if we write the message to the outbox,
-					then send it, and then crash, when we come back up we will re-write a new message to the outbox.
+					Due to the fact that all compensating actions are performed at once without persistence in between, 
+					it might like a large spot for potential issues. This is mitigated in two ways. 
+					Firstly, because downstream microservices are idempotent, if a compensation message is delivered twice
+					for an order with the same orderId, it can safely be ignored. Secondly,
+					a check is performed within the compensating action to determine if a compensating message was already written 
+					to the outbox. There is a small window for a datarace here, where if after writing the message to the outbox,
+					and sending it out, but before performing all compensating actions, the orchestrator crashes. Upon 
+					coming back online, the message would be re-written to the outbox.
 					This is why the idempotent consumer pattern for all services is critical.
 					<h3>After Compensating Actions</h3>
-					If we crash after compensating actions, this is ok because the saga is already complete and there is 
-					no more work to be done. We do not need to process responses from compensating actions, as there is nothing
-					the orchestrator can do in the event of a failed compensating action at a downstream service.
-					This should be the responsibility of the service to move the message to a DLQ, where it can be inspected
-					manually at a later date.
-				
+					If a crash occurs after compensating all the compensating actions are completed, then there is nothing to do.
+					When coming back online, this saga would not be recreated in memory.
+
+					<h2>A Note About Handling Compensation Failures</h2>
+					Maybe you noticed, but we do not explicitly handle the case where a microservice fails to perform a 
+					compensation action. In reality, the orchestrator can do nothing in the event 
+					that a downstream service fails to compensate. It is the responsibility of said service to move the message to a 
+					DLQ, where it can be inspected manually at a later date.
+
+					
         </article>
+        <a href="https://github.com/jack-gitter/nfl_octobot">Repo Link</a> 
     </main>
     <footer>
         <span class="date">SWE @ Sentinel Group</span>
