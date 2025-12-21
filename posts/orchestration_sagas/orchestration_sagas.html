@@ -19,14 +19,14 @@
 			<h2>Recap</h2>
             <p>
 				This is a small continuation of my other work around sagas, in which I first attempted to 
-				implement a orchestration based saga, but restorted to a choreography based saga. I outlined
-				all of the patterns and techniques revolvign around robust microservice communication, 
+				implement a orchestration based saga, but resorted to a choreography based saga. I outlined
+				all of the patterns and techniques revolving around robust microservice communication, 
 				and some of the challenges I had along the way in another 
 				<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">post</a>.
 				Although the implementation worked, I was not satisfied with both the code on an organizational 
 				level, and the choreography based approach. 
 				For this implementation, I've decided to utilize all of the same robustness techniques, although
-				created a more modular, clean implementation of an ochestration based saga.             </p>
+				created a more modular, clean implementation of an orchestration based saga.             </p>
 
 			<h2>General Patterns, High Level Overview</h2>
 			<p>
@@ -46,8 +46,8 @@
 
 				<ul>
 					<li>
-						<span class="desc">Postgres</span>: Used for persistance of the saga, inbox and outbox messages, 
-						and overall "work" that individiual microservices needed to acomplish as apart of the saga.
+						<span class="desc">Postgres</span>: Used for persistence of the saga, inbox and outbox messages, 
+						and overall "work" that individual microservices needed to accomplish as apart of the saga.
 					</li>
 					<li>
 						<span class="desc">	RabbitMQ</span>: Facilitates messaging between microservices
@@ -60,7 +60,7 @@
 			The overall goal of this project is to utilize a crash-resilient orchestration based saga 
 			to create a microservice system that is eventually consistent. Regardless of service crashes at any instant, 
 			whether it be the orchestrator or worker nodes. The simulated environment for this 
-			is an oversimplified ecommerce system with three microservices: orders, inventory, and shipping. 
+			is an oversimplified e-commerce system with three microservices: orders, inventory, and shipping. 
 			<h3>Orders Service</h3>
 			The orders service acts as the entrypoint for new requests, and is therefore the saga orchestrator.
 			Requests reach the orders service via HTTP. For simplicity, requests only contain a 
@@ -80,10 +80,10 @@
 			step in the process, besides finalizing the order in the orders service. Once again, this service doesn't do much 
 			of anything, besides sending messages back to the orchestrator and failing 10% of the time
 			<h2>Saga Step Interface</h2>
-			To parse the implementation, we will work our way up from the smallest buildling block to the largest. Firstly, we'll 
+			To parse the implementation, we will work our way up from the smallest building block to the largest. Firstly, we'll 
 			talk about the saga step interface. Thankfully, it is quite minimal. There is an invoke function and a compensate function. 
 			When implemented, the invoke function's purpose is to perform the work of the step. The compensate function 
-			should revert whatever occured during the invoke step for rollback purposes. There is also a field on the step, 
+			should revert whatever occurred during the invoke step for rollback purposes. There is also a field on the step, 
 			which is helpful in restoring sagas from the database. More on this later.
 
 <pre class='prettyprint lang-typescript'>
@@ -286,7 +286,7 @@ export class FinalizeOrderStep implements SagaStepInterface&ltOrderSagaStepData,
 
 			<h2>Saga Class</h2>
 			<p>
-			In order to string these steps together, I created a Saga class which contains all of the aformentioned 
+			In order to string these steps together, I created a Saga class which contains all of the aforementioned 
 			steps. The class object contains an array of all steps, keeps track of the next step to be completed via an index, and 
 			keeps track of which steps have completed so far in another array. It might be cleaner to implement this as a linked list
 			to better represent an ordering of the steps, although I'm not convinced it is critically important.
@@ -394,8 +394,8 @@ export class OrderSagaFactory {
 }
 </pre>
 			<h2>Saga Orchestrator</h2>
-			The orchestrator is the class which manages the lifecycle of all sagas. 
-			For each order there exists an instance of the saga class which manages the lifecycle of the order. This orchestrator 
+			The orchestrator is the class which manages the life cycle of all sagas. 
+			For each order there exists an instance of the saga class which manages the life cycle of the order. This orchestrator 
 			keeps track of all of these via a map from unique orderId to saga. 
 			It then is trivial to call functions related to a saga given an orderId.
 
@@ -447,7 +447,7 @@ export class OrderSagaOrchestrator {
 			</pre>
 				<h3>Orchestrator Recovery</h3>
 				The most interesting piece of this class is the <span class="inline-code">restoreFromDb</span> method. 
-				This utilizes the order saga factory and typeorm repository in order to fetch all 
+				This utilizes the order saga factory and Typeorm repository in order to fetch all 
 				sagas that have been persisted to the database, recreate them in memory, and put them in the right step. 
 				If any sagas have completed, successfully or not, they are not instantiated again. 
 				After a while, sagas within this set that are completed should also be cleaned up, to avoid a memory leak.
@@ -500,7 +500,7 @@ export class Server {
 			</pre>
 
 			<h2>RabbitMQ</h2>
-			The rabbitMQ service is what listens to the channels and routes messages back to the saga orchestrator class. 
+			The RabbitMQ service is what listens to the channels and routes messages back to the saga orchestrator class. 
 			There is also a critical method called <span class="inline-code">pollOutbox</span>, 
 			which is used to send the outbox messages that have been persisted to the database to the downstream services.
 <pre class='prettyprint lang-typescript'>
