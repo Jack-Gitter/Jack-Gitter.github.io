@@ -285,10 +285,14 @@ export class FinalizeOrderStep implements SagaStepInterface&ltOrderSagaStepData,
 </pre>
 
 			<h2>Saga Class</h2>
-			In order to string these steps together, I created a Saga class which represenents all of the steps that need 
-			to occur in order for an order to go from start to complete. It has a list of steps that it needs to complete,
-			and keeps track of which steps have completed so far. It additionally keeps some information about 
-			the order that it is coordinating the steps of, such as orderId, productId, and quantity
+			<p>
+			In order to string these steps together, I created a Saga class which contains all of the aformentioned 
+			steps. The class object contains an array of all steps, keeps track of the next step to be completed via an index, and 
+			keeps track of which steps have completed so far in another array. It might be cleaner to implement this as a linked list
+			to better represent an ordering of the steps, although I'm not convinced it is critically important.
+			The saga additionally keeps information about the order that it is coordinating, 
+			such as orderId, productId, and quantity
+			</p>
 
 <pre class='prettyprint lang-typescript'>
 export class OrderSaga {
