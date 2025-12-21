@@ -57,97 +57,94 @@
 					</li>
 				<ul>
 			<h2>Orders, Inventory, and Shipping services</h2>
-			The overall goal of this project is to create a microservice system that would always become eventually consistent
-			if the orchestrator or independent services crashed at any point. The simulated environment for this 
-			is an oversimplified ecommerce system which has three microservices: orders, inventory, and shipping. 
+			The overall goal of this project is to utilize a crash-resilient orchestration based saga 
+			to create a microservice system that is eventually consistent. Regardless of service crashes at any instant, 
+			whether it be the orchestrator or worker nodes. The simulated environment for this 
+			is an oversimplified ecommerce system with three microservices: orders, inventory, and shipping. 
 			<h3>Orders Service</h3>
-			Firstly, requests come into the orders service via HTTP. The request is simple, it only contains a 
-			productId and a quantityt. This service acts as the orchestrator for the other microservices. 
-			It will create an order in a pending state for the given product and quantity, and continue to facilitate messages between
-			the other services until the order is shipped, after which it will finalize the order status. If anything goes 
-			wrong along the way, the orders service has all the infromation as to what has succeeded so far, and is able to send messages
-			to the microservices in order to rollback any changes
+			The orders service acts as the entrypoint for new requests, and is therefore the saga orchestrator.
+			Requests reach the orders service via HTTP. For simplicity, requests only contain a 
+			productId and a quantity field located in a JSON body. After receiving the request, it creates an order
+			in a pending state, and a new orders saga. Throughout the entire process, the orders service
+			continues to facilitate messages between the other services until the order is shipped, 
+			after which it will finalize the order status. If anything goes wrong along the way, 
+			the orders service is responsible for canceling the order by updating its local database, and sending messages
+			to microservices which need to rollback any successful changes that were performed.
 			<h3>Inventory Service</h3>
 			The inventory service is responsible for managing how much of a specific product is available. In theory is would 
 			validate there is enough product for the given order requested, and remove the inventory from the system. In reality, 
-			most of this project was centered around the orchestrator, so the inventory service performs "fake" work
+			most of this project was centered around the orchestrator, so the inventory service performs "fake" work, and fails
+			10% of the time.
 			<h3>Shipping Service</h3>
 			The shipping service is responsible for shipping the product once the inventory has been removed. This would be the last 
-			step in the process, besides finalizing the order in the orders service. Again in reality, this service also doesn't do much 
-			of anything, besides sending messages back to the orchestrator
-
+			step in the process, besides finalizing the order in the orders service. Once again, this service doesn't do much 
+			of anything, besides sending messages back to the orchestrator and failing 10% of the time
 			<h2>Saga Step Interface</h2>
-			Jumping into the code, we will work our way up from smallest buildling block to the largest. Firstly, we'll 
-			talk about the saga step interface. Its quite simple, it has an invoke function and a compensate function. 
-			The invoke function is meant to perform the work of the step, and compensate should revert whatever occured
-			during the invoke step for rollback purposes.
+			To parse the implementation, we will work our way up from the smallest buildling block to the largest. Firstly, we'll 
+			talk about the saga step interface. Thankfully, it is quite minimal. There is an invoke function and a compensate function. 
+			When implemented, the invoke function's purpose is to perform the work of the step. The compensate function 
+			should revert whatever occured during the invoke step for rollback purposes. There is also a field on the step, 
+			which is helpful in restoring sagas from the database. More on this later.
 
 <pre class='prettyprint lang-typescript'>
 import { STEP } from "../../../db/entities/types"
 
 export interface SagaStepInterface&ltT, U&gt {
-
-	step: STEP
-
-	invoke(data: T): Promise&ltvoid&gt
-
-	compenstate(data: U): Promise&ltvoid&gt
-
+  step: STEP
+  invoke(data: T): Promise&ltvoid&gt
+  compenstate(data: U): Promise&ltvoid&gt
 }
 </pre>
 
 	<h2>OrderSaga Steps</h2>
-	In order to implement our saga, we're going to need a couple of concrete steps. Here they are for the orders saga.
-	These steps all have to be idempotent, and all actions have to occur in the same database transaction in order to 
-	achieve consistency
+	In order to implement the saga, some concrete steps are required. The following are the steps created 
+	for the order saga. All steps must be idempotent, and all actions have to occur in the same database 
+	transaction in order to achieve consistency.
 	<h3>Create Order</h3>
 
 
 <pre class='prettyprint lang-typescript'>
 export class CreateOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
+  public step: STEP = STEP.CREATE_ORDER
+  constructor(private datasource: DataSource) {}
 
-	public step: STEP = STEP.CREATE_ORDER
+  async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`creating order with id ${data.orderId}`)
+    await this.datasource.transaction(async manager =&gt {
+    const orderRepository = manager.getRepository(Order)
+    const outboxRepository = manager.getRepository(OutboxMessage)
+    const orderSagaRepository = manager.getRepository(OrderSagaEntity)
 
-	constructor(private datasource: DataSource) {}
-
-    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`creating order with id ${data.orderId}`)
-		await this.datasource.transaction(async manager =&gt {
-			const orderRepository = manager.getRepository(Order)
-			const outboxRepository = manager.getRepository(OutboxMessage)
-			const orderSagaRepository = manager.getRepository(OrderSagaEntity)
-
-			const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
-			if (existingOrder) {
-				console.log(`already created order with id ${data.orderId}, skipping`)
-				return
-			}
-
-			const order = new Order(data.orderId, data.productId, data.quantity)
-			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL)
-			const orderSagaEntity = new OrderSagaEntity(data.orderId, data.quantity, data.productId, STEP.CREATE_ORDER)
-
-			await orderRepository.save(order)
-			await outboxRepository.save(outboxMessage)
-			await orderSagaRepository.save(orderSagaEntity)
-		})
+    const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
+    if (existingOrder) {
+      console.log(`already created order with id ${data.orderId}, skipping`)
+      return
     }
 
-    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`compensating create order step`)
-		await this.datasource.transaction(async manager =&gt {
-			const orderRepository = manager.getRepository(Order)
-			const sagaRepository = manager.getRepository(OrderSagaEntity)
+    const order = new Order(data.orderId, data.productId, data.quantity)
+    const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL)
+    const orderSagaEntity = new OrderSagaEntity(data.orderId, data.quantity, data.productId, STEP.CREATE_ORDER)
 
-			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.COMPENSATE)
-			const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
-			existingOrder.status = ORDER_STATUS.CANCELED
+    await orderRepository.save(order)
+    await outboxRepository.save(outboxMessage)
+    await orderSagaRepository.save(orderSagaEntity)
+})
+ }
 
-			await sagaRepository.save(sagaEntity)
-			await orderRepository.save(existingOrder)
-		})
+  async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+	console.log(`compensating create order step`)
+	await this.datasource.transaction(async manager =&gt {
+      const orderRepository = manager.getRepository(Order)
+      const sagaRepository = manager.getRepository(OrderSagaEntity)
 
-    }
+      const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.COMPENSATE)
+      const existingOrder = await orderRepository.findOneBy({orderId: data.orderId})
+      existingOrder.status = ORDER_STATUS.CANCELED
+
+      await sagaRepository.save(sagaEntity)
+      await orderRepository.save(existingOrder)
+    })
+  }
 }
 </pre>
 
@@ -156,47 +153,47 @@ export class CreateOrderStep implements SagaStepInterface&ltOrderSagaStepData, O
 <pre class='prettyprint lang-typescript'>
 export class RemoveInventoryStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
 
-	public step: STEP = STEP.REMOVE_INVENTORY
+  public step: STEP = STEP.REMOVE_INVENTORY
 
-	constructor(private datasource: DataSource) {}
+  constructor(private datasource: DataSource) {}
 
-    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`removing inventory for order with id ${data.orderId}`)
-		await this.datasource.transaction(async manager =&gt {
-			const inboxRepository = manager.getRepository(InboxMessage)
-			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL})
-			if (existingMessage) {
-				console.log(`already removed inventory for order with id ${data.orderId}, skipping`)
-				return
-			}
-			const outboxRepository = manager.getRepository(OutboxMessage)
-			const sagaRepository = manager.getRepository(OrderSagaEntity)
+  async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`removing inventory for order with id ${data.orderId}`)
+    await this.datasource.transaction(async manager =&gt {
+      const inboxRepository = manager.getRepository(InboxMessage)
+      const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL})
+      if (existingMessage) {
+        console.log(`already removed inventory for order with id ${data.orderId}, skipping`)
+        return
+      }
+      const outboxRepository = manager.getRepository(OutboxMessage)
+      const sagaRepository = manager.getRepository(OrderSagaEntity)
 
-			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL, true)
-			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY)
-			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.REMOVE_INVENTORY)
+      const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.REMOVE_INVENTORY_LOCAL, true)
+      const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.REMOVE_INVENTORY)
+      const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.REMOVE_INVENTORY)
 
-			await inboxRepository.save(inboxMessage)
-			await outboxRepository.save(outboxMessage)
-			await sagaRepository.save(sagaEntity)
-		})
-    }
+      await inboxRepository.save(inboxMessage)
+      await outboxRepository.save(outboxMessage)
+      await sagaRepository.save(sagaEntity)
+    })
+  }
 
-    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`compensating remove inventory step`)
-		await this.datasource.transaction(async manager =&gt {
-			const outboxRepository = manager.getRepository(OutboxMessage)
-			const existingMessage = await outboxRepository.findOneBy({orderId: data.orderId, messageType: OUTBOX_MESSAGE_TYPE.RESTORE_INVENTORY})
-			if (existingMessage) {
-				console.log('already compensated, skipping')
-				return
-			}
+  async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`compensating remove inventory step`)
+    await this.datasource.transaction(async manager =&gt {
+      const outboxRepository = manager.getRepository(OutboxMessage)
+      const existingMessage = await outboxRepository.findOneBy({orderId: data.orderId, messageType: OUTBOX_MESSAGE_TYPE.RESTORE_INVENTORY})
+      if (existingMessage) {
+        console.log('already compensated, skipping')
+        return
+      }
 
-			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.RESTORE_INVENTORY)
+      const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.RESTORE_INVENTORY)
 
-			await outboxRepository.save(outboxMessage)
-		})
-    }
+      await outboxRepository.save(outboxMessage)
+    })
+  }
 }
 </pre>
 
@@ -206,46 +203,46 @@ export class RemoveInventoryStep implements SagaStepInterface&ltOrderSagaStepDat
 <pre class='prettyprint lang-typescript'>
 export class ShipOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
 
-	public step: STEP = STEP.SHIP_ORDER
+  public step: STEP = STEP.SHIP_ORDER
 
-	constructor(private datasource: DataSource) {}
+  constructor(private datasource: DataSource) {}
 
-    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`shipping order for order with id ${data.orderId}`)
-		await this.datasource.transaction(async manager =&gt {
-			const inboxRepository = manager.getRepository(InboxMessage)
-			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE})
-			if (existingMessage) {
-				console.log(`already shipped order for order with id ${data.orderId}, skipping`)
-				return
-			}
-			const outboxRepository = manager.getRepository(OutboxMessage)
-			const sagaRepository = manager.getRepository(OrderSagaEntity)
+  async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`shipping order for order with id ${data.orderId}`)
+    await this.datasource.transaction(async manager =&gt {
+      const inboxRepository = manager.getRepository(InboxMessage)
+      const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE})
+      if (existingMessage) {
+        console.log(`already shipped order for order with id ${data.orderId}, skipping`)
+        return
+      }
+      const outboxRepository = manager.getRepository(OutboxMessage)
+      const sagaRepository = manager.getRepository(OrderSagaEntity)
 
-			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE, true)
-			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER)
-			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.SHIP_ORDER)
+      const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.INVENTORY_RESPONSE, true)
+      const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER)
+      const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.SHIP_ORDER)
 
-			await inboxRepository.save(inboxMessage)
-			await outboxRepository.save(outboxMessage)
-			await sagaRepository.save(sagaEntity)
-		})
-    }
-    async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`compensating ship order step`)
-		await this.datasource.transaction(async manager =&gt {
-			const outboxRepository = manager.getRepository(OutboxMessage)
+      await inboxRepository.save(inboxMessage)
+      await outboxRepository.save(outboxMessage)
+      await sagaRepository.save(sagaEntity)
+    })
+  }
+  async compenstate(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`compensating ship order step`)
+    await this.datasource.transaction(async manager =&gt {
+      const outboxRepository = manager.getRepository(OutboxMessage)
 
-			const existingMessage = await outboxRepository.findOneBy({orderId: data.orderId, messageType: OUTBOX_MESSAGE_TYPE.SHIP_ORDER_CANCEL})
-			if (existingMessage) {
-				console.log('already compensated, skipping')
-				return
-			}
-			const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER_CANCEL)
+      const existingMessage = await outboxRepository.findOneBy({orderId: data.orderId, messageType: OUTBOX_MESSAGE_TYPE.SHIP_ORDER_CANCEL})
+      if (existingMessage) {
+        console.log('already compensated, skipping')
+        return
+      }
+      const outboxMessage = new OutboxMessage(data.orderId, data.productId, data.quantity, OUTBOX_MESSAGE_TYPE.SHIP_ORDER_CANCEL)
 
-			await outboxRepository.save(outboxMessage)
-		})
-    }
+      await outboxRepository.save(outboxMessage)
+    })
+  }
 }
 </pre>
 
@@ -253,36 +250,36 @@ export class ShipOrderStep implements SagaStepInterface&ltOrderSagaStepData, Ord
 <pre class='prettyprint lang-typescript'>
 export class FinalizeOrderStep implements SagaStepInterface&ltOrderSagaStepData, OrderSagaStepData&gt {
 
-	public step: STEP = STEP.FINALIZE_ORDER
+  public step: STEP = STEP.FINALIZE_ORDER
 
-	constructor(private datasource: DataSource) {}
+  constructor(private datasource: DataSource) {}
 
-    async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
-		console.log(`finalizing order with id ${data.orderId}`)
-		await this.datasource.transaction(async manager =&gt {
-			const inboxRepository = manager.getRepository(InboxMessage)
-			const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE})
-			if (existingMessage) {
-				console.log(`already finalized order with id ${data.orderId}, skipping`)
-				return;
-			}
+  async invoke(data: OrderSagaStepData): Promise&ltvoid&gt {
+    console.log(`finalizing order with id ${data.orderId}`)
+    await this.datasource.transaction(async manager =&gt {
+      const inboxRepository = manager.getRepository(InboxMessage)
+      const existingMessage = await inboxRepository.findOneBy({id: data.messageId, messageType: INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE})
+      if (existingMessage) {
+        console.log(`already finalized order with id ${data.orderId}, skipping`)
+        return;
+      }
 
-			const sagaRepository = manager.getRepository(OrderSagaEntity)
-			const orderRepository = manager.getRepository(Order)
+      const sagaRepository = manager.getRepository(OrderSagaEntity)
+      const orderRepository = manager.getRepository(Order)
 
-			const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE, true)
-			const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.FINALIZE_ORDER)
-			const order = await orderRepository.findOneBy({orderId: data.orderId})
-			order.status = ORDER_STATUS.FULFILLED
+      const inboxMessage = new InboxMessage(data.messageId, data.orderId, INBOX_MESSAGE_TYPE.SHIPPING_RESPONSE, true)
+      const sagaEntity = new OrderSagaEntity(data.orderId, data.productId, data.quantity, STEP.FINALIZE_ORDER)
+      const order = await orderRepository.findOneBy({orderId: data.orderId})
+      order.status = ORDER_STATUS.FULFILLED
 
-			await inboxRepository.save(inboxMessage)
-			await sagaRepository.save(sagaEntity)
-			await orderRepository.save(order)
+      await inboxRepository.save(inboxMessage)
+      await sagaRepository.save(sagaEntity)
+      await orderRepository.save(order)
 
-		})
-    }
+    })
+  }
     async compenstate(): Promise&ltvoid&gt {
-		// last step, no compensation
+    // last step, no compensation
     }
 }
 </pre>
