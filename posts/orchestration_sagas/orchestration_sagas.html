@@ -451,7 +451,7 @@ export class OrderSagaOrchestrator {
 				sagas that have been persisted to the database, recreate them in memory, and put them in the right step. 
 				If any sagas have completed, successfully or not, they are not instantiated again. 
 				After a while, sagas within this set that are completed should also be cleaned up, to avoid a memory leak.
-			<h2>Http Server</h2>
+			<h2>HTTP Server</h2>
 
 			There is basic http server built using express to accept incoming requests to the order service, and 
 			create a new saga.
