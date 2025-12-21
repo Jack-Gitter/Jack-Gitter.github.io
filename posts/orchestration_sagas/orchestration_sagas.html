@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orchestration Sagas</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./orchestration_sagas.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -15,35 +16,46 @@
     <main>
         <article>
             <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
-			<h2>Brief Recap</h2>
+			<h2>Recap</h2>
             <p>
-				This will be a continuation of my other post about sagas, which can be found
-				<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">here</a>.
-				Although the implementation worked, I was not extremely satisfied with the code itself.
-				That implementation started with an orchestration based saga, but reverted to a
-				choreography based approach due to the difficulties of dealing with an orchestration server crash.
+				This is a small continuation of my other work around sagas, in which I first attempted to 
+				implement a orchestration based saga, but restorted to a choreography based saga. I outlined
+				all of the patterns and techniques revolvign around robust microservice communication, 
+				and some of the challenges I had along the way in another 
+				<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">post</a>.
+				Although the implementation worked, I was not satisfied with both the code on an organizational 
+				level, and the choreography based approach. 
 				For this implementation, I've decided to utilize all of the same robustness techniques, although
-				rework my classes and code organization into a more modular and clean approach.
-            </p>
+				created a more modular, clean implementation of an ochestration based saga.             </p>
+
 			<h2>General Patterns, High Level Overview</h2>
-			The main patterns used to communicate between microservices  are: saga, idempotent consumer, and outbox. 
-			If you're not up to speed on one or any of these, my previous 
-			<a href="https://jack-gitter.github.io/posts/sagas/sagas-outbox-idempotency.html">post</a> goes into
-			great detail about them. More information can also be found <a href="https://microservices.io/patterns/">here</a>. 
-			I also use some simple OOP patterns, such as the <a href="https://refactoring.guru/design-patterns/factory-method">factory</a> 
-			and <a href="https://refactoring.guru/design-patterns/builder">builder</a> patterns.
+			<p>
+			This post will not go into great detail about design patterns used, although I will give a brief overview 
+			for clarity. The main patterns used to communicate between microservices in this are: 
+			<a href="https://microservices.io/patterns/data/saga.html">saga</a>,
+			<a href="https://microservices.io/patterns/communication-style/idempotent-consumer.html">idempotent consumer</a>,
+			and 
+			<a href="https://microservices.io/patterns/data/transactional-outbox.html">transactional outbox</a>.
+			I also use some simple OOP patterns, such as the 
+			<a href="https://refactoring.guru/design-patterns/factory-method">factory</a> 
+			and <a href="https://refactoring.guru/design-patterns/builder">builder</a>.
+			</p>
 
 			<h2>Infrastructure</h2>
-				In order to develop this project, I used a couple of different infrastructure dependencies
-				<h3>Postgres</h3>
-				Used for persistance of the saga, inbox and outbox messages, and overall "work" that the microservices needed to acomplish
-				<h3>RabbitMQ</h3>
-				Used for messaging between microservices, a simple message queue service
-				<h3>docker</h3>
-				Used in order to easily spin up the infrastructure dependencies
-				<h3>run script</h3>
-				Created a run script called "start.sh" at the root of the project, to easily start all services and dependencies
+				This project depends on a couple of different infrastructure technologies.
 
+				<ul>
+					<li>
+						<span class="desc">Postgres</span>: Used for persistance of the saga, inbox and outbox messages, 
+						and overall "work" that individiual microservices needed to acomplish as apart of the saga.
+					</li>
+					<li>
+						<span class="desc">	RabbitMQ</span>: Facilitates messaging between microservices
+					</li>
+					<li>
+						<span class="desc">Docker</span>: Used in order to easily spin up the infrastructure dependencies
+					</li>
+				<ul>
 			<h2>Orders, Inventory, and Shipping services</h2>
 			The overall goal of this project is to create a microservice system that would always become eventually consistent
 			if the orchestrator or independent services crashed at any point. The simulated environment for this 
@@ -551,7 +563,7 @@ export class RabbitMQService {
 
 			<h3>orderId on messages</h3>
 			On each message between services, there is an OrderId. This allows the rabbitMQ service to pass it to the saga orchestrator
-			and then the saga orchestrator can fetch the saga that is corresponding to that message
+			and then the saga orchestrator can fetch the saga that is corresponding to that message. 
 
 
         </article>
