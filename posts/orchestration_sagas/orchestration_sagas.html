@@ -567,6 +567,46 @@ export class RabbitMQService {
 			On each message between services, there is an <span class="inline-code">orderId</span>. 
 			This is passed to the saga orchestrator, allowing the orchestrator to 
 			find the saga that is corresponding to that message. 
+
+			<h2>Crash Mitigation Walk Through</h2>
+					<p>
+					in this section, I'll briefly go over each spot where the orchestrator may crash, and how the 
+					architecture of the application mitigates the concern
+					</p>
+					<h3>Before Persisting the Order in Pending State</h3>
+					This is really not a big concern. The end user will get a 500 HTTP response, 
+					but no consistency issues could occur as we have not done any work.
+					<h3>Before Sending a Message</h3>
+					Using the transactional outbox pattern, if we crash before we send a message we know 
+					that the message will eventually be sent when our orchestrator comes back up, 
+					as we are always polling the outbox.
+					<h3>During Processing of an Incoming Message</h3>
+					Because we ensure to ack our messages only after the work of each step of the saga is done,
+					we can be sure that if we crash during performing the work, the message will still exist in our queue.
+					When the orchestrator comes back online, it will reprocess the message and perform the work
+					<h3>Before Acking a Message</h3>
+					If we persist the changes to the database, but do not ack the message this is also ok because 
+					our steps are idempotent. We will simply receive the message, check the inbox to see if we have processed
+					the message before, and if so ignore it and ack to remove from rabbitMQ.
+					<h3>Before Compensating Actions are Performed</h3>
+					If we crash before compensating actions are performed, we will just come back online, 
+					process the message from the queue, and rollback all compensating actions
+					<h3>During Compensating Actions</h3>
+					Because we perform all compensating actions at once without persistance inbetween, it might seem
+					like we have potential for issues. Although we mitigate this in two ways. Firstly at the downstream
+					microservices we implement the idempotent consumer pattern, so if we receive a compensation message
+					for an order with the same orderId, we can safely ignore it knowing we have done it before. Secondly
+					we check in our compensating actions if we have written a compensating message to our outbox already.
+					There is a small possiblity for a datarace here though, where if we write the message to the outbox,
+					then send it, and then crash, when we come back up we will re-write a new message to the outbox.
+					This is why the idempotent consumer pattern for all services is critical.
+					<h3>After Compensating Actions</h3>
+					If we crash after compensating actions, this is ok because the saga is already complete and there is 
+					no more work to be done. We do not need to process responses from compensating actions, as there is nothing
+					the orchestrator can do in the event of a failed compensating action at a downstream service.
+					This should be the responsibility of the service to move the message to a DLQ, where it can be inspected
+					manually at a later date.
+				
         </article>
     </main>
     <footer>
