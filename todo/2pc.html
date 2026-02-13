@@ -1,5 +1,11 @@
 two phase commit --> 
 
+talk about write ahead logs 
+talk about failure cases
+talk about why its needed
+talk about drawbacks
+talk about differences between eventual consistency and this
+
 * generate a transaction id, write it to the coordinator db and say what databases its happening with
 * begin the transactions and do the prepare statement with the id that was written to the database
 * then commit after getting the OK from both, or rollback
