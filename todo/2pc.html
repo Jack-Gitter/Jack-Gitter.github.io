@@ -7,4 +7,6 @@ two phase commit -->
 * if we go down before starting the transaction, maybe we'll have to see if there is a way to see if there is an existing prepared trasnaction with the id, otherwise
 	start from the top
 
+	* also need to write the responses back from the individual dbs, so that it knows what to do when it comes back up
+
 
