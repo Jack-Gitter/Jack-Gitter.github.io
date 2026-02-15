@@ -143,13 +143,322 @@
 
 			<h3>Code Walk</h3>
 
-			<h3>Code flow happy path walkthrough</h3>
+			In order to create this project, I'm using express.js in tandem with typeorm. I've got a couple of different entities which represent the 
+			person, address, and coordinator log that I discussed before. Again these are quite basic, and only for demonstration purposes
 
-			<h3>Code flow error case walkthroughs</h3>
-            
-            
-            <p>
-            <a href="https://github.com/jack-gitter/2PC">Link to the GitHub repository</a>
+<pre class='prettyprint lang-typescript'>
+@Entity('addresses')
+export class Address {
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Column()
+  city: string
+
+  @Column()
+  state: string
+
+  @Column()
+  zip: string
+}</pre>
+
+<pre class='prettyprint lang-typescript'>
+@Entity('persons')
+export class Person {
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Column()
+  firstname: string
+
+  @Column()
+  lastname: string
+
+  @Column()
+  age: number
+}
+</pre>
+			
+<pre class='prettyprint lang-typescript'>
+@Entity('coordinator_logs')
+export class CoordinatorLog {
+  constructor(transactionId: UUID, status?: STATUS) {
+    this.transactionId = transactionId
+    this.status = status
+  }
+
+  @Column({type: 'enum', enum: STATUS, nullable: true})
+  status: STATUS | null
+
+  @Column({type: 'uuid', primary: true})
+  transactionId: UUID
+}</pre>
+
+			<p>
+			The coordinator log entity will act as our write ahead log for the coordinator for any given transaction.
+
+			In order to have an extensible implementation for coordinatable nodes, I created an interface which each participanting node in the 2PC protocol must impleemnt
+
+<pre class='prettyprint lang-typescript'>
+export interface ICoordinatableService {
+  prepare(txid: UUID): Promise<boolean>
+  commit(txid: UUID)
+  rollback(txid: UUID)
+}
+</pre>
+
+The implementation for the address service and persons service have hard-coded update statements in the prepare function, to keep things simple and focused on the 2PC protocl itself
+
+
+<pre class='prettyprint lang-typescript'>
+export class AddressesService implements ICoordinatableService {
+  constructor(private datasource: DataSource) {}
+
+  async prepare(txid: UUID): Promise<boolean> {
+    const txExists = await this.txExists(txid)
+
+    if (txExists) {
+      return true
+    }
+
+    try {
+      const query = `BEGIN TRANSACTION; UPDATE ADDRESSES SET CITY = 'New City' WHERE id = 1; PREPARE TRANSACTION '${txid}';`
+      await this.datasource.query(query)
+      return true
+    } catch (e) {
+      console.log(e.message)
+      return false
+    }
+  }
+
+  async commit(txid: UUID) {
+    const txExists = await this.txExists(txid)
+
+    if (!txExists) {
+      return true
+    }
+
+    const query = `COMMIT PREPARED '${txid}'`
+    await this.datasource.query(query)
+
+    return true
+  }
+
+  async rollback(txid: UUID) {
+    const txExists = await this.txExists(txid)
+
+    if (!txExists) {
+      return true
+    }
+
+    const query = `ROLLBACK PREPARED '${txid}'`
+    await this.datasource.query(query)
+
+    return true
+  }
+
+  private async txExists(txid: UUID) {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_prepared_xacts
+        WHERE gid = '${txid}'
+      );
+    `
+
+    const result = await this.datasource.query(query)
+    return result[0].exists
+  }
+}
+</pre>
+
+<pre class='prettyprint lang-typescript'>
+export class PersonsService implements ICoordinatableService {
+  constructor(private datasource: DataSource) {}
+
+  async prepare(txid: UUID): Promise<boolean> {
+    const txExists = await this.txExists(txid)
+
+    if (txExists) {
+      return true
+    }
+
+    try {
+      const query = `BEGIN TRANSACTION; UPDATE PERSONS SET FIRSTNAME = 'New Firstname' WHERE id = 1; PREPARE TRANSACTION '${txid}';`
+      await this.datasource.query(query)
+      return true
+    } catch (e) {
+      console.log(e.message)
+      return false
+    }
+  }
+
+  async commit(txid: UUID) {
+    const txExists = await this.txExists(txid)
+
+    if (!txExists) {
+      return true
+    }
+
+    const query = `COMMIT PREPARED '${txid}'`
+    await this.datasource.query(query)
+
+    return true
+  }
+
+  async rollback(txid: UUID) {
+    const txExists = await this.txExists(txid)
+
+    if (!txExists) {
+      return true
+    }
+
+    const query = `ROLLBACK PREPARED '${txid}'`
+    await this.datasource.query(query)
+
+    return true
+  }
+
+  private async txExists(txid: UUID) {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM pg_prepared_xacts
+        WHERE gid = '${txid}'
+      );
+    `
+
+    const result = await this.datasource.query(query)
+    return result[0].exists
+  }
+}
+</pre>
+
+In order to utilize these functions I created a transaction coordinator service. For now the service is hardcoded to accept these two services,
+although it could be refactored to accept an array of ICoordinatblaeService implementations
+
+<pre class='prettyprint lang-typescript'>
+export class TransactionCoordinator {
+  constructor(
+    private personsService: ICoordinatableService,
+    private addressService: ICoordinatableService,
+    private coordinatorRepository: Repository<CoordinatorLog>
+  ) {}
+
+  async begin() {
+    const txId = randomUUID()
+    const log = new CoordinatorLog(txId)
+    await this.coordinatorRepository.save(log)
+
+    await this.phase1(log)
+    await this.phase2(log)
+  }
+
+  private async phase1(log: CoordinatorLog) {
+    let personResponse = false
+    let addressResponse = false
+
+    try {
+      personResponse = await this.personsService.prepare(log.transactionId)
+    } catch (e) {
+      console.log(`Failed to prepare transaction with id ${log.transactionId} for person`)
+    }
+
+    try {
+      addressResponse = await this.addressService.prepare(log.transactionId)
+    } catch (e) {
+      console.log(`Failed to prepare transaction with id ${log.transactionId} for address`)
+    }
+
+    log.status = personResponse && addressResponse ? STATUS.COMMIT : STATUS.ROLLBACK
+    await this.coordinatorRepository.save(log)
+  }
+
+  private async phase2(log: CoordinatorLog) {
+    if (log.status === STATUS.COMMIT) {
+      await this.commit(log.transactionId)
+    } else {
+      await this.rollback(log.transactionId)
+    }
+    await this.coordinatorRepository.update(
+      { transactionId: log.transactionId },
+      { status: STATUS.DONE }
+    )
+  }
+
+  async rollback(txid: UUID) {
+    await backOff(() => this.personsService.rollback(txid))
+    await backOff(() => this.addressService.rollback(txid))
+  }
+
+  async commit(txid: UUID) {
+    await backOff(() => this.personsService.commit(txid))
+    await backOff(() => this.addressService.commit(txid))
+  }
+
+  async recover() {
+    const incompleteTxs = await this.coordinatorRepository.find({
+      where: { status: Not(STATUS.DONE) }
+    })
+
+    for (const log of incompleteTxs) {
+      try {
+        if (!log.status) {
+          await this.phase1(log)
+        }
+        await this.phase2(log)
+      } catch (error) {
+        console.error(`Recovery failed for transaction ${log.transactionId}:`, error)
+      }
+    }
+  }
+}
+</pre>
+
+Finally, there is the main server class which sets up the express JS server, and the main.ts which bootstraps the entire project
+
+<pre class='prettyprint lang-typescript'>
+export class Server {
+  private app
+  private port
+
+  constructor(private transactionCoordinator: TransactionCoordinator) {
+    this.app = express()
+    this.port = 3000
+  }
+
+  async init() {
+    this.app.get('/', (req: Request, res: Response) => {
+      res.send('Hello World!')
+    })
+
+    this.app.post('/update', async (req: Request, res: Response) => {
+      await this.transactionCoordinator.begin()
+      res.status(200).send()
+    })
+
+    this.app.listen(this.port, () => {
+      console.log(`Example app listening on port ${this.port}`)
+    })
+  }
+}
+</pre>
+
+<pre class='prettyprint lang-typescript'>
+const main = async () => {
+  await personDatasource.initialize()
+  await addressDatasource.initialize()
+  await coordinatorDatasource.initialize()
+  const coordinatorRepository = coordinatorDatasource.getRepository(CoordinatorLog)
+  const addressService = new AddressesService(addressDatasource)
+  const personService = new PersonsService(personDatasource)
+  const transactionCoordinator = new TransactionCoordinator(personService, addressService, coordinatorRepository)
+  const server = new Server(transactionCoordinator)
+  cawait server.init()
+}
+</pre>
+
+        <a href="https://github.com/jack-gitter/2PC">Link to the GitHub repository</a>
             </p>
         </article>
     </main>
