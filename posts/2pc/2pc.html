@@ -43,6 +43,12 @@
 				of the protocol can be understood
 			</p>
 
+            <div class='sidenote'>
+				With my previous posts on Sagas, it might be important to distinguish when 2PC would be preferred over Sagas. Sagas main aim is to guarentee eventual 
+				consistency, with no direct promise on when or how quickly data will be consistent via an asychronous message queue process. 2PC aims for a most atomic 
+				operation, with a synchronous protocol attempting to mimic an ACID transaction as much as possible. 2PC in the worst case is eventually consistent 
+				in the case of a node or coordinator failure, but aims to be more aligned with a normal database transaction.
+            </div>
 
 			<h2>Possible issues with 2PC, coordinator failures, synchronous nature</h2>
 
@@ -113,9 +119,15 @@
 				</li>
 			</ol>
 
-			<h3>When to Use/Differences between Saga? Saga is eventually consistent, this is eventually consistent worst case</h3>
-
 			<h3>PostgresSQL prepare transaction, commit prepared, rollback prepared</h3>
+			<p>
+			In order to achieve this with PostgresSQL databases as the participant nodes, postgres implements something called prepared transactions. This 
+			is essentially postgres having the ability to "reserve" rows that would be impacted via a defined transaction, and wait for a commit prepared or 
+			rollback prepared message before flushing changes to disk and releasing locks. With this functionality, we can implement phase1 by utilizing the 
+			prepare transaction statement, and phase 2 via the commit transaction or rollback transaction respectively.
+			</p>
+
+
 
 			<h3>Basic contrivived example overview, use 2pc as last resort. System design to avoid distributed transactions</h3>
 
