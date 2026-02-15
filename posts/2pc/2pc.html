@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post Title</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./2pc.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+</head>
+<body>
+    <header>
+        <h1>2PC For Atomic, Distributed Transactions</h1>
+        <p class="date">Februrary 15, 2026</p>
+    </header>
+    <main>
+        <article>
+            <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
+
+			<h2>What is 2PC</h2>
+
+			<p>
+			2PC, or two phase commit, is a protocol used in order to achieve a robust distributed transaction. 
+			There are certain times where it might be necessary to achieve atomicity across multiple database nodes for one reason or another. 
+			With 2PC, this becomes possible. The following is a rough outline of the 2PC protocol, and how it operates at a high level
+			</p>
+
+			<ol>
+				<li>
+					A coordinator node first sends a request to all other nodes participanting in the transaction to determine whether they are able to 
+					perform the required work. Each participating node must respond and indicate whether it can or cannot achieve the work
+				</li>
+				<li>
+					After receiving all responses from each participating node, the coordinator is able to determine whether the transaction can succeed or not. 
+					If all participants have voted yes, then the coordinator sends a follow-up message to each of the nodes to commit the changes. If any 
+					participating node cannot perform the required work, the coodinator sends a message indicating that each node should not commit the changes
+					preapred in the prior step
+				</li>
+			</ol>
+
+			<p>
+				These two bullets represent the two main phases of two phase commit. A prepare phase, and a commit/rollback phase. With all of this, the core control flow
+				of the protocol can be understood
+			</p>
+
+
+			<h2>Possible issues with 2PC, coordinator failures, synchronous nature</h2>
+
+			<p>
+			With the basics understood, it can be seen that two phase commit is a synchronous protocol, which in it of itself is quite limiting. But if we dive a bit deeper, 
+			we can identify some specific issues that might arise, and how to mitigate them. Firstly, we have a potential participant node crash. This can happen in a couple of places
+
+			<ol>
+				<li>Before recieving the initial prepare transaction message</li>
+				<li>After responding to the inital prepare transaction message, but before recieving a commit/rollback message</li>
+			</ol>
+
+			In the first failure scenario, we should interpret this as an inabilty to prepare the necessary work for the distributed transaction, and 
+			simply rollback changes in phase 2. For the second failure case, the protocol dicatates that we keep trying to reach the node to send the commit or rollback 
+			message indefinietly. This is typically done with exponential backoff. Furthermore, we have a more daunting failure scenario: the event that the coordinator goes down
+			</p>
+
+			<h3>WALs</h3>
+
+			<p>
+			In order to combat coordinator failures, it is first important to understand what a WAL, or write-ahead-log is. A write ahead log is a technique used in distributed
+			systems to ensure that if a server says it will perform some action, it will even despite a server crash. A write ahead log can be implemnted in many different
+			ways, althought the core principals stay the same. Upon receiving a message, the server first writes the action or list of actions that it needs to perform to a 
+			persistant storage, ensuring it can perform said action until the action is actually done (by aquiring locks, or by other means). 
+			Then it can perform the action at some point in the future. If the sever crashes before the action is performed, the WAL can be used to understand what outstanding action
+			needs to be done when the server comes back up that has not been completed yet.
+			</p>
+
+			<p>
+			In our case, we will use a modified write-ahead-log to understand what stage of coordination we are at, so that if the coordinator dies it knows what actions to perform
+			for specific transactions when it comes back up. Here are the following failure scenarios for the coordinator
+			</p>
+
+			<ol>
+				<li>
+					 Coordinator goes offline after sending the initial prepare statement to all nodes, and before receiving one or many responses
+				</li>
+				<li>
+					Coordinator goes offline after receiving the responses from one or many participanting nodes, but before it can send the commit/rollback message
+				</li>
+				<li>
+					 Coordinator goes offline after sending partial commit/rollback messages, but not all 
+				</li>
+			</ol>
+
+			<p>
+			For each of the steps that the coordinator goes through, it will write in the write-ahead-log what it is about to perform, so that it if ever goes down then it can 
+			pick right back up where it needs to go. A key point of this is that all actions done by the coordinator must be idempotent, so that if we crash before writing the next
+			step to our write ahead log, then we will not have any issues. The process of the WAL+Coordinator will look roughly like this
+			</p>
+
+			<ol>
+				<li>
+					The coordinator generates a unique transaction id and writes it to the write-ahead-log. This transaction ID is provided to the database for prepare statements
+				</li>
+				<li>
+					The coordinator sends prepare statements to each participanting node, and waits for responses. If the coordinator crashes during this phase when it comes back alive, it will first check to see if the prepared transactions exist, before sending the create message again (idepotency)
+				</li>
+				<li>
+					The coordinator receives responses from each node, and writes the final outcome to the database. If the coordinator crashes during this phase, it will re-run
+					the idepotent stage 2. If a prepared tx exists, we know that the node was able to perform the work. If it does not, we could have either not sent the message to that node, or the node failed to perform the prepare transaction. In that case we need to retry and take it from there. After this, either "COMMIT" or "ROLLBACK" is written to the 
+					database in order to indicate what should be done in step 2.
+				</li>
+				<li>
+					Based on the commit/rollback value, we either send commit or rollback messages to each node involved. If we crash during this phase, we can simply
+					re-read the commit/rollback value from the db and continue. If we arleady sent some messages to nodes before we crashed, it is as simple as sending
+					the messages again. This is because if the node says that no transaction with the provided ID can be found, then we know the commit/rollback already worked.
+				</li>
+			</ol>
+
+			<h3>When to Use/Differences between Saga? Saga is eventually consistent, this is eventually consistent worst case</h3>
+
+			<h3>PostgresSQL prepare transaction, commit prepared, rollback prepared</h3>
+
+			<h3>Basic contrivived example overview, use 2pc as last resort. System design to avoid distributed transactions</h3>
+
+			<h3>Code Walk</h3>
+
+			<h3>Code flow happy path walkthrough</h3>
+
+			<h3>Code flow error case walkthroughs</h3>
+            
+            
+            <p>
+            <a href="https://github.com/jack-gitter/2PC">Link to the GitHub repository</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">SWE @ Sentinel Group</span>
+    </footer>
+</body>
+</html>
