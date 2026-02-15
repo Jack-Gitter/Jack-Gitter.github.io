@@ -119,7 +119,7 @@
 				</li>
 			</ol>
 
-			<h3>PostgresSQL prepare transaction, commit prepared, rollback prepared</h3>
+			<h3>PostgresSQL "Prepare Transaction", "Commit Prepared", "Rollback Prepared"</h3>
 			<p>
 			In order to achieve this with PostgresSQL databases as the participant nodes, postgres implements something called prepared transactions. This 
 			is essentially postgres having the ability to "reserve" rows that would be impacted via a defined transaction, and wait for a commit prepared or 
@@ -127,9 +127,19 @@
 			prepare transaction statement, and phase 2 via the commit transaction or rollback transaction respectively.
 			</p>
 
+			<h3>Basic Contriveved Example</h3>
+			<p>
+			In order to implement and demonstrate 2PC in the simplest way possible, I've created a very basic repository which has a horribly designed set of databases.
+			In this project, there are three databases. One for the coordinator, one for storing information about a person such as their name and age, and one for 
+			storing address information for the same person, such as city and state. Yes, the address and person databases are distinct, meaning in order to update 
+			both a persons name and adress atomically we will have to utilize the 2PC protocol.
 
+            <div class='sidenote'>
+				In real systems, 2PC should only ever be used as a last resort. System design can take you a long way without ever needing the complexity that 
+				comes with distributed transactions, although they are important to know in cases where you actually do need to use them.
+            </div>
+			</p>
 
-			<h3>Basic contrivived example overview, use 2pc as last resort. System design to avoid distributed transactions</h3>
 
 			<h3>Code Walk</h3>
 
