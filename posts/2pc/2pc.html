@@ -387,13 +387,13 @@ export class TransactionCoordinator {
   }
 
   async rollback(txid: UUID) {
-    await backOff(() => this.personsService.rollback(txid))
-    await backOff(() => this.addressService.rollback(txid))
+    await backOff(() =&gt this.personsService.rollback(txid))
+    await backOff(() =&gt this.addressService.rollback(txid))
   }
 
   async commit(txid: UUID) {
-    await backOff(() => this.personsService.commit(txid))
-    await backOff(() => this.addressService.commit(txid))
+    await backOff(() =&gt this.personsService.commit(txid))
+    await backOff(() =&gt this.addressService.commit(txid))
   }
 
   async recover() {
@@ -428,16 +428,16 @@ export class Server {
   }
 
   async init() {
-    this.app.get('/', (req: Request, res: Response) => {
+    this.app.get('/', (req: Request, res: Response) =&gt {
       res.send('Hello World!')
     })
 
-    this.app.post('/update', async (req: Request, res: Response) => {
+    this.app.post('/update', async (req: Request, res: Response) =&gt {
       await this.transactionCoordinator.begin()
       res.status(200).send()
     })
 
-    this.app.listen(this.port, () => {
+    this.app.listen(this.port, () =&gt {
       console.log(`Example app listening on port ${this.port}`)
     })
   }
@@ -445,7 +445,7 @@ export class Server {
 </pre>
 
 <pre class='prettyprint lang-typescript'>
-const main = async () => {
+const main = async () =&gt {
   await personDatasource.initialize()
   await addressDatasource.initialize()
   await coordinatorDatasource.initialize()
