@@ -61,7 +61,7 @@
 				<li>After responding to the inital prepare transaction message, but before recieving a commit/rollback message</li>
 			</ol>
 
-			In the first failure scenario, we should interpret this as an inabilty to prepare the necessary work for the distributed transaction, and 
+			In the first failure scenario, the coordinator can interpret the lack of response as an inabilty to prepare the necessary work for the distributed transaction, and 
 			simply rollback changes in phase 2. For the second failure case, the protocol dicatates that we keep trying to reach the node to send the commit or rollback 
 			message indefinietly. This is typically done with exponential backoff. Furthermore, we have a more daunting failure scenario: the event that the coordinator goes down
 			</p>
@@ -69,8 +69,8 @@
 			<h3>WALs</h3>
 
 			<p>
-			In order to combat coordinator failures, it is first important to understand what a WAL, or write-ahead-log is. A write ahead log is a technique used in distributed
-			systems to ensure that if a server says it will perform some action, it will even despite a server crash. A write ahead log can be implemnted in many different
+			In order to combat coordinator failures, it is first important to understand what a WAL, or write ahead log is. A write ahead log is a technique used in distributed
+			systems to ensure that if a server says it will perform some action, it will do so despite a server crash. A write ahead log can be implemnted in many different
 			ways, althought the core principals stay the same. Upon receiving a message, the server first writes the action or list of actions that it needs to perform to a 
 			persistant storage, ensuring it can perform said action until the action is actually done (by aquiring locks, or by other means). 
 			Then it can perform the action at some point in the future. If the sever crashes before the action is performed, the WAL can be used to understand what outstanding action
@@ -78,7 +78,7 @@
 			</p>
 
 			<p>
-			In our case, we will use a modified write-ahead-log to understand what stage of coordination we are at, so that if the coordinator dies it knows what actions to perform
+			In our case, we will use a modified write ahead log to understand what stage of coordination we are at, so that if the coordinator dies it knows what actions to perform
 			for specific transactions when it comes back up. Here are the following failure scenarios for the coordinator
 			</p>
 
@@ -95,30 +95,35 @@
 			</ol>
 
 			<p>
-			For each of the steps that the coordinator goes through, it will write in the write-ahead-log what it is about to perform, so that it if ever goes down then it can 
+			For each of the steps that the coordinator goes through, it will write in the write ahead log what it is about to perform, so that it if ever goes down then it can 
 			pick right back up where it left off. A key point of this is that all actions done by the coordinator must be idempotent, so that if we crash before writing the next
-			step to our write ahead log, then we will not have any issues. The process of the WAL + coordinator roughly looks like so
+			step to our write ahead log, then we will not impact the state of our transaction negatively. The process of the WAL + coordinator roughly looks like so
 			</p>
 
 			<ol>
 				<li>
-					The coordinator generates a unique transaction id and writes it to the WAL. This transaction ID is provided to the database for prepare statements
+					The coordinator generates a unique transaction ID and writes it to the WAL 
 				</li>
 				<li>
-					The coordinator sends prepare statements to each participanting node, and waits for responses. If the coordinator crashes during this step, 
-					 it first checks to see if the prepared transactions exist in the local database before sending the create message again upon coming online again. This step is thus idempotent.
+					The coordinator sends prepare statements to each participanting node with the previously generated ID, 
+					and waits for responses. If the coordinator crashes during this step, 
+					 it first checks to see if any prepared transaction with the ID exist in the participanting nodes before sending the create message 
+					 again upon, achieving 
+					 idempotency.
 				</li>
 				<li>
-					The coordinator receives responses from each node, and writes the final outcome to the database. If the coordinator crashes during this phase, it will rerun
-					the idepotent stage 2. If a prepared transaction exists, we know that the node was able to perform the work. If it does not, we could have either not sent the message to that node, or the node failed to perform the prepare transaction. In that case we need to retry and continue as normal. After this, either "COMMIT" or "ROLLBACK" is written to the 
-					WAL in order to indicate what should be done in step 2.
+					The coordinator receives responses from each node, and writes the final outcome to the database. If the coordinator crashes before it receives 
+					the responses from the nodes, it will rerun the idepotent stage 2. If a prepared transaction exists, the coordinator knows that the node was able to 
+					perform the work. If one does not, the coordinator could have either crashed before sending prepare message to that node, 
+					or the node failed to perform the prepare transaction. In that case we need to assume we never sent the message, and retry. 
+					After this, either "commit" or "rollback" is written to the WAL in order to indicate what should be done in phase 2.
 				</li>
 				<li>
-					Based on the commit/rollback value, the coordinator either send commit or rollback messages to each node involved. If the coordinator crashes 
+					Based on the commit/rollback value, the coordinator either sends commit or rollback messages to each node involved. If the coordinator crashes 
 					during this phase, we can simply re-read the commit/rollback 
 					value from the WAL and continue. If we arleady sent some messages to nodes before we crashed, it is as simple as sending
-					the messages again. This is because if the node says that no transaction with the provided ID can be found, then we know the commit/rollback was processed
-					by the participating node.
+					the messages again. This is because if the node says that no transaction with the provided ID can be found, then the coordinator knows 
+					the commit/rollback message was processed by the participating node.
 				</li>
 			</ol>
 
@@ -126,7 +131,7 @@
 			<p>
 			In order to achieve this with PostgresSQL databases as the participant nodes, postgres implements something called prepared transactions. This 
 			gives postgres the ability to "reserve" rows that would be impacted via a defined transaction, and wait for a commit prepared or 
-			rollback prepared message before flushing changes to disk and releasing locks. With this functionality, we can implement phase1 by utilizing the 
+			rollback prepared message before flushing changes to disk and releasing locks. With this functionality, we can implement phase 1 by utilizing the 
 			prepare transaction statement, and phase 2 via the commit transaction or rollback transaction respectively.
 			</p>
 
