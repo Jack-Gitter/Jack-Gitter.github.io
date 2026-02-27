@@ -17,7 +17,7 @@
         <article>
             <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
 
-			<h2>What is 2PC</h2>
+			<h2>What Is 2PC</h2>
 
 			<p>
 			2PC, or two phase commit, is a protocol used in order to achieve a robust distributed transaction. 
@@ -50,11 +50,11 @@
 				in the case of a node or coordinator failure, but aims to be more aligned with a normal database transaction.
             </div>
 
-			<h2>Possible issues with 2PC, coordinator failures, synchronous nature</h2>
+			<h2>Possible Issues With 2PC: Coordinator Failures and Synchronous Nature</h2>
 
 			<p>
 			With the basics understood, it can be seen that two phase commit is a synchronous protocol, which in it of itself is quite limiting. But if we dive a bit deeper, 
-			we can identify some specific issues that might arise, and how to mitigate them. Firstly, we have a potential participant node crash. This can happen in a couple of places
+			we can identify some specific issues that might arise and how to mitigate them. Firstly, we have a potential participant node crash. This can happen in a couple of places
 
 			<ol>
 				<li>Before recieving the initial prepare transaction message</li>
@@ -96,33 +96,36 @@
 
 			<p>
 			For each of the steps that the coordinator goes through, it will write in the write-ahead-log what it is about to perform, so that it if ever goes down then it can 
-			pick right back up where it needs to go. A key point of this is that all actions done by the coordinator must be idempotent, so that if we crash before writing the next
-			step to our write ahead log, then we will not have any issues. The process of the WAL+Coordinator will look roughly like this
+			pick right back up where it left off. A key point of this is that all actions done by the coordinator must be idempotent, so that if we crash before writing the next
+			step to our write ahead log, then we will not have any issues. The process of the WAL + coordinator roughly looks like so
 			</p>
 
 			<ol>
 				<li>
-					The coordinator generates a unique transaction id and writes it to the write-ahead-log. This transaction ID is provided to the database for prepare statements
+					The coordinator generates a unique transaction id and writes it to the WAL. This transaction ID is provided to the database for prepare statements
 				</li>
 				<li>
-					The coordinator sends prepare statements to each participanting node, and waits for responses. If the coordinator crashes during this phase when it comes back alive, it will first check to see if the prepared transactions exist, before sending the create message again (idepotency)
+					The coordinator sends prepare statements to each participanting node, and waits for responses. If the coordinator crashes during this step, 
+					 it first checks to see if the prepared transactions exist in the local database before sending the create message again upon coming online again. This step is thus idempotent.
 				</li>
 				<li>
-					The coordinator receives responses from each node, and writes the final outcome to the database. If the coordinator crashes during this phase, it will re-run
-					the idepotent stage 2. If a prepared tx exists, we know that the node was able to perform the work. If it does not, we could have either not sent the message to that node, or the node failed to perform the prepare transaction. In that case we need to retry and take it from there. After this, either "COMMIT" or "ROLLBACK" is written to the 
-					database in order to indicate what should be done in step 2.
+					The coordinator receives responses from each node, and writes the final outcome to the database. If the coordinator crashes during this phase, it will rerun
+					the idepotent stage 2. If a prepared transaction exists, we know that the node was able to perform the work. If it does not, we could have either not sent the message to that node, or the node failed to perform the prepare transaction. In that case we need to retry and continue as normal. After this, either "COMMIT" or "ROLLBACK" is written to the 
+					WAL in order to indicate what should be done in step 2.
 				</li>
 				<li>
-					Based on the commit/rollback value, we either send commit or rollback messages to each node involved. If we crash during this phase, we can simply
-					re-read the commit/rollback value from the db and continue. If we arleady sent some messages to nodes before we crashed, it is as simple as sending
-					the messages again. This is because if the node says that no transaction with the provided ID can be found, then we know the commit/rollback already worked.
+					Based on the commit/rollback value, the coordinator either send commit or rollback messages to each node involved. If the coordinator crashes 
+					during this phase, we can simply re-read the commit/rollback 
+					value from the WAL and continue. If we arleady sent some messages to nodes before we crashed, it is as simple as sending
+					the messages again. This is because if the node says that no transaction with the provided ID can be found, then we know the commit/rollback was processed
+					by the participating node.
 				</li>
 			</ol>
 
 			<h3>PostgresSQL "Prepare Transaction", "Commit Prepared", "Rollback Prepared"</h3>
 			<p>
 			In order to achieve this with PostgresSQL databases as the participant nodes, postgres implements something called prepared transactions. This 
-			is essentially postgres having the ability to "reserve" rows that would be impacted via a defined transaction, and wait for a commit prepared or 
+			gives postgres the ability to "reserve" rows that would be impacted via a defined transaction, and wait for a commit prepared or 
 			rollback prepared message before flushing changes to disk and releasing locks. With this functionality, we can implement phase1 by utilizing the 
 			prepare transaction statement, and phase 2 via the commit transaction or rollback transaction respectively.
 			</p>
@@ -131,8 +134,8 @@
 			<p>
 			In order to implement and demonstrate 2PC in the simplest way possible, I've created a very basic repository which has a horribly designed set of databases.
 			In this project, there are three databases. One for the coordinator, one for storing information about a person such as their name and age, and one for 
-			storing address information for the same person, such as city and state. Yes, the address and person databases are distinct, meaning in order to update 
-			both a persons name and adress atomically we will have to utilize the 2PC protocol.
+			storing address information for the same person, such as city and state. In order to update both personal and address information atomically, 2PC will 
+			be used.
 
             <div class='sidenote'>
 				In real systems, 2PC should only ever be used as a last resort. System design can take you a long way without ever needing the complexity that 
@@ -144,7 +147,7 @@
 			<h3>Code Walk</h3>
 
 			In order to create this project, I'm using express.js in tandem with typeorm. I've got a couple of different entities which represent the 
-			person, address, and coordinator log that I discussed before. Again these are quite basic, and only for demonstration purposes
+			person, address, and WAL that I discussed before. Again these are quite basic, and only for demonstration purposes
 
 <pre class='prettyprint lang-typescript'>
 @Entity('addresses')
@@ -197,7 +200,7 @@ export class CoordinatorLog {
 			<p>
 			The coordinator log entity will act as our write ahead log for the coordinator for any given transaction.
 
-			In order to have an extensible implementation for coordinatable nodes, I created an interface which each participanting node in the 2PC protocol must impleemnt
+			In order to have an extensible implementation for coordinatable nodes, I created an interface which each participanting node in the 2PC protocol must implement
 
 <pre class='prettyprint lang-typescript'>
 export interface ICoordinatableService {
@@ -334,7 +337,7 @@ export class PersonsService implements ICoordinatableService {
 }
 </pre>
 
-In order to utilize these functions I created a transaction coordinator service. For now the service is hardcoded to accept these two services,
+In order to utilize these functions I created a transaction coordinator service. For now the coordinator service is hardcoded to accept these two sub-services,
 although it could be refactored to accept an array of ICoordinatblaeService implementations
 
 <pre class='prettyprint lang-typescript'>
