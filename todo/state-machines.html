@@ -6,3 +6,7 @@
 * talk about the checking valid transition, and then getting next state through the machine, etc
 * THE MOST IMPORTANT guarentee is that you write the state you are moving into along with the work done in the current state in a singular transaction. This way if the 
 work or the state write fails, than you can never be in an inconsistent state 
+
+* two major different types 
+  * one is where the state machine helps you update state on a domain object, and then you save that domain object manually to the database in the same transaction
+  * the other is a self-contained state machine which does not have relationship to your entities, making it harder to achieve transactional consistency
