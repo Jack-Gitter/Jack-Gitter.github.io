@@ -4,3 +4,5 @@
 * talk about finding the golang library
 * talk about the redhat library and bullet points
 * talk about the checking valid transition, and then getting next state through the machine, etc
+* THE MOST IMPORTANT guarentee is that you write the state you are moving into along with the work done in the current state in a singular transaction. This way if the 
+work or the state write fails, than you can never be in an inconsistent state 
