@@ -10,3 +10,17 @@ work or the state write fails, than you can never be in an inconsistent state
 * two major different types 
   * one is where the state machine helps you update state on a domain object, and then you save that domain object manually to the database in the same transaction
   * the other is a self-contained state machine which does not have relationship to your entities, making it harder to achieve transactional consistency
+
+
+* talk about progression
+========================================= ========================================= =========================================
+In the onEntry() function, start a db transaction and start to stage work for a commit. Somehow get access to the "next" state the state machine would be in if the onEntry() succeeded, and write that in the same transaction and commit
+
+Getting the next state turned out to be a bit hacky, so I went to the documentation and saw that you were using actor.subscribe() in order to persist the machine state. This however is a callback function, not able to be committed in the same database transaction as the "work" done in onEntry, therefore violating the requirement that work and machine state must be committed in the same transaction.
+
+Only have onEntry() perform in-memory adjustments to javascript objects. in actor.subscribe() fetch those objects from machine state, write them to the database along with the machine state in a singular transaction. This is atomic, however if the transaction fails to write to the database for any reason, the in-memory machine has already transfered to the next step. Rolling it back becomes difficult
+
+Side-Bar: Work done in machine.send() is not "awaitable", therefore responding to an HTTP request with a valid response code becomes difficult in the event that we do asynchronous work in there (write to the db). We do not know whether that work failed or succeeded, so how can we know what response to send the user?
+
+The solution I ended up with is to not have state machines living in memroy. They will always be rehydrated via an HTTP request, and be slim and simply guard state transitions. With this, the method which handles the HTTP request can simply use the machine to both check if the event is vaible (machine.can()) and get the next state (machine.transition()). After this, it can do all work and persist the next state to the database in a transaction. Because this is awaitable, we can have a valid response to the HTTP response. Also no in-memory actor means no opportunity to be out of sync with DB
+========================================= ========================================= =========================================
