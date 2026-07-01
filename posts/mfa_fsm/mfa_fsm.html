@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Machines and Persistence</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+</head>
+<body>
+    <header>
+        <h1>State Machines and Persistence</h1>
+        <p class="date">July 1st, 2026</p>
+    </header>
+    <main>
+        <article>
+            <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
+			<h2>State Machine for a MFA Flow</h2>
+
+            <p>
+            </p>
+            
+			<h2>Persistence Requirements</h2>
+
+            <p>
+			Redhat article
+            </p>
+
+            <p>
+			Why we have to persist the state and work in a transaction
+            </p>
+            
+            
+            <h2>XState</h2>
+
+            <h2>Attempt #1</h2>
+
+            <p>
+			In memory state machine representation
+            </p>
+
+            <p>
+			Doing all work in onEntry() including DB writes, 
+			hacky to get next state
+            </p>
+
+            <p>
+			Http responses and needing to await actor functionality
+            </p>
+
+            <h2>Attempt #2</h2>
+
+            <p>
+			In memory state machine representation
+            </p>
+
+			<p>Still having actors do db writes</p>
+
+            <p>
+			actor.subscribe() to persist state, not in same transaction, 
+			potential data races with multiple states firing off quickly
+			or crashes between work and persistence
+            </p>
+
+			<p>same issue with responding to HTTP requests, async actors</p>
+
+            <p>
+			idempotent actors to mitigate one of those issues
+            </p>
+
+
+            <h2>Attempt #3</h2>
+
+            <p>
+			In memory state machine representation
+            </p>
+
+            <p>
+			Only have onEntry() perform adjustments to javascript objects, 
+			then have actor.subscribe() persist those. Issues being that 
+			when actor.subscribe() fires we are already in the next state.
+			If we fail to persist the work done, then we shouldn't be in 
+			that state. Rollbacks become difficult
+            </p>
+
+			<p>
+			mitigates also the async actor problem, as nodejs
+			is single threaded and actor would fire before handler returns
+			</p>
+
+            <h2>Attempt #4</h2>
+
+			<p>XState discord</p>
+
+			<p>Redhat article re-read and code examination</p>
+
+			<p>golang library</p>
+
+			<p>
+			reveal the difference between XState model 
+			(state machine is not entity-backed) from other models
+			(state machine is essentially an entity, and actions are done
+			on the entity. State is defined as a function on the entity
+			which is able to determine the current state)
+			</p>
+
+            <p>
+			Rehydration, thin state machine only used for guarding logic
+            </p>
+
+			<p>All logic is contained within HTTP handler</p>
+            
+            <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
+            </p>
+        </article>
+    </main>
+    <footer>
+        <span class="date">SWE @ Sentinel Group</span>
+    </footer>
+</body>
+</html>
