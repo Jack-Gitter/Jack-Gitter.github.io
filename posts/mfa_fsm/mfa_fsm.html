@@ -158,76 +158,114 @@ public async handleMagicLink({
 			authenticated or not. These conflicting principles means that once our HTTP request comes in and we send the event to transition into the "processing magic link" state and trigger the onEntry() function to validate it, we cannot await the work done to determine what response to give back to the user. 
 			Should we redirect them to the OTP input screen? 
 			Should we redirect them to an error screen? Because we cannot await the work done here, we need to find another solution which does not involve performing work within 
-			lifecycle events
+			lifecycle events and allows us to commit machine state and work transactionally.
             </p>
 
 
             <h2>Attempt #3</h2>
 
 			<p>In my journey towards understanding how to properly implement a state machine without potential data races or inconsistencies, I decided to go to one of the
-			most authoritative sources on the subject (for XState anyway). The XState Discord. There I gained great insight into not only XState, but how typically
-			state machines are modeled in a backend architecture, and what was inherently wrong with my approach: https://discord.com/channels/795785288994652170/1519822571355508806
+			most authoritative sources on the subject (for XState anyway), the XState Discord. <a href="https://discord.com/channels/795785288994652170/1519822571355508806">There</a>
+			I gained great insight into not only XState, but how typically state machines are modeled in a backend architecture, and what was inherently wrong with my approach
 			</p>
 
 			<p>
-			A short synopsis of the long-winded and multi-day thread that took place was two things:
+			The most important discoveries of the long-winded, multi-day thread conversation that took place were the following:
 
 			<ul>
 				<li>
-					If you want to persist the next state of the machine along with the current machine work, you have to use pure machine transition functions
+					Within XState, if work and machine state must be persisted transactionally, pure machine transition functions must be used. Pure machine transition functions
+					are functions which, given the current state, an event, and some input, will tell you the next state of the machine or whether the machine can enter a 
+					specific state without actually transitioning the machine itself. Think of these more as a guard functions which don't have any side effects.
 				</li>
 				<li>
-					If you want to avoid inconsistencies between an in-memory version of a state machine and a persisted version, simply don't have an in memory version.
-					Rather re-hydrate the machine on each incoming HTTP request to ensure the in-memory version is as close to the DB version as possible
+					Avoiding inconsistencies between an in-memory version of a state machine and a persisted version is simple: don't have an in memory version at all times.
+					Rather re-hydrate the machine on each incoming HTTP request to ensure consistency with the database
 				</li>
 			</ul>
 
 			</p>
 
 			<p>
-			With these two tidbits of information, I decided to re-read through the Red Hat article, at which point I noticed that they had linked to code examples of
-			their own implementations of state machines, and even what library they were using. This library, implemented in Golang, is stateswitch: https://github.com/filanov/stateswitch. Upon looking at this code further, I recognized that the way this state machine was modeled was extremely different than the way that XState models state machines. Stateswitch utilizes an entity as the machine itself, with a function that can be customized to get the current state of the machine. This drastically differs from the XState approach, where the machine is a standalone model totally separated from any database entity. The differences might not seem significant, although in reality this couples together changes to the entity itself, along with the next state of the machine in a much more seamless and intuitive way.
-			</p>
-
-			<p>
-			One major shift in mentality that I underwent also in the successful implementation of my state machine was that I was no longer modeling states as "active", but rather
-			all my states would be states the system is steady in, waiting for some sort of external input.
-			This means that the actions themselves occur on transition, and actually guard the transition from happening if the action is unsuccessful. For example, my state modeling went from this ... to this ...
-			</p>
-
-			<p>
-			The final piece of the puzzle that allowed me to be happy with my implementation was rehydration of the state machine and utilization of pure machine functions. I started to treat the state machine as more of a thin, logical "guard" than something that should actually have the work implemented within it. After shifting my mentality around this, everything clicked into place. I no longer had issues with asynchronous onEntry or actor.subscribe() method calls and responding to HTTP requests.
-			</p>
-
-			<p>
-			The new flow of an incoming HTTP request would now look something like so:
+			With these two pillars of information, I decided to re-read through the Red Hat article to see if I noticed anything new. After another once-over, I realized that the article links a couple of different code examples to reference, and also which library they use to implement their state machine. More on this library and the differences to XState later on, but looking at the Red Hat code allowed me to gain a better understanding of the overall flow which should take place when utilizing a state machine to orchestrate a long-lived HTTP based process. 
 
 			<ul>
 				<li>
-					HTTP request comes in with a unique ID
+					When an HTTP request comes in, either kick off an initial state machine if one is not present, or rehydrate the respective machine from the database
 				</li>
 				<li>
-					Load the state machine from the DB
-				</li>
+					Utilize the machine and pure state functions to check whether or not the current action to be performed by the HTTP handler is valid. For example,
+					if we are in an HTTP handler which sends an OTP SMS magic link, but the state machine is still in a state which expects the user to click a magic link,
+					then we know we should simply reject the request with a 409 conflict. In XState, we can achieve this with the machine.can() method, which determines whether or not
+					a transition is valid based on the current machine state and the given action and input
 				<li>
-					Based on the current function, we have our inputs, what "event" is occurring, and we have our current state from the DB
-				</li>
 				<li>
-					We can rehydrate our state machine and use actor.can() to determine if we can transition into the desired state. If we can, then we know that the transition is valid and our machine is in a good state.
-				</li>
+					After determining the transition is valid, perform any work to be done within the HTTP handler itself, but perform no external side effects. Only in-memory 
+					modifications should be done at this point to any entities, utilizing a read-modify-save technique with a pessimistic locking mechanism to avoid data races
 				<li>
-					After this, we perform the work in the HTTP handler itself, all in memory.
-				</li>
 				<li>
-					When we are done with the work, we get the to-be next state of the machine with machine.transition(), update our entity one final time, and save everything in a transaction. This way, if the transaction fails, our work and new state is not persisted to the database, and we can respond with an error to the end user. The next time an HTTP request comes in, we simply rehydrate and start fresh at the last known good state
+					After all the in-memory work is completed, utilize the machine.transition() pure function to determine the next state of the machine. Write this to the in-memory
+					state machine entity, and then save all entities along with the state machine entity to the database in a singular transaction. If the transaction fails, 
+					than the state machine state and work done are rolled back together, and if not then they are completed atomically. 
 				</li>
-			</ul>
-			</p>
+			<ul>
 
-			<p>Because all logic is performed within the HTTP handler, we can properly know whether the work and machine has been done and transitioned properly, and therefore
-			we can give an accurate response to our user
-			</p>
 
+				Below is an example of an HTTP handler which handles the submission of an OTP SMS MFA code from a user. The flow described above can be seen verbatim in its implementation
+
+				<pre class='prettyprint typescript'>
+public async submitOtp(sessionId: string, code: string): Promise<void> {
+    await this.datasource.transaction(async (manager) => {
+      const repo = manager.getRepository(FSM);
+      const fsm = await repo.findOne({
+        where: { sessionId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!fsm) throw new NotFoundException(`No session found: ${sessionId}`);
+
+      const event = { type: 'otp_verified' } as const;
+      const snapshot = authMachine.resolveState({
+        value: fsm.state,
+        context: {},
+      });
+
+      if (!snapshot.can(event)) {
+        throw new ConflictException(
+          `Cannot verify OTP from state '${fsm.state}'`,
+        );
+      }
+
+      if (!fsm.sessionToken) {
+        if (!fsm.phoneId) {
+          throw new BadRequestException('OTP has not been sent yet');
+        }
+
+        const result = await this.stytch.otps.authenticate({
+          method_id: fsm.phoneId,
+          code,
+          session_token: fsm.intermediarySessionToken ?? undefined,
+          session_duration_minutes: 60,
+        });
+        fsm.sessionToken = result.session_token;
+      }
+
+      const nextState = transition(authMachine, snapshot, event)[0]
+        .value as AuthState;
+
+      fsm.state = nextState;
+      await repo.save(fsm);
+    });
+  }
+				</pre>
+
+				With this approach, we obtain the atomicity between state machine work and state persistence, and we also achieve the synchronous response nature of HTTP requests. One major difference to point out is that our state machine no longer contains any business logic itself. The logic is all in the HTTP handlers. The machine is now what I refer to as "thin". It simply acts as a guard to ensure that the application does not perform any actions that it should not given the state the user MFA flow is in, and also ensures that the system transitions into a new valid state to continue the process at hand.
+
+
+				<p>
+				One interesting thing to note is that many other languages have state machine implementations which operate a bit differently, making them much more condusive to the 
+				workflow I have described. XState state machines exist as their own "entity", separate from the business domain. Libraries such as Golang's <a href="https://github.com/filanov/stateswitch">stateswitch</a> or c#'s <a href="https://github.com/dotnet-state-machine/stateless">stateless</a> utilize a domain object or existing entity as the machine. They define a set of functions on the entity to determine the current state, meaning that inherently adjustments to the domain object and adjustments to the state are intrinsically tied together. You cannot update the domain entity, for the most part, without updating the machine state. This takes away one of the major concerns that XState introduces, however easy it is to get around as I have shown above.
+				</p>
             <p>
             <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
             </p>
