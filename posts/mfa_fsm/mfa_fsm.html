@@ -18,28 +18,28 @@
 			<h2>State Machine for a MFA Flow</h2>
 
             <p>
-			In this article, I'll document the journey that I had implementing a MFA login flow utilizing a finite state machine to keep track of user state. 
-			Beacuse finite state machines are often used to keep track of long running business processes, they often must be backed by persistence in the event that the 
-			orchestration application crashes. Due to this requirement, I thought it would be a good idea to combine my recent experience with designing a MFA flow with the
-			new challenge of utilizing a state machine to keep track of different scenarios and states the user can be in. 
+			In this article, I'll document the journey that I went on as I discovered how to implement a MFA login flow utilizing a finite state machine.
+			Since finite state machines are often used to keep track of long running business processes, they often must be backed by persistence in the event that the
+			orchestration application crashes. Due to this requirement, I thought it would be a good idea to combine my recent professional experience 
+			in designing a MFA flow with the new challenge of utilizing a state machine to keep track of different scenarios and states the user can be in.
             </p>
 
-			<p>I will not be covering state machine basics in this article. 
+			<p>I will not be covering state machine basics or theory in this article.
 			This article will assume basic familiarity with how FSMs work on both a theoretical level and a practical level</p>
-            
+
 			<h2>Persistence Requirements</h2>
 
-			<p>In my journey to understand how state machines are used for robust and production ready software, I stumbled upon an 
-			<a href="https://developers.redhat.com/articles/2021/11/23/how-design-state-machines-microservices">article</a> 
-			written by Red Hat which describes how to utilize state machines in a microservice architecture. After reading through this, I noticed one particularly interesting piece of advise which reolved around the persistence of state machines</p>
+			<p>In my journey to understand how state machines are used for robust and production ready software, I stumbled upon an
+			<a href="https://developers.redhat.com/articles/2021/11/23/how-design-state-machines-microservices">article</a>
+			written by Red Hat which describes how to utilize state machines in a microservice architecture. After reading through this, I noticed one particularly interesting piece of advice which revolved around the persistence of state machines</p>
 
-			<quote>A resource's state should generally be stored with that resource's metadata—in an SQL database or key-value store, for example. All changes to the resource, including the state change, should be made to in-memory objects and committed in a single transaction at the end of the operation to avoid races.
-			</quote>
+			<blockquote>A resource's state should generally be stored with that resource's metadata—in an SQL database or key-value store, for example. All changes to the resource, including the state change, should be made to in-memory objects and committed in a single transaction at the end of the operation to avoid races.
+			</blockquote>
 
 			<p>
-			As Red Hat advises, the work done by a state machine during a state, along with the new machine state which results after the work has been completed must be written atomically to the database. As you can imagine, this is critical to avoid inconsistencies with the work that has been done and the machine state that has been persisted to the database. For example, if we do work in state "A" and commit that work in one transaction, and then transition to state "B" and commit state "B" to our database as our new current state, we could potentially crash between the work that "A" completed and having state "B" written to the database as the new state. Upon recovery, the machine would continue along in state A, despite having already completed it. In many cases this is not a big deal if the work done in each state is idempotent, however it does leave the door open for potential bugs and brutal edge cases to appear. By transactionally completing work and transitioning the state machine state, these inconsistencies are impossible.
+			As Red Hat advises, the work done by a state machine during a state, along with the new machine state which results after the work has been completed must be written atomically to the database. As you can imagine, this is critical to avoid inconsistencies with the work that has been done and the machine state that has been persisted to the database. For example, if we do work in state "A" and commit that work in one transaction, and then transition to state "B" and commit state "B" to our database as our new current state, we could potentially crash between the work that "A" completed and when we would have written state "B" to the database. Upon recovery, the machine would continue along in state A, despite having already completed it. In many cases this is not a big deal if the work done in each state is idempotent, however it does leave the door open for potential bugs and brutal edge cases to appear. By transactionally completing work and transitioning the state machine state, these inconsistencies are impossible.
 			</p>
-            
+
             <h2>NestJS, XState, Stytch</h2>
 
 			<p>
@@ -50,28 +50,72 @@
 
 			<h3>Machine Definition</h3>
 			<p>
-			To start, my machine definition looked like so ... (insert diagram, insert code). As you can see, we have modeled the typical states and actions you would expect to be present in an MFA flow. The machine guards impossible transitions, for example a user cannot go from validation of an email magic link to a session being minted, because they have not verified their multifactor device.
-			</p>
-
-			</p>In this implementation, you can see that I have a mixture of action states and idle states. This wont be relevant right now, but keep this in mind moving forward as
-			it will be extremely relevant in how the final machine looks, and why it ended up that way
+			To start, my machine <a href="https://stately.ai/registry/editor/2bb1788e-dae4-4eca-bc03-01b7cede6079?machineId=64938cb5-c88d-4084-a06a-117861e769a7&mode=design">definition</a> was fairly standard. As you can see, we have modeled the typical states and actions you would expect to be present in an MFA flow. The machine guards impossible transitions, for example a user cannot go from validation of an email magic link to a session being minted, because they have not verified their multifactor device.
 			</p>
 
             <p>
-			My initial idea consisted of the following: Create a state machine for each incomming request to kick off an MFA flow. The incoming request would generate a UUID, create the state machine for the user in the initial state, add the machine to a Map from UUID to machine, and then return the UUID to the user in a cookie. Upon subsequent requests during the flow, the cookie would be parsed, the in-memory state machine looked up, and then the subsequent "action" sent to the machine to perform the required work. Seems logical, right? Well, there are <bold>many</bold> problems with this approach, which I soon found out. I will refer to this model of storing a representation of a state machine in a lookup map 
+			My initial idea consisted of the following: create a state machine for each incoming request to kick off an MFA flow. The incoming request would generate a UUID, create the state machine for the user in the initial state, add the machine to a Map from UUID to machine, and then return the UUID to the user in a cookie. Upon subsequent requests during the flow, the cookie would be parsed, the in-memory state machine looked up, and then the subsequent "action" sent to the machine to perform the required work. Seems logical, right? Well, there are <strong>many</strong> problems with this approach, which I soon found out. I will refer to this model of storing a representation of a state machine in a lookup map
 			as the "in-memory model"
             </p>
 
 
 			<p>
-			In this implementation, almost all of the logic that would typically go in an HTTP handler was moved into what XState calls "actors". These are essentially what gets run 
-			in the onEntry(), onExit(), and other state machine functions. For example, the validation of a magic link step looks like so: ... insert code image ...
-			You can see that the HTTP handler itself is quite thin. We simply are parsing the request, generating the event, and firing the state machien off. The onEntry() function
-			kicks off the actor, and the work is done! 
+			In my initial implementation, nearly logic that would typically go in an HTTP handler was moved into what XState calls "actors". These are essentially what gets run
+				in the onEntry(), onExit(), and other state machine functions. For example, the validation of a magic link step exists within an actor. This actor is called when the validateMagicLink step is entered, triggered by the onEntry() function.
+
+<pre class='prettyprint lang-typescript'>
+public processMagicLinkActor = async (
+    { sessionId, token }: ProcessMagicLinkInput,
+    parent?: AnyActorRef,
+  ): Promise<void> => {
+    const machineRepository = this.datasource.getRepository(FSM);
+
+    const machine = await machineRepository.findOne({
+      where: { sessionId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!machine) throw new NotFoundException();
+
+    if (!machine.processedMagicLink) {
+      await this.stytch.magicLinks.authenticate({ token });
+    }
+
+    await this.datasource.getRepository(FSM).update(
+      { sessionId },
+      {
+        snapshot: parent?.getPersistedSnapshot() as object,
+        processedMagicLink: true,
+      },
+    );
+  };
+</pre>
+			Whereas the HTTP handler which handles the incoming request actually is much slimmer
+
+<pre class='prettyprint lang-typescript'>
+public async handleMagicLink({
+    sessionId,
+    token,
+  }: {
+    sessionId: string;
+    token: string;
+  }): Promise<void> {
+    const actor = this.sessions.get(sessionId);
+
+    if (!actor) {
+      throw new Error(`No session found for sessionId: ${sessionId}`);
+    }
+
+    actor.send({ type: 'received_magic_link', token });
+  }
+</pre>
+
+			We simply are parsing the request, generating the event, and firing the state machine off. The onEntry() function
+			kicks off the actor, and the work is done!
 			</p>
 
 			<p>
-			The main problem with this approach is being able to persist the "next" state of the state machine along with doing work in the current state. XState actors are 
+			The main problem with this approach is being able to persist the "next" state of the state machine along with doing work in the current state. XState actors are
 			"dumb" in the sense that they do not have too much machine context, rather they are supposed to be "invoked", run their logic, and then "die" without knowing too much about the parent actor which invoked them. There however is the possibility to get the reference to the parent machine, and XState exposes a transition pure function to get the next state of the state machine based on the current state, and the inputs. ... show code example ...
 			With this approach, we are able to commit all of the necessary work and new state to the database in a singular transaction. To me however, this was a big code smell. It felt as though the onEntry() function of a state should not have to concern itself with what state is coming next, and even persist this information to the database
 			</p>
@@ -79,9 +123,9 @@
             <h2>Attempt #2</h2>
 
 			<p>
-			I went back to the drawing board and decided to take a look at some XState example code to see how the library recommended that persistence was tackled
+			I went back to the drawing board and decided to take a look at some XState example code to see how the library recommended that persistence was tackled.
 			Upon taking a look at some of the examples, I noticed that they used actor.subscribe() to detect when the state machine transitions, and persist the snapshot
-			to the DB that way. This technique separates the "work" transaction from the state persistence transaction, although if each step is idempotent, than 
+			to the DB that way. This technique separates the "work" transaction from the state persistence transaction, although if each step is idempotent, then
 			it is not too much of a concern except in some niche edge cases to persist the state being transitioned into non-atomically from the work done
 			</p>
 
@@ -90,9 +134,9 @@
 			</p>
 
             <p>
-			actor.subscribe() to persist state, not in same transaction, 
+			actor.subscribe() to persist state, not in same transaction,
 			potential data races with multiple states firing off quickly
-			or crashes between work and persistence. 
+			or crashes between work and persistence.
 			</p>
 
 			<p>
@@ -104,58 +148,101 @@
             </p>
 
 
-            <p>
-			idempotent actors to mitigate one of those issues
-            </p>
-
-
-
-
             <h2>Attempt #3</h2>
 
             <p>
-			In memory state machine representation
+			As a final attempt with an "in memory" model of a state machine, I decided to attempt to solve once and for all the transactional consistency between
+			performing actions within an onEntry() state function, and the state transition itself.
             </p>
 
-			</p>modeling "action" states</p>
+			<p>Modeling "action" states</p>
 
             <p>
-			Only have onEntry() perform adjustments to javascript objects, 
-			then have actor.subscribe() persist those. Issues being that 
-			when actor.subscribe() fires we are already in the next state.
-			If we fail to persist the work done, then we shouldn't be in 
-			that state. Rollbacks become difficult
-            </p>
+			In order to achieve this, the onEntry() function would simply manipulate and update XState's machine state with JavaScript objects representing database actions,
+			essentially performing all work in memory similar to a unit of work pattern. After the state is transitioned out of, the actor.subscribe() function would read
+			the in-memory "actions", and persist them to the database all in a singular transaction.
+			</p>
 
 			<p>
-			mitigates also the async actor problem, as nodejs
-			is single threaded and actor would fire before handler returns
+			This solves the atomicity issue between persisting state and performing work, however there is still one major flaw which exists: The state machine state transition
+			is not dependent on the success of actor.subscribe(). If we fail to persist the work of the previous state to our state machine, then we have already transitioned into
+			the next state assuming that the work has been completed. Our machine state in memory and the state in the database has thus gone out of sync, which is inherently the
+			crux of the problem when dealing with two representations of the same thing: Keeping the in memory state machine in sync with the database version.
+			</p>
+
+			<p>
+			There also exists a potential data race, despite it being a small one. Consider transitioning from state A -> B -> C, all via auto-transitions. If the work
+			that is performed in the actor.subscribe() between states A and B takes a long time, although the work from state B to C completes instantly, we may have a data race
+			and persist the incorrect state to our database.
 			</p>
 
             <h2>Attempt #4</h2>
 
-			<p>XState discord</p>
-
-			<p>Redhat article re-read and code examination</p>
-
-			<p>golang library</p>
-
-			</p>modeling "steady" states with actions on transition</p>
+			<p>In my journey towards understanding how to properly implement a state machine without potential data races or inconsistencies, I decided to go to one of the
+			most authoritative sources on the subject (for XState anyway). The XState Discord. There I gained great insight into not only XState, but how typically
+			state machines are modeled in a backend architecture, and what was inherently wrong with my approach: https://discord.com/channels/795785288994652170/1519822571355508806
+			</p>
 
 			<p>
-			reveal the difference between XState model 
-			(state machine is not entity-backed) from other models
-			(state machine is essentially an entity, and actions are done
-			on the entity. State is defined as a function on the entity
-			which is able to determine the current state)
+			A short synopsis of the long-winded and multi-day thread that took place was two things:
+
+			<ul>
+				<li>
+					If you want to persist the next state of the machine along with the current machine work, you have to use pure machine transition functions
+				</li>
+				<li>
+					If you want to avoid inconsistencies between an in-memory version of a state machine and a persisted version, simply don't have an in memory version.
+					Rather re-hydrate the machine on each incoming HTTP request to ensure the in-memory version is as close to the DB version as possible
+				</li>
+			</ul>
+
+			</p>
+
+			<p>
+			With these two tidbits of information, I decided to re-read through the Red Hat article, at which point I noticed that they had linked to code examples of
+			their own implementations of state machines, and even what library they were using. This library, implemented in Golang, is stateswitch: https://github.com/filanov/stateswitch. Upon looking at this code further, I recognized that the way this state machine was modeled was extremely different than the way that XState models state machines. Stateswitch utilizes an entity as the machine itself, with a function that can be customized to get the current state of the machine. This drastically differs from the XState approach, where the machine is a standalone model totally separated from any database entity. The differences might not seem significant, although in reality this couples together changes to the entity itself, along with the next state of the machine in a much more seamless and intuitive way.
+			</p>
+
+			<p>
+			One major shift in mentality that I underwent also in the successful implementation of my state machine was that I was no longer modeling states as "active", but rather
+			all my states would be states the system is steady in, waiting for some sort of external input.
+			This means that the actions themselves occur on transition, and actually guard the transition from happening if the action is unsuccessful. For example, my state modeling went from this ... to this ...
+			</p>
+
+			<p>
+			The final piece of the puzzle that allowed me to be happy with my implementation was rehydration of the state machine and utilization of pure machine functions. I started to treat the state machine as more of a thin, logical "guard" than something that should actually have the work implemented within it. After shifting my mentality around this, everything clicked into place. I no longer had issues with asynchronous onEntry or actor.subscribe() method calls and responding to HTTP requests.
+			</p>
+
+			<p>
+			The new flow of an incoming HTTP request would now look something like so:
+
+			<ul>
+				<li>
+					HTTP request comes in with a unique ID
+				</li>
+				<li>
+					Load the state machine from the DB
+				</li>
+				<li>
+					Based on the current function, we have our inputs, what "event" is occurring, and we have our current state from the DB
+				</li>
+				<li>
+					We can rehydrate our state machine and use actor.can() to determine if we can transition into the desired state. If we can, then we know that the transition is valid and our machine is in a good state.
+				</li>
+				<li>
+					After this, we perform the work in the HTTP handler itself, all in memory.
+				</li>
+				<li>
+					When we are done with the work, we get the to-be next state of the machine with machine.transition(), update our entity one final time, and save everything in a transaction. This way, if the transaction fails, our work and new state is not persisted to the database, and we can respond with an error to the end user. The next time an HTTP request comes in, we simply rehydrate and start fresh at the last known good state
+				</li>
+			</ul>
+			</p>
+
+			<p>Because all logic is performed within the HTTP handler, we can properly know whether the work and machine has been done and transitioned properly, and therefore
+			we can give an accurate response to our user
 			</p>
 
             <p>
-			Rehydration, thin state machine only used for guarding logic
-            </p>
-
-			<p>All logic is contained within HTTP handler</p>
-            
             <a href="https://github.com/yourusername/repository">Link to the GitHub repository</a>
             </p>
         </article>
