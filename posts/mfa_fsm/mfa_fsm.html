@@ -116,16 +116,16 @@ public async handleMagicLink({
 
 			<p>
 			The main problem with this approach is being able to persist the "next" state of the state machine along with doing work in the current state. XState actors are
-			"dumb" in the sense that they do not have too much machine context, rather they are supposed to be "invoked", run their logic, and then "die" without knowing too much about the parent actor which invoked them. There however is the possibility to get the reference to the parent machine, and XState exposes a transition pure function to get the next state of the state machine based on the current state, and the inputs. ... show code example ...
-			With this approach, we are able to commit all of the necessary work and new state to the database in a singular transaction. To me however, this was a big code smell. It felt as though the onEntry() function of a state should not have to concern itself with what state is coming next, and even persist this information to the database
+			"dumb" in the sense that they do not have too much machine context, rather they are supposed to be "invoked", run their logic, and then "die" without knowing too much about the parent actor which invoked them. This makes it quite difficult to fetch the next state of the machine, and persist it alongside the work that is to be done
 			</p>
 
             <h2>Attempt #2</h2>
 
 			<p>
-			I went back to the drawing board and decided to take a look at some XState example code to see how the library recommended that persistence was tackled.
+			Going back to the drawing board, I decided to take a look at some XState example code to see how the library recommended that persistence was tackled.
 			Upon taking a look at some of the examples, I noticed that they used actor.subscribe() to detect when the state machine transitions, and persist the snapshot
-			to the DB that way. This technique separates the "work" transaction from the state persistence transaction, although if each step is idempotent, then
+			to the DB that way in the <a href="https://github.com/statelyai/xstate/blob/main/examples/mongodb-persisted-state/main.ts">documentation</a>. This technique separates 
+			the "work" transaction from the state persistence transaction, although if each step is idempotent, then
 			it is not too much of a concern except in some niche edge cases to persist the state being transitioned into non-atomically from the work done
 			</p>
 
@@ -134,49 +134,35 @@ public async handleMagicLink({
 			</p>
 
             <p>
-			actor.subscribe() to persist state, not in same transaction,
-			potential data races with multiple states firing off quickly
-			or crashes between work and persistence.
+			When using actor.subscribe() to persist state, the work done in the previous state and the next machine state are not committed to the database in same transaction,
+			which can cause two issues
+
+			<ul>
+				<li>
+					Inconsistencies between the in-memory state and the database state
+				</li>
+				<li>
+					Data races when multiple transitions fire off one after another, and the second transition state is persisted before the first
+				<li>
+				<li>
+					If we successfully persist the work that is done in state A, and then transition to state B in memory but fail to write the new state B to the database in 
+					actor.subscribe(), how do we "roll back" the in-memory state machine version?
+				<li>
+			</ul>
 			</p>
 
-			<p>
-			Impossible to roll back once you're in a new state, how do you handle that?
-            </p>
-
             <p>
-			HTTP requests are synchronous by nature: if a user clicks on a magic link, by the time the HTTP request to validate that magic link returns it is expected that they should or should not know if they are authenticated. The problem with this is that XState onEntry(), onExit() and other functions are inherently asynchronous. There is no capability to await the actions invoked after sending an event to the machine. This means that once our HTTP request comes in and we send the event to transition into the "processing magic link" state and trigger the onEntry() function to validate it, we cannot await the work done to determine what response to give back to the user. Should we redirect them to the OTP input screen? Should we redirect them to an error screen? Because we cannot await the work done here, we need to find another solution
+			Along with these basic and obvious concerns comes one library-specific conern. OnEntry(), OnExit(), 
+			and other lifecycle hooks in XState are asynchronous and "unawaitable". On the contrary, HTTP requests are synchronous; If a user clicks on a magic link, 
+			by the time the HTTP request returns it is expected that the handler function will have attempted to validate the magic link and return if the user is 
+			authenticated or not. These conflicting principles means that once our HTTP request comes in and we send the event to transition into the "processing magic link" state and trigger the onEntry() function to validate it, we cannot await the work done to determine what response to give back to the user. 
+			Should we redirect them to the OTP input screen? 
+			Should we redirect them to an error screen? Because we cannot await the work done here, we need to find another solution which does not involve performing work within 
+			lifecycle events
             </p>
 
 
             <h2>Attempt #3</h2>
-
-            <p>
-			As a final attempt with an "in memory" model of a state machine, I decided to attempt to solve once and for all the transactional consistency between
-			performing actions within an onEntry() state function, and the state transition itself.
-            </p>
-
-			<p>Modeling "action" states</p>
-
-            <p>
-			In order to achieve this, the onEntry() function would simply manipulate and update XState's machine state with JavaScript objects representing database actions,
-			essentially performing all work in memory similar to a unit of work pattern. After the state is transitioned out of, the actor.subscribe() function would read
-			the in-memory "actions", and persist them to the database all in a singular transaction.
-			</p>
-
-			<p>
-			This solves the atomicity issue between persisting state and performing work, however there is still one major flaw which exists: The state machine state transition
-			is not dependent on the success of actor.subscribe(). If we fail to persist the work of the previous state to our state machine, then we have already transitioned into
-			the next state assuming that the work has been completed. Our machine state in memory and the state in the database has thus gone out of sync, which is inherently the
-			crux of the problem when dealing with two representations of the same thing: Keeping the in memory state machine in sync with the database version.
-			</p>
-
-			<p>
-			There also exists a potential data race, despite it being a small one. Consider transitioning from state A -> B -> C, all via auto-transitions. If the work
-			that is performed in the actor.subscribe() between states A and B takes a long time, although the work from state B to C completes instantly, we may have a data race
-			and persist the incorrect state to our database.
-			</p>
-
-            <h2>Attempt #4</h2>
 
 			<p>In my journey towards understanding how to properly implement a state machine without potential data races or inconsistencies, I decided to go to one of the
 			most authoritative sources on the subject (for XState anyway). The XState Discord. There I gained great insight into not only XState, but how typically
