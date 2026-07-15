@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>State Machines and Persistence</title>
     <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./mfa_fsm.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
 </head>
 <body>
@@ -33,7 +34,8 @@
 			<a href="https://developers.redhat.com/articles/2021/11/23/how-design-state-machines-microservices">article</a>
 			written by Red Hat which describes how to utilize state machines in a microservice architecture. After reading through this, I noticed one particularly interesting piece of advice which revolved around the persistence of state machines</p>
 
-			<blockquote>A resource's state should generally be stored with that resource's metadata—in an SQL database or key-value store, for example. All changes to the resource, including the state change, should be made to in-memory objects and committed in a single transaction at the end of the operation to avoid races.
+
+			<blockquote><i>A resource's state should generally be stored with that resource's metadata—in an SQL database or key-value store, for example. All changes to the resource, including the state change, should be made to in-memory objects and committed in a single transaction at the end of the operation to avoid races.</i>
 			</blockquote>
 
 			<p>
