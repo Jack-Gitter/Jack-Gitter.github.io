@@ -169,7 +169,7 @@ The hanlder parses the request, generates the event, and fires it to the machine
 				<li>
 					Within XState, if work and machine state must be persisted transactionally, pure machine transition functions must be used. Pure machine transition functions
 					are functions which, given the current state, an event, and some input, will tell you the next state of the machine or whether the machine can enter a 
-					specific state, without actually transitioning the machine itself. Think of these more as a guard functions which don't have any side effects.
+					specific state, without actually transitioning the machine itself. Think of these more as a guard or computational functions which don't have any side effects.
 				</li>
 				<li>
 					Avoiding inconsistencies between an in-memory version of a state machine and a persisted version is simple: don't have an in memory version at all times.
