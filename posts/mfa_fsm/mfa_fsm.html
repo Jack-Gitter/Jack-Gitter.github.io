@@ -188,7 +188,7 @@ The hanlder parses the request, generates the event, and fires it to the machine
 				</li>
 				<li>
 					Utilize the machine and pure state functions to check whether or not the current action to be performed by the HTTP handler is valid. For example,
-					if we are in an HTTP handler which sends an OTP SMS magic link, but the state machine is still in a state which expects the user to click a magic link,
+					if we are in an HTTP handler which sends an OTP SMS, but the state machine is still in a state which expects the user to click a magic link,
 					then we know we should simply reject the request with a 409 conflict. In XState, we can achieve this with the machine.can() method, which determines whether or not
 					a transition is valid based on the current machine state and the given action and input
 				</li>
