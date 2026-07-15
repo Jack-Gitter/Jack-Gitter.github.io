@@ -39,31 +39,30 @@
 			</blockquote>
 
 			<p>
-			As Red Hat advises, the work done by a state machine during a state, along with the new machine state which results after the work has been completed must be written atomically to the database. As you can imagine, this is critical to avoid inconsistencies with the work that has been done and the machine state that has been persisted to the database. For example, if we do work in state "A" and commit that work in one transaction, and then transition to state "B" and commit state "B" to our database as our new current state, we could potentially crash between the work that "A" completed and when we would have written state "B" to the database. Upon recovery, the machine would continue along in state A, despite having already completed it. In many cases this is not a big deal if the work done in each state is idempotent, however it does leave the door open for potential bugs and brutal edge cases to appear. By transactionally completing work and transitioning the state machine state, these inconsistencies are impossible.
+			As Red Hat advises, the work done by a state machine during a state, along with the new machine state which results after the work has been completed must be written atomically to the database. As you can imagine, this is critical to avoid inconsistencies with the work that has been done and the machine state that has been persisted to the database. For example, if we do work in state "A" and commit that work in one transaction, and then transition to state "B" and commit state "B" to our database in a different transaction, we could potentially crash between these two transactions. Upon recovery, the machine would continue along in state A, despite having already completed it. In many cases this is not a big deal if the work done in each state is idempotent and uses the inbox pattern to ensure at least once consumption of messages, however it does leave the door open for potential bugs and brutal edge cases to appear. By transactionally completing work and transitioning the state machine state, such inconsistencies are impossible.
 			</p>
 
             <h2>NestJS, XState, Stytch</h2>
 
 			<p>
-			For my implementation I will be using NestJS HTTP framework for the core code. For my state machine modeling, I will be using <a href="https://xstate.js.org/">XState</a>, which I've found to be the most comprehensive state machine library for Typescript. I will be using Stytch as my IDP of choice, as it is free and has all of the capabilities required for a basic MFA implementation
+			For my implementation I will be using NestJS HTTP framework for the core code. For my state machine modeling, I will be using <a href="https://xstate.js.org/">XState</a>, which I've found to be the most comprehensive state machine library for Typescript. For MFA, I will be using Stytch as my IDP of choice, as it is free and has all of the capabilities required for a basic MFA implementation
 			</p>
 
             <h2>Attempt #1</h2>
 
 			<h3>Machine Definition</h3>
 			<p>
-			To start, my machine <a href="https://stately.ai/registry/editor/2bb1788e-dae4-4eca-bc03-01b7cede6079?machineId=64938cb5-c88d-4084-a06a-117861e769a7&mode=design">definition</a> was fairly standard. As you can see, we have modeled the typical states and actions you would expect to be present in an MFA flow. The machine guards impossible transitions, for example a user cannot go from validation of an email magic link to a session being minted, because they have not verified their multifactor device.
+			To start, my machine <a href="https://stately.ai/registry/editor/2bb1788e-dae4-4eca-bc03-01b7cede6079?machineId=64938cb5-c88d-4084-a06a-117861e769a7&mode=design">definition</a> was fairly standard. Modeled are the typical states and actions you would expect to be present in an MFA flow. The machine guards impossible transitions, for example a user cannot go from validation of an email magic link to a session being minted, because they have not verified their multifactor device.
 			</p>
 
             <p>
-			My initial idea consisted of the following: create a state machine for each incoming request to kick off an MFA flow. The incoming request would generate a UUID, create the state machine for the user in the initial state, add the machine to a Map from UUID to machine, and then return the UUID to the user in a cookie. Upon subsequent requests during the flow, the cookie would be parsed, the in-memory state machine looked up, and then the subsequent "action" sent to the machine to perform the required work. Seems logical, right? Well, there are <strong>many</strong> problems with this approach, which I soon found out. I will refer to this model of storing a representation of a state machine in a lookup map
-			as the "in-memory model"
+			My initial idea consisted of the following: create a state machine for each incoming request to kick off an MFA flow. The incoming request would generate a UUID, create the state machine for the user in the initial state, add the machine to a map from UUID to machine, and then return the UUID to the user in a cookie. Upon subsequent requests during the flow, the cookie would be parsed, the in-memory state machine looked up, and then the subsequent event sent to the machine to perform the required work. Seems logical, right? Well, there are <strong>many</strong> problems with this approach, which I soon found out. 
             </p>
 
 
 			<p>
-			In my initial implementation, nearly logic that would typically go in an HTTP handler was moved into what XState calls "actors". These are essentially what gets run
-				in the onEntry(), onExit(), and other state machine functions. For example, the validation of a magic link step exists within an actor. This actor is called when the validateMagicLink step is entered, triggered by the onEntry() function.
+			In my initial implementation, nearly all logic that would typically go in an HTTP handler was moved into what XState calls "actors". These are essentially what gets run
+			during lifecycle hooks for the machine, think <span class="inline-code">onEntry()</span>, <span class="inline-code">onExit()</span>, and other state machine functions. For example, the validation of a magic link step exists within an actor. This actor is called when the <span class="inline-code">validateMagicLink</span> step is entered, triggered by the <span class="inline-code">onEntry()</span> function.
 
 <pre class='prettyprint lang-typescript'>
 public processMagicLinkActor = async (
@@ -112,55 +111,47 @@ public async handleMagicLink({
   }
 </pre>
 
-			We simply are parsing the request, generating the event, and firing the state machine off. The onEntry() function
+The hanlder parses the request, generates the event, and fires it to the machine. The <span class='inline-code'>onEntry()</span> function
 			kicks off the actor, and the work is done!
 			</p>
 
 			<p>
-			The main problem with this approach is being able to persist the "next" state of the state machine along with doing work in the current state. XState actors are
-			"dumb" in the sense that they do not have too much machine context, rather they are supposed to be "invoked", run their logic, and then "die" without knowing too much about the parent actor which invoked them. This makes it quite difficult to fetch the next state of the machine, and persist it alongside the work that is to be done
+			There are a couple of issues with this approach, but the main one is the ability to persist the next machine state along with the work atomically. XState actors are
+			dumb in the sense that they do not have much machine context, but rather they are supposed to be invoked, run their logic, and then die without knowing too much about the parent actor or machine which invoked them. This makes it quite difficult to fetch the next state of the machine, and persist it alongside the work that is to be done.
 			</p>
 
             <h2>Attempt #2</h2>
 
 			<p>
 			Going back to the drawing board, I decided to take a look at some XState example code to see how the library recommended that persistence was tackled.
-			Upon taking a look at some of the examples, I noticed that they used actor.subscribe() to detect when the state machine transitions, and persist the snapshot
-			to the DB that way in the <a href="https://github.com/statelyai/xstate/blob/main/examples/mongodb-persisted-state/main.ts">documentation</a>. This technique separates 
-			the "work" transaction from the state persistence transaction, although if each step is idempotent, then
-			it is not too much of a concern except in some niche edge cases to persist the state being transitioned into non-atomically from the work done
+			Upon taking a look at some of the examples, I noticed that the recommended approach used <span class='inline-code'>actor.subscribe()</span> 
+			to detect when the state machine transitions, and persist the snapshot to the DB that way in the 
+			<a href="https://github.com/statelyai/xstate/blob/main/examples/mongodb-persisted-state/main.ts">documentation</a>. 
+			<span class='inline-code'>actor.subscribe()</span> is another lifecycle hook which fires when the machine transitions from one state to another, 
+			and provides the callback function with the previous and next state, along with other machinecontext. 
+			This technique separates the "work" transaction from the state persistence transaction, although if each step is idempotent, then
+			it is not too much of a concern except in some niche edge cases.
 			</p>
 
 			<p>
-			As you may expect however (this only being attempt #2) this approach has some potentially even worse flaws than approach #1.
+			Despite the lack of concern with atomicity, there exist other concerns with this approach, most notably data races, rollbacks, and HTTP responses. 
 			</p>
-
-            <p>
-			When using actor.subscribe() to persist state, the work done in the previous state and the next machine state are not committed to the database in same transaction,
-			which can cause two issues
 
 			<ul>
 				<li>
-					Inconsistencies between the in-memory state and the database state
+					Inconsistencies between the in-memory state and the database state. Consider the scenario where we transition from state A to B, successfully commit the work done in state A to the database, but fail to persist the new state machine state B to the database. Should we "rollback" the work, transition to an error state? 
 				</li>
 				<li>
-					Data races when multiple transitions fire off one after another, and the second transition state is persisted before the first
+					Data races when multiple transitions fire off one after another, and the second transition state is persisted before the first. Think 
+					A -&gt B -&gt C, and the <span class='inline-code'>actor.subscribe()</span> from B to C completes before A to B, so state B is persisted when in reality the machine in memory is in state C.
+				</li>
 				<li>
-				<li>
-					If we successfully persist the work that is done in state A, and then transition to state B in memory but fail to write the new state B to the database in 
-					actor.subscribe(), how do we "roll back" the in-memory state machine version?
-				<li>
-			</ul>
+					Lifecycle hooks in XState are not "awaitable". Therefore how do we know what HTTP response code to return to the user? There is no way to know not only whether the work done after sending an event to a machine successfully completes, but also whether the persistence of the new machine state has succeeded either.
+				</li> </ul>
 			</p>
 
             <p>
-			Along with these basic and obvious concerns comes one library-specific conern. OnEntry(), OnExit(), 
-			and other lifecycle hooks in XState are asynchronous and "unawaitable". On the contrary, HTTP requests are synchronous; If a user clicks on a magic link, 
-			by the time the HTTP request returns it is expected that the handler function will have attempted to validate the magic link and return if the user is 
-			authenticated or not. These conflicting principles means that once our HTTP request comes in and we send the event to transition into the "processing magic link" state and trigger the onEntry() function to validate it, we cannot await the work done to determine what response to give back to the user. 
-			Should we redirect them to the OTP input screen? 
-			Should we redirect them to an error screen? Because we cannot await the work done here, we need to find another solution which does not involve performing work within 
-			lifecycle events and allows us to commit machine state and work transactionally.
+			Due to the plethora of issues and complications, I knew there had to be a better way.
             </p>
 
 
@@ -200,21 +191,23 @@ public async handleMagicLink({
 					if we are in an HTTP handler which sends an OTP SMS magic link, but the state machine is still in a state which expects the user to click a magic link,
 					then we know we should simply reject the request with a 409 conflict. In XState, we can achieve this with the machine.can() method, which determines whether or not
 					a transition is valid based on the current machine state and the given action and input
-				<li>
+				</li>
 				<li>
 					After determining the transition is valid, perform any work to be done within the HTTP handler itself, but perform no external side effects. Only in-memory 
 					modifications should be done at this point to any entities, utilizing a read-modify-save technique with a pessimistic locking mechanism to avoid data races
-				<li>
+				</li>
 				<li>
 					After all the in-memory work is completed, utilize the machine.transition() pure function to determine the next state of the machine. Write this to the in-memory
 					state machine entity, and then save all entities along with the state machine entity to the database in a singular transaction. If the transaction fails, 
 					than the state machine state and work done are rolled back together, and if not then they are completed atomically. 
 				</li>
-			<ul>
+			</ul>
 
+				<p>
 
 				Below is an example of an HTTP handler which handles the submission of an OTP SMS MFA code from a user. The flow described above can be seen verbatim in its implementation
 
+				</p>
 				<pre class='prettyprint typescript'>
 public async submitOtp(sessionId: string, code: string): Promise<void> {
     await this.datasource.transaction(async (manager) => {
