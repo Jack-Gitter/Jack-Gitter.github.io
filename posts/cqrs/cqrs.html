@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CQRS, Kafka, Debezium</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+</head>
+<body>
+    <header>
+        <h1>CQRS, Kafka, Debezium</h1>
+        <p class="date">October 20th, 2026</p>
+    </header>
+    <main>
+        <article>
+            <a href="https://jack-gitter.github.io" class="top-right-button">🏠</a>
+			<h2>What is CQRS?</h2>
+            <p>
+			CQRS, also known as command query response segregation, is a way to functionally separate the reads and writes of an application. CQRS, in practice, involves separating out the write model from the read model, as typically the data you need to maintain consistency and uphold invariants is not always the same exact data as you want to read. Throughout this article, I will be using DDD nomenclature to reference core programming concepts and ideas, however CQRS is not inherently tied to DDD in any way. CQRS is much simpler than issues revolving around scalability, CDC, or any other topics that it is usually developed in tandem with, however it enables these performacne enhancements and architecture decisions
+            </p>
+			<p>For those unfamiliar, a "command" within CQRS is essentially anything that will change the underlying data, think POST, PATCH, PUT requests. For queries, think anything that reads data without modification, for example GET requests</p>
+			<h2>Why CQRS</h2>
+			<p>
+			With respect to DDD, CQRS allows for the separation of aggregate roots from the data models which are queried and displayed in the application. Aggregate roots typically fetch complex data from a database with locking, in order to uhold invariants about some data. Because reading data does not in any way change the state of the database, it is therefore safe to break out of these aggregate roots (whose purpose is to uphold invariants) and fetch data only the UI would care about. This is extremely helpful when the data required in the UI differes in any significant way from what data is fetched for the aggregate, allowing for optimization of SQL queries for hot read paths.
+			</p>
+
+			<h2>Data Modeling and Technology</h2>
+			<p>NestJS and CQRS implementation</p>
+			<p>Show data model for airplane and seats and invariants</p>
+			<p>Show code for controller and command dispatcher, and commands themselves</p>
+
+			<h2>CDC</h2>
+			<p>explain CDC at a high level, LSN</p>
+			<p>explain CDC change codes, full diff vs net diff, different settings</p>
+
+			<h2>Postgres and CDC</h2>
+			<p>explain postgres specific WAL and config settings, wal deletion, etc</p>
+
+			<h2>Kafka</h2>
+			<p>explain what kafka is, what a broker is, topic, and partition</p>
+
+			<h2>Kafka Setup</h2>
+			<p>explain what topics we have set up, and how many brokers</p>
+			<p>show code snippet of subscription to kafka</p>
+
+			<h2>Debezium</h2>
+			<p>explain how debezium is the connector between CDC and kafka</p>
+			<p>explain how it reads the WAL and outputs to the topic, and what it outputs</p>
+
+			<h2>Two Postgres Databases</h2>
+			<p>explain why we are reading the WAL -- to upgrade read database</p>
+			<p>explain benefits, scaling, partiioning, fault tolerance, etc</p>
+
+			<h2>Two APIs</h2>
+			<p>the api for handling commands and reads</p>
+			<p>api for listening to kafka, transforming data, populating read db</p>
+			<p>show code snippet for transformer kafka record and upsert to read db</p>
+			<p>show screenshot of kafka UI message in a topic</p>
+			<p>show screenshot of the database after an update</p>
+
+			<h2>Why?</h2>
+			<p>hot paths on reads</p>
+			<p>independent scaling, more simple code querying</p>
+
+            
+    </main>
+    <footer>
+        <span class="date">SWE @ Sentinel Group</span>
+    </footer>
+</body>
+</html>
