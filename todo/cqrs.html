@@ -1,1 +1,33 @@
-cqrs with a separate db, and dbezeium to replicate data into a different read modle in a new db, talk about scaling, dault tolerance, DDD aggregate not all data needex for reada
+cqrs with a separate db, and dbezeium to replicate data into a different read modle in a new db, 
+talk about scaling, dault tolerance, DDD aggregate not all data needex for reada
+
+* what is cqrs
+	* just separate read model from write model, nothing else, no separate db necessary, etc
+	* discuss data modeling, DDD, aggregate roots, having too much data in the aggregate root
+	* discuss commands 
+	* discuss queries
+
+* discuss why you might need cqrs
+    * aggregates complex, dont always need the full context when reading
+	* dont need to uphold invariants on reading, its not impacting any data that lives in the db
+	* hot read paths
+
+* discuss postgres WAL and data streaming capabilities, 
+	* WAL retention while a reader still needs data with new streaming capabilities
+
+* what is CDC
+
+* what is kafka
+
+* discuss debezium CDC setup to listen to postgres WAL and output to kafka
+
+* discuss two different postgres database, one for read, one for write
+	* might need different scaling
+
+* discuss different apis, one for the main capabilities, and one for ingestion from kafka and populating read model
+	* might need different scaling
+
+* discuss persistence, if one goes down, picks back up in kafka
+
+* explain how to run the demo application
+
