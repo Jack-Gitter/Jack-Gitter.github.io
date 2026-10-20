@@ -12,6 +12,10 @@ talk about scaling, dault tolerance, DDD aggregate not all data needex for reada
 	* dont need to uphold invariants on reading, its not impacting any data that lives in the db
 	* hot read paths
 
+* data modeling for this demo, what aggregates we're working with, and how NestJS supports CQRS
+	* show aggregates with typeorm, upholding invariants
+	* show NestJS CQRS with command dispatcher, show some code snippets
+
 * discuss postgres WAL and data streaming capabilities, 
 	* WAL retention while a reader still needs data with new streaming capabilities
 
@@ -23,6 +27,7 @@ talk about scaling, dault tolerance, DDD aggregate not all data needex for reada
 
 * discuss two different postgres database, one for read, one for write
 	* might need different scaling
+	* show some kafka code snippets of consumer and populating the read only db
 
 * discuss different apis, one for the main capabilities, and one for ingestion from kafka and populating read model
 	* might need different scaling
