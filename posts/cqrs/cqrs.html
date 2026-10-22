@@ -43,11 +43,52 @@
 			This is CQRS at its most pure form, and often times it is enough in order to achieve great separation of concerns and performance increases!
 			</p>
 
+			<h2>What is this post about?</h2>
+
+			<p>
+			This post is taking CQRS to the most extreme, complex, and scalable way that I could think of. It is in no way what should be strived for out of the gate,
+			and is most likely only necessary with extremely hot read paths for thousands of requests a second. Starting with the aformentioned strategy of simply
+			separating DDD aggregate roots for writes and raw sql queries for reads is a great starting point for implementing CQRS.
+			</p>
 
 			<h2>Data Modeling and Technology</h2>
+
+			<p>
+			In order to implement this, I used AI (of course at this point), along with some other technologies. Firstly, I want to start with the framework and language, that
+			being NestJS and Typescript.
+			</p>
+
+			<p>
+			NestJS actually has an explicit section in the <a href="https://docs.nestjs.com/recipes/cqrs#installation">documentation</a> 
+			for CQRS implementation, meaning the support is great and the implementation is easy to follow. For my implementation, I decided to go with an airline booking service, 
+			which would manage flights and seats, and have requirements to fetch some aggregated data for specific flights, such as how many first class seats are left, 
+			potential revenue, total price of already booked seats, etc.
+			</p>
+
 			<p>NestJS and CQRS implementation</p>
-			<p>Show data model for airplane and seats and invariants</p>
-			<p>Show code for controller and command dispatcher, and commands themselves</p>
+
+			<p>
+			To start, we have our controller which handles all incoming requests. NestJS has the concept of a command bus, which executes commands, and therefore updates data. 
+			Taking a look at the commands, you can see that they are all related to the updating or creating of data with regards to an airplane, such as creating an airplane,
+			booking a seat, or deactivating (grounding) an airplane.
+			<code>
+			screenshot of controller, along with commands here!
+			</code>
+			</p>
+
+			<p>
+			In order to model the airplane aggregate and seat entity, we utilize Typeorm. In this example, I've merged the domain model with the typeorm entity to keep things simple,
+			although it could be argued it is against DDD and there should be a separate pure domain model living in the code which can be "materialized" from a database record. The aairplane aggregate upholds the dummy invariants that I've invented for this project, which can be seen in the methods on the class.
+			<code>
+			show entities
+			</code>
+			</p>
+
+			<p>
+			Taking a look at a command itself, you can see that the ...command handler class... is called, and then utilizes a unit of work pattern in order to create and update corresponding entities with methods on the aggregate root which uphold the invariants. Although this is all a bit of recap of DDD, so why don't we get into the real new topics!
+			<code>
+			</code>
+			</p>
 
 			<h2>CDC</h2>
 			<p>explain CDC at a high level, LSN</p>
