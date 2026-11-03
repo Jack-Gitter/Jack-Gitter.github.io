@@ -91,26 +91,66 @@
 			</p>
 
 			<h2>CDC</h2>
-			<p>explain CDC at a high level, LSN</p>
-			<p>explain CDC change codes, full diff vs net diff, different settings</p>
+			<p>CDC, or change data capture, is a way to keep track of row level changes of specific database tables. Often times, it is implemented by reading the 
+			database WAL to figure out which rows have been updated, deleted, created, etc. With CDC, it becomes possible to stream changes from a database directly 
+			into a queue to be processed by downstream services. With CDC, each change is tracked in a global transaction log. 
+			In order to determine at which point in time a CDC consumer should start and end at, LSNs, or log sequence numbers, are used. They tell the database during 
+			which time period the client wants to receieve changes for. This allows for CDC events to be replayed, in the event that a client was down and missed CDC 
+			events during a specific duration of time. CDC also typically has different modes, either net changes or full changes. Net changes will, over a point in time, give the 
+			most recent state of each row which has been changed in the LSN window. 
+			Contrarily, full changes will give all the changes which have occurred to a specific row during the selected 
+			time. Full changes is especially useful for event streaming, while net changes can be more useful for data warehousing applications
+			</p>
 
 			<h2>Postgres and CDC</h2>
 			<p>explain postgres specific WAL and config settings, wal deletion, etc</p>
+			<p>Postgres has extensive CDC support, especially with its configuration options. Traditionally CDC is done by looking at the WAL in order to get a list of 
+			actions which the database has performed. The WAL is cleaned up every so often, to maintain speed and performance requirements of the database. Consider
+			the event that a CDC consumer goes down at LSN 10, until LSN 100. If at any point before the consumer comes back up, the database decides to clear the WAL 
+			events between 10 and 100, the consumer will actually miss important changes! To combat this, historically the WAL will be written to a separate file, and CDC 
+			consumers will have to look to this file in the event the WAL no longer contains the changes they request. But postgres has a more elegant solution. Postres offers
+			what is known as a logical replication slot. This slot keeps track of CDC consumers and what LSN each of them have consumed up to, so it knows what data from the WAL 
+			is safe to remove. This ensures that consumers will never miss any data, and the WAL will never be prematurely cleaned up.
+			</p>
 
 			<h2>Kafka</h2>
-			<p>explain what kafka is, what a broker is, topic, and partition</p>
+			<p>Kafka is an event streaming platform which stores and streams real time events to consumers. In order to understand the next section, its important to know a couple
+			of key terms</p>
+
+			<p>
+			Broker: A kafka broker is essentially a kafka server instance which typically will run only a singular kafka instance
+
+			Topic: A kafka topic is a named feed or log which consumers will subscribe to, in order to get events which are written to said topic. One topic can have 
+			multiple subscribers, and an event is not removed if consumed by a subscriber
+
+			Partition: A kafka partition is a split of a kafka topic. A topic can be split amongst many different servers for reliability or scalability. Event ordering is only 
+			guarenteed within a kafka partition, and cannot be guarenteed across multiple partitions in a singular topic. Events can be routed to the same partition by 
+			specifying a message key
+			</p>
 
 			<h2>Kafka Setup</h2>
-			<p>explain what topics we have set up, and how many brokers</p>
-			<p>show code snippet of subscription to kafka</p>
+			<p>For this project, we have a kafka instance running in a docker container, with a two topics, "airplane" and "seats", and a single partition per each. Within 
+			this project, we are subscribing to the kafka topic in a separate nestjs application specifically designed to consume and replicate events to our read database.
+			</p>
+
+			<p>show kafka UI screenshot of kafka topics</p>
+			<p>show code snippet of subscribing to the kafka topic</p>
 
 			<h2>Debezium</h2>
-			<p>explain how debezium is the connector between CDC and kafka</p>
-			<p>explain how it reads the WAL and outputs to the topic, and what it outputs</p>
+			<p>Debezium is the glue that holds together the CDC and Kafka. Debezium automatically connects to postgres and will output CDC events which have been written
+			to the WAL into our kafka topic, based on ... how does debezium know which kafka topic to put the message into? ... which origin table the change came from. This
+			debezium instance is also running on a docker container and is setup to subscribe to postgres with the aformentioned logical replication slot. Debezium will update
+			effectively the ... (cdc net change? or what?) into the kafka topic, so that consumers will have all the information required to do their own tasks. 
+			</p>
 
 			<h2>Two Postgres Databases</h2>
-			<p>explain why we are reading the WAL -- to upgrade read database</p>
-			<p>explain benefits, scaling, partiioning, fault tolerance, etc</p>
+			<p>The main point of this experiment, reading the WAL, streaming to kafka, is so that we can have a consumer which reads our kafka topic and writes 
+			to a separate postgres database, on an entirely different server. This postgres database instance will be specifically used for reading data. Not only will the server
+			be scalable independently of our write database, but the tables and models within the database will differ completely. This is because we are able to cater directly
+			to what our UI is going to need to display to users, aggregating data across different tables in the write database, utilizing different indexes which might slow down
+			updates or insertions on the write database, etc. This also increases fault tolerance. Read paths of the application will continue to operate if the write db goes down, 
+			and vice versa. It also allows for partitioning of data easily, as distributed writes and transactions are much more difficult than distributed reads
+			</p>
 
 			<h2>Two APIs</h2>
 			<p>the api for handling commands and reads</p>
