@@ -331,7 +331,6 @@ export class AirplaneUnitOfWork {
 			</p>
 
 			<h2>Postgres and CDC</h2>
-			<p>explain postgres specific WAL and config settings, wal deletion, etc</p>
 			<p>Postgres has extensive CDC support, especially with its configuration options. Traditionally CDC is done by looking at the WAL in order to get a list of 
 			actions which the database has performed. The WAL is cleaned up every so often, to maintain speed and performance requirements of the database. Consider
 			the event that a CDC consumer goes down at LSN 10, until LSN 100. If at any point before the consumer comes back up, the database decides to clear the WAL 
