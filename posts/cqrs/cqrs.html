@@ -121,11 +121,15 @@
 			Broker: A kafka broker is essentially a kafka server instance which typically will run only a singular kafka instance
 
 			Topic: A kafka topic is a named feed or log which consumers will subscribe to, in order to get events which are written to said topic. One topic can have 
-			multiple subscribers, and an event is not removed if consumed by a subscriber
+			multiple subscribers, and an event is not removed if consumed by a subscriber. It can be thought of as a logical grouping of messages
 
 			Partition: A kafka partition is a split of a kafka topic. A topic can be split amongst many different servers for reliability or scalability. Event ordering is only 
 			guarenteed within a kafka partition, and cannot be guarenteed across multiple partitions in a singular topic. Events can be routed to the same partition by 
-			specifying a message key
+			specifying a message key. A partition can be thought of as a the physical grouping of messages on disk.
+
+			Message Group: A message group in kafka is one or more conusmers which read data from topics. Kafka will manage the message group and evenly distribute the 
+			consumers within a message group to read from the underlying partitions of a topic, and rebalance in the event of new or leaving consumers. For example,
+			if there are 6 partitions of a topic, and 3 consumers, kafka will automatically allocated each consumer 2 partitions
 			</p>
 
 			<h2>Kafka Setup</h2>
