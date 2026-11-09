@@ -62,32 +62,260 @@
 			NestJS actually has an explicit section in the <a href="https://docs.nestjs.com/recipes/cqrs#installation">documentation</a> (yes, people still read documentation)
 			for CQRS implementation, meaning the support is great and the implementation is easy to follow. For my implementation, I decided to go with an airline booking service, 
 			which would manage flights and seats, and have requirements to fetch some aggregated data for specific flights, such as how many first class seats are left, 
-			potential revenue, total price of already booked seats, etc.
+			potential revenue, total price of already booked seats, and more.
 			</p>
 
-			<p>NestJS and CQRS implementation</p>
+			<h2>NestJS Implementation</h2>
 
 			<p>
 			To start, we have our controller which handles all incoming requests. NestJS has the concept of a command bus, which executes commands, and therefore updates data. 
-			Taking a look at the commands, you can see that they are all related to the updating or creating of data with regards to an airplane, such as creating an airplane,
-			booking a seat, or deactivating (grounding) an airplane.
-			<code>
-			screenshot of controller, along with commands here!
-			</code>
+			Taking a look at the commands, you can see that they are related to the updating or creating of data with regards to an airplane, such as creating an airplane, or booking a seat. This is only a subset of the controller code.
+<pre class='prettyprint lang-typescript'>
+@ApiTags('commands (write DB)')
+@ApiNotFoundResponse({ type: ErrorResponseDto, description: 'Airplane or seat does not exist' })
+@Controller('airplanes')
+export class AirplaneCommandController {
+constructor(private readonly commandBus: CommandBus) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create an airplane with a generated seat map' })
+  @ApiCreatedResponse({ type: CommandResultDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto, description: 'Validation or invalid layout' })
+  @ApiConflictResponse({ type: ErrorResponseDto, description: 'Tail number already exists' })
+  create(@Body() dto: CreateAirplaneDto): Promise&lt;CommandResultDto&gt; {
+	return this.commandBus.execute(
+	  new CreateAirplaneCommand(dto.tailNumber, dto.model, dto.baseTicketPrice, {
+		rows: dto.rows,
+		seatsPerRow: dto.seatsPerRow,
+		firstClassRows: dto.firstClassRows,
+	  }),
+	);
+  }
+
+  @Post(':id/seats/:seatNumber/book')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Book a seat for a passenger' })
+  @ApiParam(airplaneIdParam)
+  @ApiParam(seatParam)
+  @ApiOkResponse({ type: CommandResultDto })
+  @ApiConflictResponse({
+	type: ErrorResponseDto,
+	description: 'SEAT_ALREADY_BOOKED, PASSENGER_ALREADY_SEATED, AIRPLANE_GROUNDED or AGGREGATE_LOCKED',
+  })
+  book(
+	@Param('id', ParseUUIDPipe) id: string,
+	@Param('seatNumber') seatNumber: string,
+	@Body() dto: BookSeatDto,
+  ): Promise&lt;CommandResultDto&gt; {
+
+	return this.commandBus.execute(new BookSeatCommand(id, seatNumber, dto.passengerName));
+</pre>
+
 			</p>
 
 			<p>
 			In order to model the airplane aggregate and seat entity, we utilize Typeorm. In this example, I've merged the domain model with the typeorm entity to keep things simple,
-			although it could be argued it is against DDD and there should be a separate pure domain model living in the code which can be "materialized" from a database record. The aairplane aggregate upholds the dummy invariants that I've invented for this project, which can be seen in the methods on the class.
-			<code>
-			show entities
-			</code>
+			although it could be argued it is against DDD and there should be a separate pure domain model living in the code which can be "materialized" from a database record. The airplane aggregate upholds the dummy invariants that I've invented for this project, which can be seen in the methods on the class. Again, this is only a snippet of the entity
+
+<pre class='prettyprint lang-typescript'>
+@Entity({ name: 'airplanes' })
+export class Airplane {
+  @PrimaryColumn('uuid')
+  readonly id: string;
+
+  @Column({ name: 'tail_number', type: 'text', unique: true })
+  readonly tailNumber: string;
+
+  @Column({ type: 'text' })
+  readonly model: string;
+
+  @Column({ name: 'base_ticket_price', type: 'numeric', precision: 10, scale: 2, transformer: NumericTransformer })
+  private _baseTicketPrice: number;
+
+  @Column({ name: 'status', type: 'text' })
+  private _status: AirplaneStatus;
+
+  /** Bumped by the repository on every save; read models expose it as writeVersion. */
+  @Column({ type: 'integer', default: 0 })
+  version: number;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  readonly createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  readonly updatedAt: Date;
+
+  /** Always loaded together with the root. Mutate seats through the methods below, not directly. */
+  @OneToMany(() =&gt; Seat, (seat) =&gt; seat.airplane, { cascade: ['insert', 'update'] })
+  readonly seats: Seat[];
+
+  /** TypeORM instantiates with no arguments and then assigns columns; the factory passes props. */
+  private constructor(props?: { id: string; tailNumber: string; model: string; baseTicketPrice: number; seats: Seat[] }) {
+    if (props) {
+      this.id = props.id;
+      this.tailNumber = props.tailNumber;
+      this.model = props.model;
+      this._baseTicketPrice = props.baseTicketPrice;
+      this._status = AirplaneStatus.ACTIVE;
+      this.version = 0;
+      this.seats = props.seats;
+    }
+  }
+
+  static create(input: { tailNumber: string; model: string; baseTicketPrice: number; layout: SeatLayout }): Airplane {
+    const { layout } = input;
+    const tailNumber = input.tailNumber.trim().toUpperCase();
+
+    if (!/^[A-Z0-9-]{3,10}$/.test(tailNumber)) {
+      throw new InvalidAirplaneError('Tail number must be 3-10 alphanumeric characters');
+    }
+    if (!input.model.trim()) {
+      throw new InvalidAirplaneError('Model is required');
+    }
+    if (!(input.baseTicketPrice &gt; 0)) {
+      throw new InvalidAirplaneError('Base ticket price must be positive');
+    }
+    if (layout.rows &lt; 1 || layout.rows &gt; 60) {
+      throw new InvalidAirplaneError('Rows must be between 1 and 60');
+    }
+    if (layout.seatsPerRow &lt; 1 || layout.seatsPerRow &gt; SEAT_LETTERS.length) {
+      throw new InvalidAirplaneError(`Seats per row must be between 1 and ${SEAT_LETTERS.length}`);
+    }
+    if (layout.firstClassRows &lt; 0 || layout.firstClassRows &gt; layout.rows) {
+      throw new InvalidAirplaneError('First class rows must be between 0 and the number of rows');
+    }
+
+    const id = randomUUID();
+    const seats: Seat[] = [];
+    for (let row = 1; row &lt;= layout.rows; row++) {
+      const cabin = row &lt;= layout.firstClassRows ? CabinClass.FIRST : CabinClass.ECONOMY;
+      for (let i = 0; i &lt; layout.seatsPerRow; i++) {
+        seats.push(Seat.create(randomUUID(), id, `${row}${SEAT_LETTERS[i]}`, cabin));
+      }
+    }
+
+    return new Airplane({
+      id,
+      tailNumber,
+      model: input.model.trim(),
+      baseTicketPrice: round2(input.baseTicketPrice),
+      seats,
+    });
+  }
+
+  // ---------- behaviour (commands) ----------
+
+  bookSeat(seatNumber: string, passengerName: string): Seat {
+    this.assertActive();
+    const seat = this.seatOrThrow(seatNumber);
+    const name = passengerName.trim();
+    if (!name) {
+      throw new InvalidAirplaneError('Passenger name is required');
+    }
+
+    const existing = this.seatHeldBy(name);
+    if (existing) {
+      throw new PassengerAlreadySeatedError(name, existing.seatNumber);
+    }
+
+    seat.book(name, new Date());
+    return seat;
+  }
+
+  cancelSeat(seatNumber: string): Seat {
+    const seat = this.seatOrThrow(seatNumber);
+    seat.release();
+    return seat;
+  }
+
+  changeBasePrice(newPrice: number): void {
+    if (!(newPrice &gt; 0)) {
+      throw new InvalidPriceChangeError('Base ticket price must be positive');
+    }
+    const ceiling = round2(this._baseTicketPrice * MAX_PRICE_INCREASE_FACTOR);
+    if (newPrice &gt; ceiling) {
+      throw new InvalidPriceChangeError(
+        `Price can be raised to at most ${ceiling.toFixed(2)} in one change (current ${this._baseTicketPrice.toFixed(2)})`,
+      );
+    }
+    this._baseTicketPrice = round2(newPrice);
+  }
+
+  ground(): void {
+    const booked = this.seats.filter((s) =&gt; s.isBooked).length;
+    if (booked &gt; 0) {
+      throw new AirplaneHasBookingsError(this.tailNumber, booked);
+    }
+    this._status = AirplaneStatus.GROUNDED;
+  }
+			</pre>
 			</p>
 
 			<p>
-			Taking a look at a command itself, you can see that the ...command handler class... is called, and then utilizes a unit of work pattern in order to create and update corresponding entities with methods on the aggregate root which uphold the invariants. Although this is all a bit of recap of DDD, so why don't we get into the real new topics!
-			<code>
-			</code>
+			Taking a look at at the commands themselves, it delegates the business logic to the aggregate root while utilizing a unit of work pattern in order to keep all entity adjustments transactionally consistent
+
+<pre class='prettyprint lang-typescript'> 
+@CommandHandler(CreateAirplaneCommand)
+export class CreateAirplaneHandler implements ICommandHandler&lt;CreateAirplaneCommand, CommandResult&gt; {
+  constructor(private readonly uow: AirplaneUnitOfWork) {}
+
+  execute(cmd: CreateAirplaneCommand): Promise&lt;CommandResult&gt; {
+    return this.uow.create(
+      Airplane.create({
+        tailNumber: cmd.tailNumber,
+        model: cmd.model,
+        baseTicketPrice: cmd.baseTicketPrice,
+        layout: cmd.layout,
+      }),
+    );
+  }
+}
+
+@CommandHandler(BookSeatCommand)
+export class BookSeatHandler implements ICommandHandler&lt;BookSeatCommand, CommandResult&gt; {
+  constructor(private readonly uow: AirplaneUnitOfWork) {}
+
+  execute(cmd: BookSeatCommand): Promise&lt;CommandResult&gt; {
+    return this.uow.mutate(cmd.airplaneId, (airplane) =&gt; airplane.bookSeat(cmd.seatNumber, cmd.passengerName));
+  }
+}
+</pre>
+
+<pre class='prettyprint lang-typescript'> 
+@Injectable()
+export class AirplaneUnitOfWork {
+  private readonly logger = new Logger(AirplaneUnitOfWork.name);
+
+  constructor(
+    @InjectDataSource(WRITE_DB) private readonly dataSource: DataSource,
+    private readonly airplanes: AirplaneRepository,
+  ) {}
+
+  async mutate(airplaneId: string, action: (airplane: Airplane) =&gt; void): Promise&lt;CommandResult&gt; {
+    return this.dataSource.transaction(async (manager) =&gt; {
+      // Fail fast instead of queueing forever behind a slow writer.
+      await manager.query(`SET LOCAL lock_timeout = '5s'`);
+
+      const airplane = await this.airplanes.findByIdForUpdate(manager, airplaneId);
+      action(airplane);
+      await this.airplanes.save(manager, airplane);
+
+      this.logger.log(`airplane ${airplane.tailNumber} -&gt; version ${airplane.version}`);
+      return { airplaneId: airplane.id, version: airplane.version };
+    });
+  }
+
+  async create(airplane: Airplane): Promise&lt;CommandResult&gt; {
+    return this.dataSource.transaction(async (manager) =&gt; {
+      await this.airplanes.insert(manager, airplane);
+      this.logger.log(`airplane ${airplane.tailNumber} created with ${airplane.seats.length} seats`);
+      return { airplaneId: airplane.id, version: airplane.version };
+    });
+  }
+}
+</pre>
+
+
 			</p>
 
 			<h2>CDC</h2>
