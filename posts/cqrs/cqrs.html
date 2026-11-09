@@ -34,7 +34,7 @@
 			Although I did explicitly say that CQRS does not require the use of DDD in order to be considered CQRS, in my opinion, the strongest benefit of CQRS comes when utilizing
 			data modeling concepts found in DDD, such as aggregates. An aggregates main purpose is to protect business invariants and ensure that data remains consistent. As such,
 			aggregates often have to encompass many smaller entities in order to protect the rules of the business. Quite often the data required for UI pages does not encompass 
-			all of the data in the aggregate, and in some cases could even require data outside the bounds of any one specific aggregate. As such, it could become cumbersome to 
+			all of the data in the aggregate, and in some cases could even require data outside the bounds of any one specific aggregate. Because of this, it could become cumbersome to 
 			attempt to utilize the aggregate data model to fetch data, especially when no invariants need to be upheld for read operations. Because read operations do not udpate 
 			any data and therefore cannot violate any invaraints, SQL queries can be fine tuned and optimized to fetch exactly the data required by the UI without having to worry 
 			about upholding business rules. At its most simplest, this can just be implemented with a raw SQL query, selecting and joining any columns from within the same database.
@@ -44,7 +44,9 @@
 			<h2>What is this post about?</h2>
 
 			<p>
-			This post is taking CQRS to the most extreme, complex, and scalable way that I could think of. It is in no way what should be strived for out of the gate,
+			This post is an excersize taking CQRS to the extreme. Its exhibits a complex, 
+			way to encorporate CQRS with a scalable system. 
+			It is in no way what should be strived for out of the gate,
 			and is most likely only necessary with extremely hot read paths for thousands of requests a second. Starting with the aformentioned strategy of simply
 			separating DDD aggregate roots for writes and raw sql queries for reads is a great starting point for implementing CQRS.
 			</p>
@@ -57,7 +59,7 @@
 			</p>
 
 			<p>
-			NestJS actually has an explicit section in the <a href="https://docs.nestjs.com/recipes/cqrs#installation">documentation</a> 
+			NestJS actually has an explicit section in the <a href="https://docs.nestjs.com/recipes/cqrs#installation">documentation</a> (yes, people still read documentation)
 			for CQRS implementation, meaning the support is great and the implementation is easy to follow. For my implementation, I decided to go with an airline booking service, 
 			which would manage flights and seats, and have requirements to fetch some aggregated data for specific flights, such as how many first class seats are left, 
 			potential revenue, total price of already booked seats, etc.
