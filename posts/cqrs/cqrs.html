@@ -157,16 +157,26 @@
 			</p>
 
 			<h2>Two APIs</h2>
-			<p>the api for handling commands and reads</p>
-			<p>api for listening to kafka, transforming data, populating read db</p>
+			<p>
+			To organize this project, there are two main APIs which should be noted. The first, is the API which handles direct HTTP requests from clients, 
+			both the command side and read side. The read side will consume from the postgres database and serve the read models which we have created via the debezium + kafka
+			replication process
+
+			The second API is for consuming the messages from kafka, transforming them, and writing them over to the read datbase. This is also known as a projector, which
+			is when an application is specifically meant to consume data and "project" it into a more consumer-friendly format
+			</p>
+
 			<p>show code snippet for transformer kafka record and upsert to read db</p>
 			<p>show screenshot of kafka UI message in a topic</p>
 			<p>show screenshot of the database after an update</p>
 
 			<h2>Why?</h2>
-			<p>hot paths on reads</p>
-			<p>independent scaling, more simple code querying</p>
-
+			<p>Now with all this complexity, you might be asking why? Well, because I wanted to. But from a professinal standpoint, most of the time something like this 
+			wont be necessary. The benefits of CQRS can vastly different depending on how far you want to take it, anywhere from simple code organization to being able 
+			to scale each and every part of your application to your specific needs. In this case, the separate read model and read database allow for the read database
+			to be scaled completely separately from the write datbaase, in the event that our system has to serve an absurd amount of read requests per second, but not a 
+			lot of write requests. 
+			</p>
             
     </main>
     <footer>
