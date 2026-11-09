@@ -320,14 +320,14 @@ export class AirplaneUnitOfWork {
 
 			<h2>CDC</h2>
 			<p>CDC, or change data capture, is a way to keep track of row level changes of specific database tables. Often times, it is implemented by reading the 
-			database WAL to figure out which rows have been updated, deleted, created, etc. With CDC, it becomes possible to stream changes from a database directly 
-			into a queue to be processed by downstream services. With CDC, each change is tracked in a global transaction log. 
+			database WAL to figure out which rows have been updated, deleted, or created. With CDC, it becomes possible to stream changes from a database directly 
+			into a queue to be processed by downstream services. With CDC enabled, each change is tracked in a global transaction log. 
 			In order to determine at which point in time a CDC consumer should start and end at, LSNs, or log sequence numbers, are used. They tell the database during 
 			which time period the client wants to receieve changes for. This allows for CDC events to be replayed, in the event that a client was down and missed CDC 
 			events during a specific duration of time. CDC also typically has different modes, either net changes or full changes. Net changes will, over a point in time, give the 
 			most recent state of each row which has been changed in the LSN window. 
 			Contrarily, full changes will give all the changes which have occurred to a specific row during the selected 
-			time. Full changes is especially useful for event streaming, while net changes can be more useful for data warehousing applications
+			time. Full changes can be especially useful for event streaming, while net changes may be more useful for data warehousing applications
 			</p>
 
 			<h2>Postgres and CDC</h2>
