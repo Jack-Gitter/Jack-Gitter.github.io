@@ -19,15 +19,13 @@
 
 			<p>
 			CQRS, also known as command query response segregation, is a way to separate the models used for writing data and reading data. Within CQRS, a command is a request which
-			updates data, think POST, PATCH, PUT, etc. A query is a request just to fetch data, think GET.
+			updates data, and a query is a request which fetches data. In the context of HTTP, these can be thought of as including, but not exclusive to POST, PATCH, PUT for commands, and GET for queries.
 			</p>
 
 			<h2>What CQRS is not</h2>
 			<p>
-			CQRS is not the same as DDD, does not require a separate read database, and does not require the use of domain events, eventual consistency, or CDC. 
-			At its heart, it is purely concerned with the separation of models for reading and writing, however it enabled and is often talked about in 
-			the same context as DDD and scalability/performance. Another benefit is code simplicity and separation of concerns, 
-			keeping code quality high and repositories organized.
+			CQRS is not the same as DDD. It does not require a separate read database, does not require the use of domain events, eventual consistency, or CDC. 
+			At its heart, it is purely concerned with the separation of models for reading and writing, however it enables and is often talked about in the same context as DDD and scalability/performance. Another benefit is code simplicity and separation of concerns, keeping code quality high and repositories organized.
 			</p>
 
 			<h2>Why CQRS</h2>
